@@ -1,19 +1,48 @@
 ﻿cmake_minimum_required (VERSION 3.15)
 
+set(CMAKE_CXX_STANDARD 23)
+
 project ("Alive")
 
 add_executable(alive
 	Main.cpp
 	Shader.h
 	Shader.cpp
+	Buffer.h
+	Buffer.cpp
+	Camera.h
+	Camera.cpp
+	FrameBuffer.h
+	FrameBuffer.cpp
+	Renderer2D.h
+	Renderer2D.cpp
+	SubTexture2D.h
+	SubTexture2D.cpp
+	Texture.h
+	Texture.cpp
+	VertexArray.h
+	VertexArray.cpp
+	Organism.h
+	Organism.cpp
+	Cell.h
+	Cell.cpp
+	LeafCell.h
+	LeafCell.cpp
+	MoverCell.h
+	MoverCell.cpp
+	ThornCell.h
+	ThornCell.cpp
+	TextureManager.h
+	TextureManager.cpp
+	Transform.h
+	Transform.cpp
 
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c
 	external/stb/stb_image.h
-	)
+)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 
 add_subdirectory ("external/glfw")
 add_subdirectory ("external/glm")
