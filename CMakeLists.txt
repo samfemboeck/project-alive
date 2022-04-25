@@ -5,37 +5,53 @@ set(CMAKE_CXX_STANDARD 23)
 project ("Alive")
 
 add_executable(alive
-	Main.cpp
-	Shader.h
-	Shader.cpp
-	Buffer.h
-	Buffer.cpp
-	Camera.h
-	Camera.cpp
-	FrameBuffer.h
-	FrameBuffer.cpp
-	Renderer2D.h
-	Renderer2D.cpp
-	SubTexture2D.h
-	SubTexture2D.cpp
-	Texture.h
-	Texture.cpp
-	VertexArray.h
-	VertexArray.cpp
-	Organism.h
-	Organism.cpp
-	Cell.h
-	Cell.cpp
-	LeafCell.h
-	LeafCell.cpp
-	MoverCell.h
-	MoverCell.cpp
-	ThornCell.h
-	ThornCell.cpp
-	TextureManager.h
-	TextureManager.cpp
-	Transform.h
-	Transform.cpp
+	src/Engine/Shader.h
+	src/Engine/Shader.cpp
+	src/Engine/Buffer.h
+	src/Engine/Buffer.cpp
+	src/Engine/Camera.h
+	src/Engine/Camera.cpp
+	src/Engine/FrameBuffer.h
+	src/Engine/FrameBuffer.cpp
+	src/Engine/Renderer2D.h
+	src/Engine/Renderer2D.cpp
+	src/Engine/SubTexture2D.h
+	src/Engine/SubTexture2D.cpp
+	src/Engine/Texture.h
+	src/Engine/Texture.cpp
+	src/Engine/VertexArray.h
+	src/Engine/VertexArray.cpp
+	src/Engine/TextureManager.h
+	src/Engine/TextureManager.cpp
+	src/Engine/Transform.h
+	src/Engine/Transform.cpp
+	src/Engine/ITimerBase.h
+	src/Engine/TickCountTimer.h
+	src/Engine/TickCountTimer.cpp
+	src/Engine/ClockTimer.h
+	src/Engine/ClockTimer.cpp
+	src/Engine/Physics/AABBCollider.h
+	src/Engine/Physics/AABBCollider.cpp
+	src/Engine/Physics/CircleCollider.h
+	src/Engine/Physics/CircleCollider.cpp
+	src/Engine/Physics/Collider.h
+	src/Engine/Physics/Collider.cpp
+	src/Engine/Physics/PhysicsManager.h
+	src/Engine/Physics/PhysicsManager.cpp
+	src/Engine/Physics/RigidBody.h
+	src/Engine/Physics/RigidBody.cpp
+
+	src/Main.cpp
+	src/Organism.h
+	src/Organism.cpp
+	src/Cell.h
+	src/Cell.cpp
+	src/LeafCell.h
+	src/LeafCell.cpp
+	src/MoverCell.h
+	src/MoverCell.cpp
+	src/ThornCell.h
+	src/ThornCell.cpp
 
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c
@@ -48,7 +64,7 @@ add_subdirectory ("external/glfw")
 add_subdirectory ("external/glm")
 
 target_precompile_headers(alive
-	INTERFACE pch.h
+	INTERFACE src/pch.h
 	)
 
 target_include_directories (alive

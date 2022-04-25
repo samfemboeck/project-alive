@@ -1,9 +1,7 @@
-#include "bcpch.h"
+#include "pch.h"
+#include "Organism.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "Renderer2D.h"
-#include "Organism.h"
-#include "TextureManager.h"
 
 void onWindowResize(GLFWwindow* window, int width, int height);
 void onMouseEvent(GLFWwindow* window, double xpos, double ypos);
@@ -14,14 +12,17 @@ GLFWwindow* window = nullptr;
 glm::mat4 projection;
 float width = 1600;
 float height = 800;
-Organism* organism = nullptr;
+Organism* organism1 = nullptr;
+Organism* organism2 = nullptr;
+TickCountTimer* timer = nullptr;
+ClockTimer* timerclock = nullptr;
 
 std::string randomDNA()
 {
 	auto vocabulary = "LTM";
 	auto params = "0123";
 	std::stringstream dna;
-	int length = rand() % 19 + 1;
+	int length = rand() % 5 + 1;
 	for (int i = 0; i < length; i++)
 	{
 		if (dna.str().find('M') == std::string::npos)
@@ -49,8 +50,14 @@ int main()
 	TextureManager::add("cell_leaf.png");
 	TextureManager::add("cell_thorn.png");
 	TextureManager::add("cell_mover.png");
+	TextureManager::add("collider.png");
 
-	organism = new Organism(randomDNA());
+	organism1 = new Organism(randomDNA());
+	organism1->m_rigid_body.pm_transform.pm_position = { 200, 200 };
+	organism2 = new Organism(randomDNA());
+	organism2->m_rigid_body.pm_velocity = { 100, 100 };
+	timer = new TickCountTimer(1000);
+	//timerclock = new ClockTimer(1000);
 
 	mainLoop();
 
@@ -69,11 +76,16 @@ void mainLoop()
 
 		projection = glm::ortho(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f, 0.00000001f, 100.0f);
 
+		organism1->tick(deltaTime);
+		organism2->tick(deltaTime);
+
 		Renderer2D::clear();
 		Renderer2D::beginTextures(projection);
-		organism->tick(deltaTime);
-		organism->draw();
+		organism1->draw();
+		organism2->draw();
 		Renderer2D::endTextures();
+
+		PhysicsManager::update(deltaTime);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
