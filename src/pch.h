@@ -39,10 +39,6 @@
 #include "Engine/ClockTimer.h"
 #include "Engine/Entity.h"
 
-#include "Engine/Physics/RigidBody.h"
-#include "Engine/Physics/CircleCollider.h"
-#include "Engine/Physics/PhysicsManager.h"
-
 template<typename... Args>
 void log(std::string msg, Args... args)
 {

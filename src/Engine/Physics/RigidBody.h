@@ -28,10 +28,10 @@ struct RigidBody : IComponent
 	void set_ignore(RigidBody* rb, bool ignore);
 	bool has_ignore(RigidBody* rb);
 	void add_correction(const glm::vec2& correction);
+	void update() override {}
 };
 
-class RigidBodySys : public ComponentSys<RigidBody, RigidBodySys>
-{
-public:
-	void update();
-};
+template<>
+void ComponentSys<RigidBody>::update();
+
+

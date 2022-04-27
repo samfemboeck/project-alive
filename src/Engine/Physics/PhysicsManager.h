@@ -18,7 +18,7 @@ struct Manifold
 	MTV mtv;
 };
 
-class SPhysics : System
+class PhysicsManager
 {
 public:
 	static void add(Collider* collider);

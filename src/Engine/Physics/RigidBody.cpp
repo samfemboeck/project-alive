@@ -51,7 +51,8 @@ void RigidBody::add_correction(const glm::vec2& correction)
 	Correction += correction;
 }
 
-void RigidBodySys::update()
+template<>
+void ComponentSys<RigidBody>::update()
 {
 	for (auto rb : m_components_active)
 	{

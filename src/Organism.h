@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Cell.h"
+#include "Engine/Physics/RigidBody.h"
+#include "Engine/Physics/CircleCollider.h"
 
 class Organism
 {

@@ -6,6 +6,11 @@
 
 void onWindowResize(GLFWwindow* window, int width, int height);
 void onMouseEvent(GLFWwindow* window, double xpos, double ypos);
+void error_callback(int error_code, const char* desc)
+{
+	log(desc);
+}
+
 void initGlfw();
 void mainLoop();
 
@@ -45,13 +50,17 @@ int main()
 
 	srand(time(NULL));
 
+	/*
 	Renderer2D::init();
 	Renderer2D::setClearColor({ 0, 0, 0, 1 });
+	*/
 
+	/*
 	TextureManager::add("cell_leaf.png");
 	TextureManager::add("cell_thorn.png");
 	TextureManager::add("cell_mover.png");
 	TextureManager::add("collider.png");
+	*/
 
 	organism1 = new Organism(randomDNA());
 	organism1->set_position({ 200, 200 });
@@ -61,10 +70,17 @@ int main()
 	//timerclock = new ClockTimer(1000);
 
 	entity e = 0;
-	auto& sys = RigidBodySys::get();
+	auto& sys = ComponentSys<RigidBody>::get();
 	sys.add_component(e);
 	auto* rb = sys.get_component(e);
 	rb->Velocity = { 10, 10 };
+
+	auto components = Registry::get().get_components(e);
+
+	for (int i = 0; i < 1; i++)
+	{
+		auto cmp = components[i];
+	}
 
 	mainLoop();
 
@@ -73,37 +89,12 @@ int main()
 
 void mainLoop()
 {
-	while (!glfwWindowShouldClose(window))
+	while (true)
 	{
-		static float deltaTime = 0;
-		static float lastElapsedRuntime = glfwGetTime();
-		float currentTime = glfwGetTime();
-		deltaTime = currentTime - lastElapsedRuntime;
-		lastElapsedRuntime = currentTime;
-
-		projection = glm::ortho(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f, 0.00000001f, 100.0f);
-
-		organism1->tick(deltaTime);
-		organism2->tick(deltaTime);
-
-		Renderer2D::clear();
-		Renderer2D::beginTextures(projection);
-		organism1->draw();
-		organism2->draw();
-		Renderer2D::endTextures();
-
-		auto sys = RigidBodySys::get();
+		auto& sys = ComponentSys<RigidBody>::get();
 		sys.update();
 		auto* rb = sys.get_component(0);
-		log("velo: {0}", rb->Transform.Position.x);
-
-		PhysicsManager::update(deltaTime);
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
 	}
-
-	glfwTerminate();
 }
 
 void onWindowResize(GLFWwindow * window, int w, int h)
@@ -119,12 +110,18 @@ void onMouseEvent(GLFWwindow * window, double xpos, double ypos)
 
 void initGlfw()
 {
-	glfwInit();
+	glfwSetErrorCallback(error_callback);
+
+	if (!glfwInit())
+	{
+		log("Failed to init glfw");
+	}
+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(width, height, "Project Alive", NULL, NULL);
+	window = glfwCreateWindow(width, height, "Project Alive", 0, nullptr);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
