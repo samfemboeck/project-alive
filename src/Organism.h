@@ -5,11 +5,13 @@
 class Organism
 {
 public:
-	Organism(std::string dna);
-	void tick(float deltaTime);
-	void draw();
-	RigidBody m_rigid_body;
+	Organism(const std::string& dna);
+	void draw() const;
+	void tick(const float deltaTime);
+	void set_position(const glm::vec2& pos);
+	void set_velocity(const glm::vec2& pos);
 private:
+	RigidBody m_rigid_body;
 	std::string m_dna;
 	float m_energy = 100;
 	std::vector<Cell*> m_cells;
@@ -17,7 +19,7 @@ private:
 	Cell* m_mover_cell = nullptr;
 	CircleCollider* m_circle_collider;
 private:
-	bool overlaps_position(glm::vec2 pos);
-	glm::vec2 get_offset_for_param(unsigned int param);
-	Cell* get_cell_for_symbol(char symbol);
+	bool overlaps_position(const glm::vec2& pos) const;
+	constexpr glm::vec2 get_offset_for_param(const unsigned int param);
+	constexpr Cell* get_cell_for_symbol(const char symbol);
 };

@@ -2,21 +2,24 @@
 #include <vector>
 #include <list>
 #include "../Transform.h"
+#include "../IComponent.h"
 
-class Collider;
-class IRigidBodyObserver;
+struct Collider;
 
-class RigidBody
+struct RigidBody : IComponent
 {
-public:
-	glm::vec2 pm_acceleration = glm::vec2(0);
-	glm::vec2 pm_velocity = glm::vec2(0);
-	std::string pm_layer;
-	float pm_inv_mass = 1;
-	std::list<glm::vec2> pm_forces;
-	std::list<glm::vec2> pm_impulses;
-	Transform pm_transform;
-public:
+	RigidBody* Parent = nullptr;
+	glm::vec2 Acceleration = glm::vec2(0);
+	glm::vec2 Velocity = glm::vec2(0);
+	std::string Layer;
+	float InvMass = 1;
+	std::vector<glm::vec2> Forces;
+	std::vector<glm::vec2> Impulses;
+	Transform Transform;
+	glm::vec2 Correction = glm::vec2(0);
+	std::map<std::string, bool> IgnoredLayers;
+	std::map<RigidBody*, bool> IgnoredRBs;
+
 	RigidBody();
 	~RigidBody();
 	void correct_position(float delta);
@@ -25,10 +28,10 @@ public:
 	void set_ignore(RigidBody* rb, bool ignore);
 	bool has_ignore(RigidBody* rb);
 	void add_correction(const glm::vec2& correction);
-private:
-	glm::vec2 m_correction = glm::vec2(0);
-	std::list<glm::vec2> m_forces;
-	std::list<glm::vec2> m_impulses;
-	std::map<std::string, bool> m_ignored_layers;
-	std::map<RigidBody*, bool> m_ignored_rbs;
+};
+
+class RigidBodySys : public ComponentSys<RigidBody, RigidBodySys>
+{
+public:
+	void update();
 };

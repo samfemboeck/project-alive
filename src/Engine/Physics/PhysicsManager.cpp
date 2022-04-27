@@ -73,8 +73,8 @@ void PhysicsManager::find_collisions()
 		{
 			auto col1 = s_colliders[i];
 			auto col2 = s_colliders[a];
-			auto rb1 = col1->pm_rigid_body;
-			auto rb2 = col2->pm_rigid_body;
+			auto rb1 = col1->RB;
+			auto rb2 = col2->RB;
 
 			if (rb1 == rb2 ||
 				rb1->has_ignore(rb2) ||
@@ -88,7 +88,7 @@ void PhysicsManager::find_collisions()
 				rb1->on_collision(col2);
 				rb2->on_collision(col1);
 
-				if (col1->pm_is_trigger || col2->pm_is_trigger)
+				if (col1->IsTrigger || col2->IsTrigger)
 					continue;
 
 				Manifold manifold;
@@ -105,10 +105,10 @@ void PhysicsManager::resolve_collisions()
 {
 	for (auto& man : s_manifolds)
 	{
-		if (man.rb1->pm_inv_mass == 0 && man.rb2->pm_inv_mass == 0)
+		if (man.rb1->InvMass == 0 && man.rb2->InvMass == 0)
 			continue;
 
-		glm::vec2 rv = man.rb2->pm_velocity - man.rb1->pm_velocity;
+		glm::vec2 rv = man.rb2->Velocity - man.rb1->Velocity;
 		float velAlongNormal = (rv.x * man.mtv.normal.x + rv.y * man.mtv.normal.y);
 
 		if (velAlongNormal > 0)
@@ -117,17 +117,17 @@ void PhysicsManager::resolve_collisions()
 		float e = 0.1f;
 
 		float j = (1 + e) * velAlongNormal;
-		j /= man.rb1->pm_inv_mass + man.rb2->pm_inv_mass;
+		j /= man.rb1->InvMass + man.rb2->InvMass;
 		glm::vec2 impulse = j * man.mtv.normal;
 
-		man.rb1->pm_velocity = man.rb1->pm_velocity + glm::vec2(man.rb1->pm_inv_mass * impulse.x, man.rb1->pm_inv_mass * impulse.y);
-		man.rb2->pm_velocity = man.rb2->pm_velocity - glm::vec2(man.rb2->pm_inv_mass * impulse.x, man.rb2->pm_inv_mass * impulse.y);
+		man.rb1->Velocity = man.rb1->Velocity + glm::vec2(man.rb1->InvMass * impulse.x, man.rb1->InvMass * impulse.y);
+		man.rb2->Velocity = man.rb2->Velocity - glm::vec2(man.rb2->InvMass * impulse.x, man.rb2->InvMass * impulse.y);
 
 		const float percent = 0.5f;
 		const float slop = 0.f;
-		glm::vec2 correction = std::max(man.mtv.penetration - slop, 0.0f) / (man.rb1->pm_inv_mass + man.rb2->pm_inv_mass) * percent * man.mtv.normal;
-		man.rb1->add_correction(-man.rb1->pm_inv_mass * correction);
-		man.rb2->add_correction(man.rb2->pm_inv_mass * correction);
+		glm::vec2 correction = std::max(man.mtv.penetration - slop, 0.0f) / (man.rb1->InvMass + man.rb2->InvMass) * percent * man.mtv.normal;
+		man.rb1->add_correction(-man.rb1->InvMass * correction);
+		man.rb2->add_correction(man.rb2->InvMass * correction);
 	}
 
 	s_manifolds.clear();
@@ -139,15 +139,15 @@ void PhysicsManager::update_rigid_bodies()
 	{
 		glm::vec2 forces = glm::vec2(0);
 
-		for (const auto& f : body->pm_forces)
+		for (const auto& f : body->Forces)
 			forces += f;
 
-		for (const auto& i : body->pm_impulses)
+		for (const auto& i : body->Impulses)
 			forces += i;
 
-		body->pm_impulses.clear();
-		body->pm_acceleration = forces * body->pm_inv_mass;
-		body->pm_velocity = body->pm_velocity + body->pm_acceleration * s_time_step;
+		body->Impulses.clear();
+		body->Acceleration = forces * body->InvMass;
+		body->Velocity = body->Velocity + body->Acceleration * s_time_step;
 		body->correct_position(s_time_step);
 	}
 }

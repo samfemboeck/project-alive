@@ -4,7 +4,7 @@
 
 RigidBody::RigidBody()
 {
-	log("rb pos: {0} {1}", pm_transform.pm_position.x, pm_transform.pm_position.y); 
+	log("rb pos: {0} {1}", Transform.Position.x, Transform.Position.y);
 	PhysicsManager::add(this);
 }
 
@@ -15,8 +15,8 @@ RigidBody::~RigidBody()
 
 void RigidBody::correct_position(float delta)
 {
-	pm_transform.pm_position += pm_velocity * delta + m_correction;
-	m_correction.x = m_correction.y = 0;
+	Transform.Position += Velocity * delta + Correction;
+	Correction.x = Correction.y = 0;
 }
 
 void RigidBody::on_collision(Collider* other)
@@ -25,22 +25,22 @@ void RigidBody::on_collision(Collider* other)
 
 void RigidBody::set_ignore(std::string layer, bool ignore)
 {
-	m_ignored_layers[layer] = ignore;
+	IgnoredLayers[layer] = ignore;
 }
 
 void RigidBody::set_ignore(RigidBody* rb, bool ignore)
 {
-	m_ignored_rbs[rb] = ignore;
+	IgnoredRBs[rb] = ignore;
 }
 
 bool RigidBody::has_ignore(RigidBody* rb)
 {
-	auto it = m_ignored_rbs.find(rb);
-	if (it != m_ignored_rbs.end() && m_ignored_rbs[rb])
+	auto it = IgnoredRBs.find(rb);
+	if (it != IgnoredRBs.end() && IgnoredRBs[rb])
 		return true;
 
-	auto it2 = m_ignored_layers.find(rb->pm_layer);
-	if (it2 != m_ignored_layers.end() && m_ignored_layers[rb->pm_layer])
+	auto it2 = IgnoredLayers.find(rb->Layer);
+	if (it2 != IgnoredLayers.end() && IgnoredLayers[rb->Layer])
 		return true;
 
 	return false;
@@ -48,5 +48,13 @@ bool RigidBody::has_ignore(RigidBody* rb)
 
 void RigidBody::add_correction(const glm::vec2& correction)
 {
-	m_correction += correction;
+	Correction += correction;
+}
+
+void RigidBodySys::update()
+{
+	for (auto rb : m_components_active)
+	{
+		rb->Transform.Position += rb->Velocity;
+	}
 }

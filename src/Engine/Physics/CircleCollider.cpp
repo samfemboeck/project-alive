@@ -4,25 +4,18 @@
 #include "PhysicsManager.h"
 #include "RigidBody.h"
 
-/*
-void CircleCollider::update(sf::Time)
-{
-	mShape.setPosition(mGo->getPosition() + getOffset());
-}
-*/
-
 CircleCollider::CircleCollider(RigidBody* rb, float radius, glm::vec2 offset) : 
 	Collider(rb, offset),
-	m_radius(radius)
+	Radius(radius)
 {
 }
 
 bool CircleCollider::vs_circle(CircleCollider& a, CircleCollider& b, MTV& mtv)
 {
-	glm::vec2 difference = glm::vec2(a.m_pos.x + a.m_radius,a.m_pos.y + a.m_radius) 
-		- glm::vec2(b.m_pos.x + b.m_radius, b.m_pos.y + b.m_radius);
+	glm::vec2 difference = glm::vec2(a.Pos.x + a.Radius,a.Pos.y + a.Radius) 
+		- glm::vec2(b.Pos.x + b.Radius, b.Pos.y + b.Radius);
 	float length = glm::length(difference);
-	float radiusSum = a.m_radius + b.m_radius;
+	float radiusSum = a.Radius + b.Radius;
 
 	if (length == 0)
 	{
@@ -73,27 +66,10 @@ bool CircleCollider::collides_with(Collider* collider, MTV& mtv)
 
 void CircleCollider::update()
 {
-	m_pos = pm_rigid_body->pm_transform.pm_position + m_offset;
+	Pos = RB->Transform.Position + Offset;
 }
 
 void CircleCollider::draw()
 {
-	Renderer2D::pushQuad(glm::translate(glm::mat4(1.0f), { m_pos, 0 }) * glm::scale(glm::mat4(1.0f), { m_radius * 2, m_radius * 2, 1 }), TextureManager::get("collider.png"), glm::vec4(1), false);
+	Renderer2D::pushQuad(glm::translate(glm::mat4(1.0f), { Pos, 0 }) * glm::scale(glm::mat4(1.0f), { Radius * 2, Radius * 2, 1 }), TextureManager::get("collider.png"), glm::vec4(1), false);
 }
-
-/*
-CircleCollider::CircleCollider(tld::Object* obj, tld::ObjectGroup* group, GameObject* go) : Collider(obj, group, go)
-{
-	mShape.setRadius(obj->Height * 0.5f * Map::Scale);
-	mShape.setPosition({ (float)obj->X * Map::Scale, (float)obj->Y * Map::Scale});
-
-	if (group->Color)
-		mShape.setOutlineColor(*group->Color);
-	else
-		mShape.setOutlineColor(sf::Color::Magenta);
-
-	mShape.setOutlineThickness(2);
-	mShape.setFillColor(sf::Color::Transparent);
-	setOffset(sf::Vector2f(mShape.getPosition().x - go->getPosition().x, mShape.getPosition().y - go->getPosition().y));	
-}
-*/

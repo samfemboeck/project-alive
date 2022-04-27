@@ -2,6 +2,7 @@
 #include "Organism.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "Engine/IComponent.h"
 
 void onWindowResize(GLFWwindow* window, int width, int height);
 void onMouseEvent(GLFWwindow* window, double xpos, double ypos);
@@ -53,11 +54,17 @@ int main()
 	TextureManager::add("collider.png");
 
 	organism1 = new Organism(randomDNA());
-	organism1->m_rigid_body.pm_transform.pm_position = { 200, 200 };
+	organism1->set_position({ 200, 200 });
 	organism2 = new Organism(randomDNA());
-	organism2->m_rigid_body.pm_velocity = { 100, 100 };
+	organism2->set_velocity({ 100, 100 });
 	timer = new TickCountTimer(1000);
 	//timerclock = new ClockTimer(1000);
+
+	entity e = 0;
+	auto& sys = RigidBodySys::get();
+	sys.add_component(e);
+	auto* rb = sys.get_component(e);
+	rb->Velocity = { 10, 10 };
 
 	mainLoop();
 
@@ -84,6 +91,11 @@ void mainLoop()
 		organism1->draw();
 		organism2->draw();
 		Renderer2D::endTextures();
+
+		auto sys = RigidBodySys::get();
+		sys.update();
+		auto* rb = sys.get_component(0);
+		log("velo: {0}", rb->Transform.Position.x);
 
 		PhysicsManager::update(deltaTime);
 

@@ -30,6 +30,8 @@ add_executable(alive
 	src/Engine/TickCountTimer.cpp
 	src/Engine/ClockTimer.h
 	src/Engine/ClockTimer.cpp
+	src/Engine/Entity.h
+	src/Engine/Component.h
 	src/Engine/Physics/AABBCollider.h
 	src/Engine/Physics/AABBCollider.cpp
 	src/Engine/Physics/CircleCollider.h

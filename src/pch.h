@@ -37,6 +37,7 @@
 #include "Engine/Transform.h"
 #include "Engine/TickCountTimer.h"
 #include "Engine/ClockTimer.h"
+#include "Engine/Entity.h"
 
 #include "Engine/Physics/RigidBody.h"
 #include "Engine/Physics/CircleCollider.h"
