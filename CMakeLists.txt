@@ -23,25 +23,15 @@ add_executable(alive
 	src/Engine/VertexArray.cpp
 	src/Engine/TextureManager.h
 	src/Engine/TextureManager.cpp
-	src/Engine/Transform.h
-	src/Engine/Transform.cpp
 	src/Engine/ITimerBase.h
 	src/Engine/TickCountTimer.h
 	src/Engine/TickCountTimer.cpp
 	src/Engine/ClockTimer.h
 	src/Engine/ClockTimer.cpp
-	src/Engine/Entity.h
 	src/Engine/Component.h
-	src/Engine/Physics/AABBCollider.h
-	src/Engine/Physics/AABBCollider.cpp
-	src/Engine/Physics/CircleCollider.h
-	src/Engine/Physics/CircleCollider.cpp
-	src/Engine/Physics/Collider.h
-	src/Engine/Physics/Collider.cpp
-	src/Engine/Physics/PhysicsManager.h
-	src/Engine/Physics/PhysicsManager.cpp
-	src/Engine/Physics/RigidBody.h
-	src/Engine/Physics/RigidBody.cpp
+	src/Engine/Component.cpp
+	src/Engine/Physics.h
+	src/Engine/Physics.cpp
 
 	src/Main.cpp
 	src/Organism.h
@@ -60,10 +50,9 @@ add_executable(alive
 	external/stb/stb_image.h
 )
 
-
-
 add_subdirectory ("external/glfw")
 add_subdirectory ("external/glm")
+add_subdirectory("external/box2d")
 
 target_precompile_headers(alive
 	INTERFACE src/pch.h
@@ -74,12 +63,14 @@ target_include_directories (alive
 	PUBLIC ${PROJECT_SOURCE_DIR}/external/glfw/include
 	PUBLIC ${PROJECT_SOURCE_DIR}/external/glm
 	PUBLIC ${PROJECT_SOURCE_DIR}/external/stb
+	PUBLIC ${PROJECT_SOURCE_DIR}/external/box2d/include
 	)
 
 target_link_libraries (
 	alive
 	glfw
 	glm
+	box2d
 )
 
 add_custom_command(TARGET alive POST_BUILD

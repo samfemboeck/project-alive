@@ -2,7 +2,7 @@
 #include "Organism.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "Engine/IComponent.h"
+#include "Engine/Physics.h"
 
 void onWindowResize(GLFWwindow* window, int width, int height);
 void onMouseEvent(GLFWwindow* window, double xpos, double ypos);
@@ -50,37 +50,23 @@ int main()
 
 	srand(time(NULL));
 
-	/*
 	Renderer2D::init();
 	Renderer2D::setClearColor({ 0, 0, 0, 1 });
-	*/
 
-	/*
 	TextureManager::add("cell_leaf.png");
 	TextureManager::add("cell_thorn.png");
 	TextureManager::add("cell_mover.png");
 	TextureManager::add("collider.png");
-	*/
 
 	organism1 = new Organism(randomDNA());
-	organism1->set_position({ 200, 200 });
+	organism1->set_position({ 0, 0 });
+	organism1->set_velocity_linear({ 0, 0 });
+	organism1->set_velocity_angular(1);
+	/*
 	organism2 = new Organism(randomDNA());
-	organism2->set_velocity({ 100, 100 });
+	organism2->set_position({ -200, -200 });
+	*/
 	timer = new TickCountTimer(1000);
-	//timerclock = new ClockTimer(1000);
-
-	entity e = 0;
-	auto& sys = ComponentSys<RigidBody>::get();
-	sys.add_component(e);
-	auto* rb = sys.get_component(e);
-	rb->Velocity = { 10, 10 };
-
-	auto components = Registry::get().get_components(e);
-
-	for (int i = 0; i < 1; i++)
-	{
-		auto cmp = components[i];
-	}
 
 	mainLoop();
 
@@ -89,11 +75,26 @@ int main()
 
 void mainLoop()
 {
-	while (true)
+	while (!glfwWindowShouldClose(window))
 	{
-		auto& sys = ComponentSys<RigidBody>::get();
-		sys.update();
-		auto* rb = sys.get_component(0);
+		static clock_t start = clock();
+		clock_t now = clock();
+		float deltaTime = (now - start) / (float)CLOCKS_PER_SEC;
+		start = now;
+
+		auto projection = glm::ortho(-0.5f * width, 0.5f * width, -0.5f * height, 0.5f * height);
+
+		organism1->tick(deltaTime);
+
+		Physics::update(deltaTime);
+
+		Renderer2D::clear();
+		Renderer2D::beginTextures(projection);
+		organism1->draw();
+		Renderer2D::endTextures();
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 }
 

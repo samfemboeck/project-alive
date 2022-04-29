@@ -14,6 +14,7 @@
 #include <format>
 #include <unordered_map>
 #include <array>
+#include <functional>
 
 #include <glad/glad.h> 
 
@@ -34,10 +35,15 @@
 #include "Engine/Shader.h"
 #include "Engine/Renderer2D.h"
 #include "Engine/TextureManager.h"
-#include "Engine/Transform.h"
 #include "Engine/TickCountTimer.h"
 #include "Engine/ClockTimer.h"
-#include "Engine/Entity.h"
+#include "Engine/Component.h"
+
+#include <box2d/b2_math.h>
+#include <box2d/b2_world.h>
+#include <box2d/b2_body.h>
+#include <box2d/b2_circle_shape.h>
+#include <box2d/b2_fixture.h>
 
 template<typename... Args>
 void log(std::string msg, Args... args)
