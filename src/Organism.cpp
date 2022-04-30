@@ -5,11 +5,11 @@
 #include "MoverCell.h"
 #include "Engine/Physics.h"
 
-bool Organism::overlaps_position(const glm::vec2& pos) const
+bool Organism::overlaps_position(const Vec2& pos) const
 {
 	for (auto cell : m_cells)
 	{
-		if (glm::length(cell->LocalPos - pos) < Cell::Size)
+		if (QuickMaths::mag(cell->LocalPos - pos) < Cell::Size)
 		{
 			return true;
 		}
@@ -18,7 +18,7 @@ bool Organism::overlaps_position(const glm::vec2& pos) const
 	return false;
 }
 
-constexpr glm::vec2 Organism::get_offset_for_param(const unsigned param)
+constexpr Vec2 Organism::get_offset_for_param(const unsigned param)
 {
 	switch (param)
 	{
@@ -51,7 +51,8 @@ constexpr Cell* Organism::get_cell_for_symbol(const char symbol)
 }
 
 Organism::Organism(const std::string& dna) :
-	m_dna(dna)
+	m_dna(dna),
+	m_timer(1)
 {
 	log(dna);
 
@@ -61,8 +62,8 @@ Organism::Organism(const std::string& dna) :
 
 	m_body = Physics::create_body(&def);
 
-	glm::vec2 curPos = { 0, 0 };
-	glm::vec2 offset = { 0, 0 };
+	Vec2 curPos = { 0, 0 };
+	Vec2 offset = { 0, 0 };
 
 	for (size_t index = 0; index < m_dna.size(); index += 4)
 	{
@@ -75,7 +76,7 @@ Organism::Organism(const std::string& dna) :
 		cell->LocalPos = curPos;
 		b2CircleShape circle_shape;
 		circle_shape.m_radius = Cell::Size * 0.5f;
-		circle_shape.m_p.Set(curPos.x, curPos.y);
+		circle_shape.m_p.Set(curPos.X, curPos.Y);
 
 		b2FixtureDef fix;
 		fix.shape = &circle_shape;
@@ -102,42 +103,54 @@ Organism::Organism(const std::string& dna) :
 		}
 	}
 
+	std::reverse(m_cells.begin(), m_cells.end());
+
 	if (m_mover_cell)
 	{
-		/*
-		for (auto* cell : m_cells)
-		{
-			if (cell == m_mover_cell)
-				continue;
-
-			cell->Collider->Transform.Position = cell->Collider->Transform.Position - m_mover_cell->Collider->Transform.Position;
-			cell->Collider->Transform.Parent = &m_mover_cell->Collider->Transform;
-		}
-
-		m_mover_cell->Collider->Transform.Position = {0, 0};
-		*/
+		b2MassData data{};
+		data.center = m_mover_cell->LocalPos;
+		data.mass = 1;
+		data.I = 100000;
+		m_body->SetMassData(&data);
+		m_body->SetLinearDamping(1);
 	}
-
-	//m_body->SetLinearVelocity({ 100, 100 });
-	std::reverse(m_cells.begin(), m_cells.end());
 }
 
 void Organism::tick(const float deltaTime)
 {
+	if (!m_mover_cell)
+		return;
+
+	auto y = m_body->GetTransform().q.GetYAxis();
+	auto x = m_body->GetTransform().q.GetXAxis();
+	auto dir = m_body->GetPosition() - m_target_point;
+
+	if (QuickMaths::mag(dir) < 50)
+		m_target_point = QuickMaths::rand_vec({ -400, -400 }, { 400, 400 });
+
+	m_speed_linear = dir.Normalize();
+	m_body->SetLinearVelocity({y.x * m_speed_linear, y.y * m_speed_linear});
+	m_body->SetAngularVelocity(b2Dot(x, dir) * m_speed_angular);
 }
 
-void Organism::set_position(const glm::vec2& pos)
+void Organism::set_position(const Vec2& pos)
 {
-	m_body->SetTransform({pos.x, pos.y}, 0);
+	m_body->SetTransform(pos, 0);
 }
 
-void Organism::set_velocity_linear(const glm::vec2& velocity)
+void Organism::set_velocity_linear(const Vec2& velocity)
 {
-	m_body->SetLinearVelocity({ velocity.x, velocity.y });
+	if (!m_mover_cell)
+		return;
+
+	m_body->SetLinearVelocity(velocity);
 }
 
 void Organism::set_velocity_angular(float vel)
 {
+	if (!m_mover_cell)
+		return;
+
 	m_body->SetAngularVelocity(vel);
 }
 
@@ -148,14 +161,13 @@ void Organism::draw() const
 	{
 		auto* circle_shape = dynamic_cast<b2CircleShape*>(fix->GetShape());
 		auto angle = m_body->GetTransform().q.GetAngle();
+		auto rbPos = glm::vec3{ m_body->GetPosition().x, m_body->GetPosition().y, 0 };
 		auto tf =
-			glm::translate(glm::mat4(1.0f), { m_body->GetPosition().x, m_body->GetPosition().y, 0 }) *
+			glm::translate(glm::mat4(1.0f), rbPos) *
 			glm::rotate(glm::mat4(1.0f), angle, { 0, 0, 1 }) *
 			glm::translate(glm::mat4(1.0f), { circle_shape->m_p.x, circle_shape->m_p.y, 0 }) *
 			glm::scale(glm::mat4(1.0f), { circle_shape->m_radius * 2, circle_shape->m_radius * 2, 1 });
 		auto pos = tf * glm::vec4(0, 0, 0, 1);
-		log("cell: {0}, pos: {1}", m_cells[i]->TextureName, pos.y);
-
 		Renderer2D::pushQuad(tf, TextureManager::get(m_cells[i]->TextureName), glm::vec4(1.0f), false);
 		fix = fix->GetNext();
 	}

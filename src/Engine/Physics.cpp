@@ -1,7 +1,8 @@
 #include "../pch.h"
 #include "Physics.h"
+#include "QuickMaths.h"
 
-static b2Vec2 gravity(0.0f, 0.0f);
+static Vec2 gravity(0.0f, 0.0f);
 static b2World world(gravity);	
 static const float time_step = 1.0f / 60.0f;
 static const int32 velocity_iterations = 6;

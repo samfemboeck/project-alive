@@ -32,6 +32,8 @@ add_executable(alive
 	src/Engine/Component.cpp
 	src/Engine/Physics.h
 	src/Engine/Physics.cpp
+	src/Engine/QuickMaths.h
+	src/Engine/QuickMaths.cpp
 
 	src/Main.cpp
 	src/Organism.h
