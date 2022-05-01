@@ -11,6 +11,7 @@ public:
 	void set_position(const Vec2& pos);
 	void set_velocity_linear(const Vec2& pos);
 	void set_velocity_angular(float vel);
+	Vec2 m_target_point;
 private:
 	std::string m_dna;
 	float m_energy = 100;
@@ -18,13 +19,17 @@ private:
 	std::vector<glm::mat4> m_cell_offsets;
 	Cell* m_mover_cell = nullptr;
 	b2Body* m_body;
-	Vec2 m_target_point = {200, 200};
 	float m_speed_linear = 0;
-	float m_speed_angular = 2;
+	float m_speed_angular = 8;
+	float m_elapsed = Random<float>::range(0, 6);
+	float m_multiplier_sin = Random<float>::range(1, 5);
+	float m_multiplier_velocity_angular = Random<float>::range(0, 10);
+	float m_multiplier_velocity_linear = Random<float>::range(0, 10);
 private:
 	bool overlaps_position(const Vec2& pos) const;
-	constexpr Vec2 get_offset_for_param(const unsigned int param);
-	constexpr Cell* get_cell_for_symbol(const char symbol);
-	ClockTimer m_timer;	
+	Vec2 get_offset_for_param(const unsigned param) const;
+	Cell* get_cell_for_symbol(const char symbol) const;
+	ClockTimer m_timer_ttl;	
+	std::vector<std::function<float(void)>> m_instincts;
 	
 };

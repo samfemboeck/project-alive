@@ -7,9 +7,9 @@
 
 bool Organism::overlaps_position(const Vec2& pos) const
 {
-	for (auto cell : m_cells)
+	for (auto* cell : m_cells)
 	{
-		if (QuickMaths::mag(cell->LocalPos - pos) < Cell::Size)
+		if ((cell->LocalPos - pos).magnitude() < Cell::Size)
 		{
 			return true;
 		}
@@ -18,7 +18,7 @@ bool Organism::overlaps_position(const Vec2& pos) const
 	return false;
 }
 
-constexpr Vec2 Organism::get_offset_for_param(const unsigned param)
+Vec2 Organism::get_offset_for_param(const unsigned param) const
 {
 	switch (param)
 	{
@@ -35,7 +35,7 @@ constexpr Vec2 Organism::get_offset_for_param(const unsigned param)
 	throw std::runtime_error("Invalid parameter.");
 }
 
-constexpr Cell* Organism::get_cell_for_symbol(const char symbol)
+Cell* Organism::get_cell_for_symbol(const char symbol) const
 {
 	switch (symbol)
 	{
@@ -52,13 +52,11 @@ constexpr Cell* Organism::get_cell_for_symbol(const char symbol)
 
 Organism::Organism(const std::string& dna) :
 	m_dna(dna),
-	m_timer(1)
+	m_timer_ttl(10)
 {
-	log(dna);
-
 	b2BodyDef def;
 	def.position.Set(0.0f, 0.0f);
-	def.type = b2_dynamicBody;
+	def.type = b2_staticBody;
 
 	m_body = Physics::create_body(&def);
 
@@ -82,12 +80,12 @@ Organism::Organism(const std::string& dna) :
 		fix.shape = &circle_shape;
 		fix.density = 1.0f;
 		fix.friction = 0.3f;
+
+
 		m_body->CreateFixture(&fix);
 		
 		if (dynamic_cast<MoverCell*>(cell))
-		{
 			m_mover_cell = cell;
-		}
 
 		unsigned param = m_dna[index + 2] - '0';
 		bool error = true;
@@ -109,11 +107,25 @@ Organism::Organism(const std::string& dna) :
 	{
 		b2MassData data{};
 		data.center = m_mover_cell->LocalPos;
-		data.mass = 1;
-		data.I = 100000;
+		data.mass = m_body->GetMass();
 		m_body->SetMassData(&data);
 		m_body->SetLinearDamping(1);
+		m_body->SetType(b2_dynamicBody);
+		m_body->SetTransform(Vec2(), Random<float>::range(0, 2 * std::numbers::pi));
 	}
+
+	auto f1 = [this]() { return sin(1 / m_elapsed + m_elapsed * sin(1 / m_elapsed)) + cos(m_elapsed); };
+	m_instincts.push_back(f1);
+	auto f2 = [this]() { return 3 * 1 - log(m_elapsed * 2); };
+	m_instincts.push_back(f2);
+	auto f3 = [this]() { return sin(3 * 1 - log(m_elapsed * 2) + sin(m_elapsed)); };
+	m_instincts.push_back(f3);
+	auto rng = std::default_random_engine {};
+	std::shuffle(m_instincts.begin(), m_instincts.end(), rng);
+}
+
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
 }
 
 void Organism::tick(const float deltaTime)
@@ -121,16 +133,11 @@ void Organism::tick(const float deltaTime)
 	if (!m_mover_cell)
 		return;
 
-	auto y = m_body->GetTransform().q.GetYAxis();
-	auto x = m_body->GetTransform().q.GetXAxis();
-	auto dir = m_body->GetPosition() - m_target_point;
-
-	if (QuickMaths::mag(dir) < 50)
-		m_target_point = QuickMaths::rand_vec({ -400, -400 }, { 400, 400 });
-
-	m_speed_linear = dir.Normalize();
-	m_body->SetLinearVelocity({y.x * m_speed_linear, y.y * m_speed_linear});
-	m_body->SetAngularVelocity(b2Dot(x, dir) * m_speed_angular);
+	m_elapsed += deltaTime;
+	auto rot = m_body->GetTransform().q.GetAngle();
+	m_body->SetAngularVelocity(m_instincts[0]() * m_multiplier_velocity_angular);
+	Vec2 forward = m_body->GetTransform().q.GetYAxis();
+	m_body->ApplyForceToCenter(forward * 1000 * m_elapsed * m_multiplier_velocity_linear * (0.5f * (m_instincts[0]() + 1)), true);
 }
 
 void Organism::set_position(const Vec2& pos)

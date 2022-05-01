@@ -28,7 +28,7 @@ std::string randomDNA()
 	auto vocabulary = "LTM";
 	auto params = "0123";
 	std::stringstream dna;
-	int length = rand() % 10 + 1;
+	int length = rand() % 5 + 1;
 	for (int i = 0; i < length; i++)
 	{
 		if (dna.str().find('M') == std::string::npos)
@@ -58,11 +58,12 @@ int main()
 	TextureManager::add("cell_mover.png");
 	TextureManager::add("collider.png");
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 300; i++)
 	{
 		auto org = new Organism(randomDNA());
 		organisms.push_back(org);
-		org->set_position(QuickMaths::rand_vec({-width * 0.5f, -height * 0.5f}, {width * 0.5f, height * 0.5f}));
+		org->m_target_point = Random<Vec2>::range({ -width * 0.5f, -height * 0.5f }, { width * 0.5f, height * 0.5f });
+		org->set_position(Random<Vec2>::range({ -width * 0.5f, -height * 0.5f }, { width * 0.5f, height * 0.5f }));
 	}
 
 	timer = new TickCountTimer(1000);
