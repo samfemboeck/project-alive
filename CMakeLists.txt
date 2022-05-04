@@ -5,60 +5,17 @@ set(CMAKE_CXX_STANDARD 23)
 project ("Alive")
 
 add_executable(alive
-	src/Engine/Shader.h
-	src/Engine/Shader.cpp
-	src/Engine/Buffer.h
-	src/Engine/Buffer.cpp
-	src/Engine/Camera.h
-	src/Engine/Camera.cpp
-	src/Engine/FrameBuffer.h
-	src/Engine/FrameBuffer.cpp
-	src/Engine/Renderer2D.h
-	src/Engine/Renderer2D.cpp
-	src/Engine/SubTexture2D.h
-	src/Engine/SubTexture2D.cpp
-	src/Engine/Texture.h
-	src/Engine/Texture.cpp
-	src/Engine/VertexArray.h
-	src/Engine/VertexArray.cpp
-	src/Engine/TextureManager.h
-	src/Engine/TextureManager.cpp
-	src/Engine/ITimerBase.h
-	src/Engine/TickCountTimer.h
-	src/Engine/TickCountTimer.cpp
-	src/Engine/ClockTimer.h
-	src/Engine/ClockTimer.cpp
-	src/Engine/Component.h
-	src/Engine/Component.cpp
-	src/Engine/Physics.h
-	src/Engine/Physics.cpp
-	src/Engine/QuickMaths.h
-	src/Engine/QuickMaths.cpp
-
 	src/Main.cpp
-	src/Organism.h
-	src/Organism.cpp
-	src/Cell.h
-	src/Cell.cpp
-	src/LeafCell.h
-	src/LeafCell.cpp
-	src/MoverCell.h
-	src/MoverCell.cpp
-	src/ThornCell.h
-	src/ThornCell.cpp
-
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c
 	external/stb/stb_image.h
-)
+   "src/Organism.ixx"  "src/Engine/ECS.ixx" "src/Engine/QuickMaths.ixx" "src/Cell.ixx" "src/Engine/Physics.ixx" "src/Engine/Timer.ixx" "src/Engine/Renderer.ixx" "src/Engine/VertexArray.ixx" "src/Engine/Buffer.ixx" "src/Engine/Texture.ixx" "src/Engine/Shader.ixx" "src/Engine/Camera.ixx" "src/Engine/FrameBuffer.ixx" "src/Engine/App.ixx")
+
+set_property(TARGET alive PROPERTY CXX_STANDARD 20)
 
 add_subdirectory ("external/glfw")
 add_subdirectory ("external/glm")
 add_subdirectory("external/box2d")
-
-target_precompile_headers(alive
-	INTERFACE src/pch.h
-	)
 
 target_include_directories (alive
 	PUBLIC ${PROJECT_SOURCE_DIR}/external/glad/include

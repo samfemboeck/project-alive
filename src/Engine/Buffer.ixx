@@ -1,6 +1,11 @@
-#pragma once
+module;
+#include <glad/glad.h>
+#include <cstdint>
+#include <string>
+#include <vector>
+export module Buffer;
 
-enum class ShaderDataType
+export enum class ShaderDataType
 {
 	None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
 };
@@ -25,7 +30,7 @@ static uint32_t ShaderDataTypeSize(ShaderDataType type)
 	return 0;
 }
 
-struct BufferElement
+export struct BufferElement
 {
 	std::string Name;
 	ShaderDataType Type;
@@ -35,10 +40,13 @@ struct BufferElement
 
 	BufferElement() {}
 
-	BufferElement(ShaderDataType type, const std::string& name, bool normalized = false)
-		: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized)
-	{
-	}
+	BufferElement(ShaderDataType type, const std::string& name) :
+		Name(name),
+		Type(type),
+		Size(ShaderDataTypeSize(type)),
+		Offset(0),
+		Normalized(false)
+	{}
 
 	uint32_t GetComponentCount() const
 	{
@@ -61,7 +69,7 @@ struct BufferElement
 	}
 };
 
-class BufferLayout
+export class BufferLayout
 {
 public:
 	BufferLayout() {}
@@ -96,17 +104,43 @@ private:
 	uint32_t m_stride = 0;
 };
 
-class VertexBuffer
+export class VertexBuffer
 {
 public:
-	VertexBuffer(uint32_t size);
-	VertexBuffer(const void* vertices, uint32_t size);
-	virtual ~VertexBuffer();
+	VertexBuffer(uint32_t size)
+	{
+		glGenBuffers(1, &m_rendererId);
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererId);
+		glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
+	}
 
-	virtual void bind() const;
-	virtual void unbind() const;
+	VertexBuffer(const void* vertices, uint32_t size)
+	{
+		glGenBuffers(1, &m_rendererId);
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererId);
+		glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+	}
 
-	virtual void setData(const void* data, uint32_t size);
+	VertexBuffer()
+	{
+		glDeleteBuffers(1, &m_rendererId);
+	}
+
+	void bind() const
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererId);
+	}
+
+	void unbind() const
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	void setData(const void* data, uint32_t size)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererId);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+	}
 
 	virtual const BufferLayout& getLayout() const { return m_layout; }
 	virtual void setLayout(const BufferLayout& layout) { m_layout = layout; }
@@ -115,15 +149,34 @@ private:
 	BufferLayout m_layout;
 };
 
-class IndexBuffer
+export class IndexBuffer
 {
 public:
-	IndexBuffer(uint32_t* indices, uint32_t count);
-	virtual ~IndexBuffer();
+	IndexBuffer(uint32_t* indices, uint32_t count)
+		: m_count(count)
+	{
+		glGenBuffers(1, &m_rendererId);
 
-	virtual void bind() const;
-	virtual void unbind() const;
+		// GL_ELEMENT_ARRAY_BUFFER is not valid without an actively bound VAO
+		// Binding with GL_ARRAY_BUFFER allows the data to be loaded regardless of VAO state. 
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererId);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(uint32_t), indices, GL_STATIC_DRAW);
+	}
 
+	IndexBuffer()
+	{
+		glDeleteBuffers(1, &m_rendererId);
+	}
+
+	void bind() const
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererId);
+	}
+
+	void unbind() const
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
 	virtual uint32_t getCount() const { return m_count; }
 private:
 	uint32_t m_rendererId;
