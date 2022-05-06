@@ -31,11 +31,11 @@ private:
 	std::vector<std::array<IComponent*, NUM_COMPONENTS>> m_entities;
 };
 
-template<typename T>
+template<typename T, size_t max_components>
 class ComponentSys
 {
 public:
-	static ComponentSys<T>& get()
+	static ComponentSys<T, max_components>& get()
 	{
 		static ComponentSys<T> instance;
 		return instance;
@@ -59,7 +59,7 @@ public:
 		return m_components[e].IsAlive ? &m_components[e] : nullptr;
 	}
 
-	void update(float deltaTime)
+	void update()
 	{
 	}
 
@@ -69,7 +69,7 @@ public:
 	}
 
 protected:
-	std::array<T, 200> m_components;
+	std::array<T, max_components> m_components;
 
 private:
 	ComponentSys() = default;

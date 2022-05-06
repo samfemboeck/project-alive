@@ -47,8 +47,4 @@
 #include "Engine/ClockTimer.h"
 #include "Engine/Component.h"
 
-template<typename... Args>
-void log(std::string msg, Args... args)
-{
-	std::cout << std::format(msg, args...) << std::endl;
-}
+#define LOG(...) std::cout << std::format(__VA_ARGS__) << std::endl;

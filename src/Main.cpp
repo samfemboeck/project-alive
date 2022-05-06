@@ -3,91 +3,70 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "Engine/Physics.h"
-#include <random>
+#include "Engine/Time.h"
+#include "Engine/App.h"
 
-void onWindowResize(GLFWwindow* window, int width, int height);
-void onMouseEvent(GLFWwindow* window, double xpos, double ypos);
-void error_callback(int error_code, const char* desc)
-{
-	log(desc);
-}
-
-void initGlfw();
-void mainLoop();
-
-GLFWwindow* window = nullptr;
-glm::mat4 projection;
-float width = 1600;
-float height = 800;
-TickCountTimer* timer = nullptr;
-ClockTimer* timerclock = nullptr;
 std::vector<Organism*> organisms;
 
-std::string randomDNA()
+static std::string get_random_DNA(unsigned max_length)
 {
-	auto vocabulary = "LTM";
+	auto vocabulary = "LTAM";
 	auto params = "0123";
 	std::stringstream dna;
-	int length = rand() % 5 + 1;
-	for (int i = 0; i < length; i++)
+	unsigned length = rand() % max_length + 1;
+	for (unsigned i = 0; i < length; i++)
 	{
 		if (dna.str().find('M') == std::string::npos)
-			dna << vocabulary[rand() % 3];
+			dna << vocabulary[rand() % 4];
 		else
-			dna << vocabulary[rand() % 2];
+			dna << vocabulary[rand() % 3];
 		dna << "(";
 		dna << rand() % 4;
 		dna << ")";
 	}
-	
+
 	return dna.str();
 }
 
 
-int main()
+class AliveApp : public App
 {
-	initGlfw();
-
-	srand(time(NULL));
-
-	Renderer2D::init();
-	Renderer2D::setClearColor({ 0, 0, 0, 1 });
-
-	TextureManager::add("cell_leaf.png");
-	TextureManager::add("cell_thorn.png");
-	TextureManager::add("cell_mover.png");
-	TextureManager::add("collider.png");
-
-	for (int i = 0; i < 300; i++)
+public:
+	AliveApp() : App()
 	{
-		auto org = new Organism(randomDNA());
-		organisms.push_back(org);
-		org->m_target_point = Random<Vec2>::range({ -width * 0.5f, -height * 0.5f }, { width * 0.5f, height * 0.5f });
-		org->set_position(Random<Vec2>::range({ -width * 0.5f, -height * 0.5f }, { width * 0.5f, height * 0.5f }));
+		srand(time(NULL));
+
+		Renderer2D::init();
+		Renderer2D::setClearColor({ 0, 0, 0, 1 });
+
+		TextureManager::add("cell_leaf.png");
+		TextureManager::add("cell_thorn.png");
+		TextureManager::add("cell_mover.png");
+		TextureManager::add("cell_light.png");
+		TextureManager::add("collider.png");
+		TextureManager::add("light_circle.png");
+
+		Physics::update(0.01f);
+		Physics::update(0.01f);
+		Physics::update(0.01f);
+		Physics::update(0.01f);
+
+		for (int i = 0; i < 300; i++)
+		{
+			auto* org = new Organism(get_random_DNA(5));
+			org->set_transform(Random<Vec2>::range({ -m_window_data.Width * 0.5f, -m_window_data.Height * 0.5f }, { m_window_data.Width * 0.5f, m_window_data.Height * 0.5f }), Random<float>::range(0, 2 * std::numbers::pi));
+			organisms.push_back(org);
+		}
 	}
 
-	timer = new TickCountTimer(1000);
-
-	mainLoop();
-
-	return 0;
-}
-
-void mainLoop()
-{
-	while (!glfwWindowShouldClose(window))
+	void update() override
 	{
-		static clock_t start = clock();
-		clock_t now = clock();
-		float deltaTime = (now - start) / (float)CLOCKS_PER_SEC;
-		start = now;
-
-		auto projection = glm::ortho(-0.5f * width, 0.5f * width, -0.5f * height, 0.5f * height);
+		auto projection = glm::ortho(-0.5f * m_window_data.Width, 0.5f * m_window_data.Width, -0.5f * m_window_data.Height, 0.5f * m_window_data.Height);
 
 		for (auto org : organisms)
-			org->tick(deltaTime);
+			org->tick();
 
-		Physics::update(deltaTime);
+		Physics::update(Time::Delta);
 
 		Renderer2D::clear();
 		Renderer2D::beginTextures(projection);
@@ -96,52 +75,12 @@ void mainLoop()
 			org->draw();
 
 		Renderer2D::endTextures();
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
 	}
-}
+};
 
-void onWindowResize(GLFWwindow * window, int w, int h)
+int main()
 {
-	width = w;
-	height = h;
-	glViewport(0, 0, width, height);
-}
-
-void onMouseEvent(GLFWwindow * window, double xpos, double ypos)
-{
-}
-
-void initGlfw()
-{
-	glfwSetErrorCallback(error_callback);
-
-	if (!glfwInit())
-	{
-		log("Failed to init glfw");
-	}
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	window = glfwCreateWindow(width, height, "Project Alive", 0, nullptr);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return;
-	}
-
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, onWindowResize);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return;
-	}
-
-	glfwSetCursorPosCallback(window, onMouseEvent);
+	AliveApp app;
+	app.start();
+	return 0;
 }

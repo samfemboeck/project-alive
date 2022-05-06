@@ -160,6 +160,9 @@ void Renderer2D::init()
 
 		s_data.FlatColorShader = new Shader("Flat Color", vertexSrc, fragmentSrc);
 	}
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void Renderer2D::shutdown()

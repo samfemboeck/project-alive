@@ -50,7 +50,7 @@ add_executable(alive
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c
 	external/stb/stb_image.h
-)
+ "src/Engine/Time.h"  "src/LightCell.h" "src/Engine/App.h" "src/Engine/App.cpp")
 
 add_subdirectory ("external/glfw")
 add_subdirectory ("external/glm")
