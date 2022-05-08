@@ -1,40 +1,79 @@
-#include "bcpch.h"
+#include "../pch.h"
+#include "Camera.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "QuickMaths.h"
 #include "OrthoCamController.h"
+#include "Time.h"
 
-namespace bc 
+void OrthoCamController::update()
 {
-	void OrthoCamController::onUpdate()
+	if (m_key_a_down)
+		m_position.x -= m_translation_speed * Time::DeltaSeconds;
+	else if (m_key_d_down)
+		m_position.x += m_translation_speed * Time::DeltaSeconds;
+
+	if (m_key_w_down)
+		m_position.y += m_translation_speed * Time::DeltaSeconds;
+	else if (m_key_s_down)
+		m_position.y -= m_translation_speed * Time::DeltaSeconds;
+
+	m_translation_speed = m_zoom_level * 1000;
+}
+
+void OrthoCamController::set_dimensions(float width, float aspect)
+{
+	m_aspect = aspect;
+	m_width = width;
+	m_camera.set_ortho(-width * 0.5f * m_zoom_level, width * 0.5f * m_zoom_level, -aspect * width * 0.5f * m_zoom_level, aspect * width * 0.5f * m_zoom_level);
+}
+
+void OrthoCamController::key_pressed(int key)
+{
+	switch (key)
 	{
-		if (Input::isKeyPressed(Key::A))
-			m_position.x -= m_translationSpeed * Time::Delta;
-		else if (Input::isKeyPressed(Key::D))
-			m_position.x += m_translationSpeed * Time::Delta;
-
-		if (Input::isKeyPressed(Key::W))
-			m_position.y += m_translationSpeed * Time::Delta;
-		else if (Input::isKeyPressed(Key::S))
-			m_position.y -= m_translationSpeed * Time::Delta;
-
-		m_translationSpeed = m_zoomLevel * 1000;
+		case GLFW_KEY_W:
+			m_key_w_down = true;
+			break;
+		case GLFW_KEY_A:
+			m_key_a_down = true;
+			break;
+		case GLFW_KEY_S:
+			m_key_s_down = true;
+			break;
+		case GLFW_KEY_D:
+			m_key_d_down = true;
+			break;
+		default:
+			break;
 	}
+}
 
-	void OrthoCamController::onEvent(Event& e)
+void OrthoCamController::key_released(int key)
+{
+	switch (key)
 	{
-		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<MouseScrolledEvent>(BIND_EVENT_FN(OrthoCamController::onMouseScrolled));
+	case GLFW_KEY_W:
+		m_key_w_down = false;
+		break;
+	case GLFW_KEY_A:
+		m_key_a_down = false;
+		break;
+	case GLFW_KEY_S:
+		m_key_s_down = false;
+		break;
+	case GLFW_KEY_D:
+		m_key_d_down = false;
+		break;
+	default:
+		break;
 	}
+}
 
-	void OrthoCamController::setDimensions(float width, float aspectRatio)
-	{
-		m_inverseAspect = 1 / aspectRatio;
-		m_width = width;
-		m_camera.setOrtho(width * 0.5f * m_zoomLevel, -width * 0.5f * m_zoomLevel, -m_inverseAspect * width * 0.5f * m_zoomLevel, m_inverseAspect * width * 0.5f * m_zoomLevel);
-	}
-
-	bool OrthoCamController::onMouseScrolled(MouseScrolledEvent& e)
-	{
-		m_zoomLevel += e.GetYOffset() * m_scrollSpeed;
-		m_zoomLevel = std::max(m_zoomLevel, 0.1f);
-		return false;
-	}
+bool OrthoCamController::mouse_scrolled(double mouse_offset_y)
+{
+	m_zoom_level -= mouse_offset_y * m_scroll_speed;
+	m_zoom_level = std::max(m_zoom_level, 0.1f);
+	m_camera.set_ortho(-m_width * 0.5f * m_zoom_level, m_width * 0.5f * m_zoom_level, -m_aspect * m_width * 0.5f * m_zoom_level, m_aspect * m_width * 0.5f * m_zoom_level);
+	return false;
 }

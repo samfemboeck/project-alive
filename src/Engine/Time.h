@@ -2,6 +2,7 @@
 
 struct Time
 {
-	inline static float Elapsed = 0;
-	inline static float Delta = 0;
+	inline static float ElapsedSeconds = 0;
+	inline static float DeltaSeconds = 0;
+	inline static float DeltaMillis = 0;
 };

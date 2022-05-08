@@ -7,11 +7,3 @@ Cell::Cell(std::string texture_name) :
 	TextureName(texture_name)
 {
 }
-
-Cell::~Cell()
-{
-}
-
-void Cell::draw()
-{	
-}

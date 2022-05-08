@@ -1,8 +1,11 @@
 #pragma once
 #include "Cell.h"
+#include "Engine/Timer.h"
 
-class LeafCell final : public Cell
+struct LeafCell final : public Cell
 {
-public:
-	LeafCell() : Cell("cell_leaf.png"){};
+	LeafCell();
+	void tick(Organism* org) override;
+	TickCountTimer Timer;
+	unsigned LightLevel = 0;
 };

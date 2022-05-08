@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iostream>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <memory>
 #include <format>
@@ -43,8 +44,8 @@
 #include "Engine/Shader.h"
 #include "Engine/Renderer2D.h"
 #include "Engine/TextureManager.h"
-#include "Engine/TickCountTimer.h"
-#include "Engine/ClockTimer.h"
 #include "Engine/Component.h"
 
-#define LOG(...) std::cout << std::format(__VA_ARGS__) << std::endl;
+#define LOG(...) std::cout << std::format(__VA_ARGS__) << std::endl
+
+#define PROFILE(...) //ScopeTimer timer(__VA_ARGS__)

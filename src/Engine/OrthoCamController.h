@@ -1,41 +1,33 @@
 #pragma once
 
-#include "Renderer/Camera.h"
-#include "Events/ApplicationEvent.h"
-#include "Events/MouseEvent.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "Camera.h"
 
-namespace bc 
+class OrthoCamController
 {
-	class OrthoCamController
-	{
-	public:
-		OrthoCamController() = default;
+public:
+	OrthoCamController() = default;
 
-		void onUpdate();
-		void onEvent(Event&);
-		void setDimensions(float width, float aspectRatio);
-		float getWidth() { return m_width; }
-		float getInverseAspect() { return m_inverseAspect; }
-		float getZoomLevel() { return m_zoomLevel; }
-		glm::mat4 getViewProjection() { return getProjection() * getView(); }
-		glm::mat4 getView() { return glm::inverse(glm::translate(glm::mat4(1), m_position)); }
-		glm::mat4 getProjection() { return m_camera.getProjectionMatrix(); }
+	void update();
+	void set_dimensions(float width, float aspect);
+	void key_pressed(int key);
+	void key_released(int key);
+	bool mouse_scrolled(double mouse_offset_y);
+	inline glm::mat4 get_view_projection() { return getProjection() * getView(); }
+	inline glm::mat4 getView() { return glm::inverse(glm::translate(glm::mat4(1), m_position)); }
+	inline glm::mat4 getProjection() { return m_camera.getProjectionMatrix(); }
+	inline Camera& getCamera() { return m_camera; }
 
-		Camera& getCamera() { return m_camera; }
+private:
+	Camera m_camera;
 
-	private:
-		bool onMouseScrolled(MouseScrolledEvent& e);
-
-	private:
-		Camera m_camera;
-
-		float m_width = 0;
-		float m_inverseAspect = 0;
-		float m_zoomLevel = 1;
-		glm::vec3 m_position = glm::vec3{ 0.0f, 0.0f, 0.0f };
-		float m_translationSpeed = 5.0f;
-		float m_scrollSpeed = 0.5f;
-	};
-}
+	float m_aspect;
+	float m_width = 0;
+	float m_zoom_level = 1;
+	glm::vec3 m_position = glm::vec3{ 0.0f, 0.0f, 0.0f };
+	float m_translation_speed = 5.0f;
+	float m_scroll_speed = 0.25f;
+	bool m_key_w_down = false;
+	bool m_key_a_down = false;
+	bool m_key_s_down = false;
+	bool m_key_d_down = false;
+};

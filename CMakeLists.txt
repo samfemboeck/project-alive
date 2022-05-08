@@ -23,17 +23,19 @@ add_executable(alive
 	src/Engine/VertexArray.cpp
 	src/Engine/TextureManager.h
 	src/Engine/TextureManager.cpp
-	src/Engine/ITimerBase.h
-	src/Engine/TickCountTimer.h
-	src/Engine/TickCountTimer.cpp
-	src/Engine/ClockTimer.h
-	src/Engine/ClockTimer.cpp
 	src/Engine/Component.h
 	src/Engine/Component.cpp
 	src/Engine/Physics.h
 	src/Engine/Physics.cpp
 	src/Engine/QuickMaths.h
 	src/Engine/QuickMaths.cpp
+	src/Engine/OrthoCamController.h
+	src/Engine/OrthoCamController.cpp
+	src/Engine/Timer.h
+	src/Engine/Timer.cpp
+	src/Engine/Time.h
+	src/Engine/App.h
+	src/Engine/App.cpp
 
 	src/Main.cpp
 	src/Organism.h
@@ -46,11 +48,15 @@ add_executable(alive
 	src/MoverCell.cpp
 	src/ThornCell.h
 	src/ThornCell.cpp
+	src/LightCell.h
+	src/LightCell.cpp
+	src/ContactListener.h
+	src/ContactListener.cpp
 
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c
 	external/stb/stb_image.h
- "src/Engine/Time.h"  "src/LightCell.h" "src/Engine/App.h" "src/Engine/App.cpp")
+ )
 
 add_subdirectory ("external/glfw")
 add_subdirectory ("external/glm")

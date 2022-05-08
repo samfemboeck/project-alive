@@ -1,6 +1,8 @@
 #pragma once
 #include "Engine/QuickMaths.h"
 
+class Organism;
+
 struct Cell
 {
 	static const float Size;
@@ -9,5 +11,6 @@ struct Cell
 
 	Cell(std::string texture_name);
 	void draw();
-	virtual ~Cell();
+	virtual void tick(Organism* org) {};
+	virtual ~Cell() = default;
 };

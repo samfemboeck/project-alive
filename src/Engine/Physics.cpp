@@ -24,3 +24,13 @@ b2Body* Physics::create_body(const b2BodyDef* def)
 {
 	return world.CreateBody(def);
 }
+
+void Physics::destroy_body(b2Body* body)
+{
+	world.DestroyBody(body);
+}
+
+void Physics::set_listener(b2ContactListener* listener)
+{
+	world.SetContactListener(listener);
+}

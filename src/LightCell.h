@@ -1,7 +1,9 @@
 #pragma once
 
+#include "Cell.h"
+
 struct LightCell final : public Cell
 {
-	float Radius = Cell::Size * 6;
-	LightCell() : Cell("cell_light.png"){};
+	inline static float Radius = Cell::Size * 100;
+	LightCell();
 };

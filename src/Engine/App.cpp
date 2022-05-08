@@ -59,7 +59,7 @@ App::App()
 	glfwSetScrollCallback(m_window, [](GLFWwindow* window, double x_offset, double y_offset)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		data->App->on_mouse_scrolled(x_offset, y_offset);
+		data->App->mouse_scrolled(x_offset, y_offset);
 	});
 
 	glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods)
@@ -70,12 +70,12 @@ App::App()
 		{
 			case GLFW_PRESS:
 			{
-				data->App->on_mouse_pressed(button);
+				data->App->mouse_pressed(button);
 				break;
 			}
 			case GLFW_RELEASE:
 			{
-				data->App->on_mouse_released(button);
+				data->App->mouse_released(button);
 				break;
 			}
 		}
@@ -89,12 +89,12 @@ App::App()
 		{
 			case GLFW_PRESS:
 			{
-				data->App->on_key_pressed(key);
+				data->App->key_pressed(key);
 				break;
 			}
 			case GLFW_RELEASE:
 			{
-				data->App->on_key_released(key);
+				data->App->key_released(key);
 				break;
 			}
 		}
@@ -103,7 +103,7 @@ App::App()
 	glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		data->App->on_window_close();
+		data->App->window_closed();
 	});
 }
 
@@ -113,9 +113,10 @@ void App::start()
 	{
 		static clock_t start = clock();
 		clock_t now = clock();
-		Time::Delta = (now - start) / (float)CLOCKS_PER_SEC;
+		Time::DeltaSeconds = (now - start) / (float)CLOCKS_PER_SEC;
+		Time::DeltaMillis = (now - start) / (float)CLOCKS_PER_SEC * 1000;
 		start = now;
-		Time::Elapsed += Time::Delta;
+		Time::ElapsedSeconds += Time::DeltaSeconds;
 		update();
 		glfwSwapBuffers(m_window);
 		glfwPollEvents();

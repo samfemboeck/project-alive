@@ -19,13 +19,14 @@ public:
 	void start();
 protected:
 	virtual void update();
-	virtual void on_mouse_scrolled(double x_offset, double y_offset) {};
-	virtual void on_mouse_pressed(int button) {};
-	virtual void on_mouse_released(int button) {};
-	virtual void on_key_pressed(int key) {};
-	virtual void on_key_released(int key) {};
-	virtual void on_window_close() {};
+	virtual void mouse_scrolled(double x_offset, double y_offset) {};
+	virtual void mouse_pressed(int button) {};
+	virtual void mouse_released(int button) {};
+	virtual void key_pressed(int key) {};
+	virtual void key_released(int key) {};
+	virtual void window_closed() {};
 protected:
 	WindowData m_window_data;
 	GLFWwindow* m_window;
+	clock_t m_frame_start;
 };

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <glm/glm.hpp>
+#include <string>
+
 struct Vec2
 {	
 	inline Vec2() = default;
