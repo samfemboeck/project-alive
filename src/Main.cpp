@@ -35,10 +35,10 @@ static std::string get_random_DNA(unsigned max_length)
 	return dna.str();
 }
 
-static auto get_random_instinct()
-{
-
-}
+RigidBody* rb1;
+CircleCollider* cc1;
+RigidBody* rb2;
+CircleCollider* cc2;
 
 class AliveApp : public App
 {
@@ -60,7 +60,26 @@ public:
 		TextureManager::add("collider.png");
 		TextureManager::add("light_circle.png");
 
-		Physics::set_listener(new ContactListener());
+		rb1 = new RigidBody();
+		rb1->setVelocity({ 10, 10 });
+		rb1->Position = { 0, 0 };
+		rb2 = new RigidBody();
+		rb2->setVelocity({ -10, -10 });
+		rb2->Position = { 200, 200 };
+
+		PhysicsManager::getInstance().add(rb1);
+		PhysicsManager::getInstance().add(rb2);
+
+		cc2 = new CircleCollider();
+		cc2->Body = rb2;
+		cc2->CenterLocal = rb2->Position;
+		cc2->Radius = 100;
+		cc1 = new CircleCollider();
+		cc1->Body = rb1;
+		cc1->CenterLocal = rb1->Position;
+		cc1->Radius = 100;
+		PhysicsManager::getInstance().add(cc2);
+		PhysicsManager::getInstance().add(cc1);
 	}
 
 	void update() override
@@ -71,39 +90,43 @@ public:
 		{
 			PROFILE("Organism::tick()");
 			static std::vector<Organism*> to_delete;
-			static std::vector<Organism*> to_add;
+			static std::vector<int> results;
 
 			for (auto* org : SOrganisms)
 			{
 				int result = org->tick();
+
 				if (result != -1)
 				{
-					if (to_add.size() < Organism::MAX_INSTANCES)
-					{
-						for (unsigned i = 0; i < result; i++)
-							to_add.push_back(org->clone());
-					}
-
+					results.push_back(result);
 					to_delete.push_back(org);
 				}
-			}
-
+			}			
+			
 			for (auto* org : to_delete)
 			{
-				delete org;
 				std::erase(SOrganisms, org);
 			}
 
-			for (auto* org : to_add)
-				SOrganisms.push_back(org);
+			for (unsigned i = 0; i < results.size(); i++)
+			{
+				if (SOrganisms.size() < Organism::MAX_INSTANCES)
+				{
+					for (unsigned a = 0; a < results[i]; a++)
+						SOrganisms.push_back(to_delete[i]->clone());
+				}
+
+				delete to_delete[i];
+			}			
 
 			to_delete.clear();
-			to_add.clear();
+			results.clear();
 		}
 
 		{
 			PROFILE("Physics::update()");
-			Physics::update(Time::DeltaSeconds);
+			PhysicsManager::getInstance().update();
+			//Physics::update(Time::DeltaSeconds);
 		}
 
 		{
@@ -164,7 +187,7 @@ public:
 		m_cam_controller.mouse_scrolled(y_offset);
 	}
 
-	virtual void mouse_pressed(int button) 
+	virtual void mouse_pressed(int button)
 	{
 		if (button == 0)
 		{
@@ -182,7 +205,25 @@ public:
 			auto mouse_pos_world = Camera::screen_to_world_point({ m_window_data.MousePos.X / m_window_data.Width, m_window_data.MousePos.Y / m_window_data.Height }, m_cam_controller.get_view_projection());
 			SOrganisms.push_back(new Organism(Organism::DEFAULT_DNAS[Organism::DNA_INDEX], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi)));
 		}
-	};
+		else
+		{
+			float amplitude = Random<float>::range(0.25f, 3.0f);
+			float offset_sin1 = Random<float>::range(0.0f, 10.0f);
+			float multiplier_x_sin1 = Random<int>::range(1, 5);
+			float offset_sin2 = Random<float>::range(0.0f, 10.0f);
+			float multiplier_x_sin2 = Random<int>::range(1, 5);
+
+			auto instinct = [=](float x) -> float
+			{
+				return amplitude * (sin(multiplier_x_sin1 * x + offset_sin1) + sin(multiplier_x_sin2 * x + offset_sin2));
+			};
+
+			auto mouse_pos_world = Camera::screen_to_world_point({ m_window_data.MousePos.X / m_window_data.Width, m_window_data.MousePos.Y / m_window_data.Height }, m_cam_controller.get_view_projection());
+			auto org = new Organism(Organism::DEFAULT_DNAS[Organism::DNA_INDEX], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi));
+			org->m_rb->setVelocity({ 10, 10 });
+			SOrganisms.push_back(org);
+		}
+	}
 
 private:
 	OrthoCamController m_cam_controller;

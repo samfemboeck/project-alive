@@ -2,6 +2,7 @@
 #include "Engine/QuickMaths.h"
 
 class Organism;
+class CircleCollider;
 
 struct Cell
 {
@@ -13,4 +14,5 @@ struct Cell
 	void draw();
 	virtual void tick(Organism* org) {};
 	virtual ~Cell() = default;
+	virtual void on_collision(CircleCollider* coll) {}
 };

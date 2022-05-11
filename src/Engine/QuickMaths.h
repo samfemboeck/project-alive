@@ -58,10 +58,25 @@ struct Vec2
 		return sqrt(X * X + Y * Y);
 	}
 
+	inline float magnitude_squared()
+	{
+		return X * X + Y * Y;
+	}
+
 	inline Vec2 normalize()
 	{
 		float mag = magnitude();
 		return Vec2(X / mag, Y / mag);
+	}
+
+	inline float dot(const Vec2& other)
+	{
+		return X * other.X + Y * other.Y;
+	}
+
+	inline float cross(const Vec2& other) const
+	{
+		return (X * other.Y) - (Y * other.X);
 	}
 
 	float X, Y;
