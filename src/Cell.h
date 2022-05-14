@@ -6,13 +6,15 @@ class CircleCollider;
 
 struct Cell
 {
-	static const float Size;
-	std::string TextureName;
-	Vec2 LocalPos;
+	inline static int Instances = 0;
+	inline static const float Size = 10;
 
-	Cell(std::string texture_name);
+	std::string textureName;
+	Vec2 localPos;
+
+	Cell(std::string textureName);
 	void draw();
 	virtual void tick(Organism* org) {};
-	virtual ~Cell() = default;
-	virtual void on_collision(CircleCollider* coll) {}
+	inline virtual ~Cell() { Instances--; };
+	virtual void onCollision(CircleCollider* coll) {}
 };

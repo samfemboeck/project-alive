@@ -14,11 +14,11 @@ public:
 	virtual void addVertexBuffer(VertexBuffer* vertexBuffer);
 	virtual void setIndexBuffer(IndexBuffer* indexBuffer);
 
-	virtual const std::vector<VertexBuffer*>& getVertexBuffers() const { return m_vertexBuffers; }
-	virtual const IndexBuffer* getIndexBuffer() const { return m_indexBuffer; }
+	virtual const std::vector<VertexBuffer*>& getVertexBuffers() const { return vertexBuffers_; }
+	virtual const IndexBuffer* getIndexBuffer() const { return indexBuffer_; }
 
 private:
-	uint32_t m_rendererId;
-	std::vector<VertexBuffer*> m_vertexBuffers;
-	IndexBuffer* m_indexBuffer;
+	uint32_t id_;
+	std::vector<VertexBuffer*> vertexBuffers_;
+	IndexBuffer* indexBuffer_;
 };

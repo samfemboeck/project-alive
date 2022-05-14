@@ -19,6 +19,10 @@
 #include <random>
 #include <numbers>
 
+#include <../../external/imgui/imgui.h>
+#include "../../external/imgui/backends/imgui_impl_glfw.h"
+#include "../../external/imgui/backends/imgui_impl_opengl3.h"
+
 #include <glad/glad.h> 
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -48,4 +52,4 @@
 
 #define LOG(...) std::cout << std::format(__VA_ARGS__) << std::endl
 
-#define PROFILE(...) //ScopeTimer timer(__VA_ARGS__)
+#define PROFILE(...) ScopeTimer timer(__VA_ARGS__)

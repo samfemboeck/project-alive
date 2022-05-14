@@ -4,6 +4,6 @@
 
 struct LightCell final : public Cell
 {
-	inline static float Radius = Cell::Size * 100;
+	inline static float Radius = Cell::Size * 20;
 	LightCell();
 };

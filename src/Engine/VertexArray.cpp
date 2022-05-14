@@ -24,17 +24,17 @@ static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type)
 
 VertexArray::VertexArray()
 {
-	glGenVertexArrays(1, &m_rendererId);
+	glGenVertexArrays(1, &id_);
 }
 
 VertexArray::~VertexArray()
 {
-	glDeleteVertexArrays(1, &m_rendererId);
+	glDeleteVertexArrays(1, &id_);
 }
 
 void VertexArray::bind() const
 {
-	glBindVertexArray(m_rendererId);
+	glBindVertexArray(id_);
 }
 
 void VertexArray::unbind() const
@@ -44,7 +44,7 @@ void VertexArray::unbind() const
 
 void VertexArray::addVertexBuffer(VertexBuffer* vertexBuffer)
 {
-	glBindVertexArray(m_rendererId);
+	glBindVertexArray(id_);
 	vertexBuffer->bind();
 
 	uint32_t index = 0;
@@ -54,20 +54,20 @@ void VertexArray::addVertexBuffer(VertexBuffer* vertexBuffer)
 		glEnableVertexAttribArray(index);
 		glVertexAttribPointer(index,
 			element.GetComponentCount(),
-			ShaderDataTypeToOpenGLBaseType(element.Type),
-			element.Normalized ? GL_TRUE : GL_FALSE,
+			ShaderDataTypeToOpenGLBaseType(element.type),
+			element.normalized ? GL_TRUE : GL_FALSE,
 			layout.GetStride(),
-			(const void*)element.Offset);
+			(const void*)element.offset);
 		index++;
 	}
 
-	m_vertexBuffers.push_back(vertexBuffer);
+	vertexBuffers_.push_back(vertexBuffer);
 }
 
 void VertexArray::setIndexBuffer(IndexBuffer* indexBuffer)
 {
-	glBindVertexArray(m_rendererId);
+	glBindVertexArray(id_);
 	indexBuffer->bind();
 
-	m_indexBuffer = indexBuffer;
+	indexBuffer_ = indexBuffer;
 }

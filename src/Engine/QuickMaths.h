@@ -5,81 +5,24 @@
 
 struct Vec2
 {	
-	inline Vec2() = default;
+	Vec2() = default;
+	Vec2(float x, float y);
+	Vec2(const b2Vec2& vec);
+	Vec2(const glm::vec2& vec);
+	operator const glm::vec2() const;
+	operator const b2Vec2() const;
+	std::string str() const;
+	Vec2& operator += (const Vec2& rhs);
+	Vec2 operator+(const Vec2& rhs) const;
+	Vec2 operator*(float rhs) const;
+	Vec2 operator-(const Vec2& rhs) const;
+	float magnitude();
+	float magnitude_squared();
+	Vec2 normalize();
+	float dot(const Vec2& other);
+	float cross(const Vec2& other) const;
 
-	inline Vec2(float x, float y)
-	{
-		X = x;
-		Y = y;
-	}
-
-	inline Vec2(const b2Vec2& vec)
-	{
-		X = vec.x;
-		Y = vec.y;
-	}
-
-	inline Vec2(const glm::vec2& vec)
-	{
-		X = vec.x;
-		Y = vec.y;
-	}
-
-	inline operator const glm::vec2() const { return glm::vec2(X, Y); }
-
-	inline operator const b2Vec2() const { return b2Vec2(X, Y); }
-
-	inline std::string str() const { return "{" + std::to_string(X) + ", " + std::to_string(Y) + "}"; }
-
-	inline Vec2& operator += (const Vec2& rhs)
-	{
-		X += rhs.X;
-		Y += rhs.Y;
-		return *this;
-	}
-
-	inline Vec2 operator+(const Vec2& rhs) const
-	{
-		return Vec2(X + rhs.X, Y + rhs.Y);
-	}		
-	
-	inline Vec2 operator*(float rhs) const
-	{
-		return Vec2(X * rhs, Y * rhs);
-	}
-	
-	inline Vec2 operator-(const Vec2& rhs) const
-	{
-		return Vec2(X - rhs.X, Y - rhs.Y);
-	}
-
-	inline float magnitude()
-	{
-		return sqrt(X * X + Y * Y);
-	}
-
-	inline float magnitude_squared()
-	{
-		return X * X + Y * Y;
-	}
-
-	inline Vec2 normalize()
-	{
-		float mag = magnitude();
-		return Vec2(X / mag, Y / mag);
-	}
-
-	inline float dot(const Vec2& other)
-	{
-		return X * other.X + Y * other.Y;
-	}
-
-	inline float cross(const Vec2& other) const
-	{
-		return (X * other.Y) - (Y * other.X);
-	}
-
-	float X, Y;
+	float x, y;
 };
 
 template<typename T>

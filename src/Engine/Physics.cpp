@@ -10,23 +10,23 @@ PhysicsManager& PhysicsManager::getInstance()
 
 void PhysicsManager::add(CircleCollider* collider)
 {
-	mColliders.push_back(collider);
+	colliders_.push_back(collider);
 }
 
 void PhysicsManager::add(RigidBody* rb)
 {
-	mRigidBodies.push_back(rb);
+	rigidBodies_.push_back(rb);
 }
 
 void PhysicsManager::remove(CircleCollider* collider)
 {
-	mColliders.erase(std::find(mColliders.begin(), mColliders.end(), collider));
+	colliders_.erase(std::find(colliders_.begin(), colliders_.end(), collider));
 	delete collider;
 }
 
 void PhysicsManager::remove(RigidBody* rb)
 {
-	mRigidBodies.erase(std::find(mRigidBodies.begin(), mRigidBodies.end(), rb));
+	rigidBodies_.erase(std::find(rigidBodies_.begin(), rigidBodies_.end(), rb));
 	delete rb;
 }
 
@@ -35,16 +35,16 @@ void PhysicsManager::update()
 	static float accumulator = 0;
 	accumulator += Time::DeltaSeconds;
 
-	while (accumulator > mStep)
+	while (accumulator > step_)
 	{
 		fixedUpdate();
-		accumulator -= mStep;
+		accumulator -= step_;
 	}
 }
 
 void PhysicsManager::fixedUpdate()
 {
-	updateRigidbodies();
+	updateRigidBodies();
 	findCollisions();
 	resolveCollisions();
 	//GameObjectManager::getInstance().physicsUpdate(mStep);
@@ -52,41 +52,41 @@ void PhysicsManager::fixedUpdate()
 
 void PhysicsManager::findCollisions()
 {
-	if (mColliders.size() < 2)
+	if (colliders_.size() < 2)
 		return;
 
-	for (int i = 0; i < mColliders.size() - 1; ++i)
+	for (int i = 0; i < colliders_.size() - 1; ++i)
 	{
-		for (int a = i + 1; a < mColliders.size(); ++a)
+		for (int a = i + 1; a < colliders_.size(); ++a)
 		{
-			auto col1 = mColliders[i];
-			auto col2 = mColliders[a];
-			auto rb1 = col1->Body;
-			auto rb2 = col2->Body;
+			auto col1 = colliders_[i];
+			auto col2 = colliders_[a];
+			auto rb1 = col1->body;
+			auto rb2 = col2->body;
 
 			if (rb1 == rb2)
 				continue;
 
-			float sum_radii = col1->Radius + col2->Radius;
-			Vec2 dir = col2->CenterWorld - col1->CenterWorld;
+			float sum_radii = col1->radius + col2->radius;
+			Vec2 dir = col2->centerWorld - col1->centerWorld;
 
 			if (dir.magnitude_squared() <= sum_radii * sum_radii)
 			{
-				if (col1->CollisionCallback)
-					col1->CollisionCallback(col2);
-				if (col2->CollisionCallback)
-					col2->CollisionCallback(col1);
+				if (col1->collisionCallback)
+					col1->collisionCallback(col2);
+				if (col2->collisionCallback)
+					col2->collisionCallback(col1);
 
-				if (col1->IsSensor || col2->IsSensor)
+				if (col1->isSensor || col2->isSensor)
 					continue;
 
-				Manifold manifold;
+				ManifoldResolve manifold;
 				manifold.Penetration = (sum_radii - dir.magnitude()) * 0.5f;
 				manifold.Normal = dir.normalize();
-				manifold.ContactPoint = col1->CenterWorld + manifold.Normal * (col1->Radius - manifold.Penetration);
+				manifold.ContactPoint = col1->centerWorld + manifold.Normal * (col1->radius - manifold.Penetration);
 				manifold.rb1 = rb1;
 				manifold.rb2 = rb2;
-				mManifolds.push_back(manifold);
+				manifolds_.push_back(manifold);
 			}
 		}
 	}
@@ -94,9 +94,9 @@ void PhysicsManager::findCollisions()
 
 void PhysicsManager::resolveCollisions()
 {
-	for (auto& man : mManifolds)
+	for (auto& man : manifolds_)
 	{
-		if (man.rb1->getInvMass() == 0 && man.rb2->getInvMass() == 0)
+		if (man.rb1->invMass == 0 && man.rb2->invMass == 0)
 		{
 			continue;
 		}
@@ -112,34 +112,34 @@ void PhysicsManager::resolveCollisions()
 		float e = 0.1f;
 
 		float j = (1 + e) * velAlongNormal;
-		auto contact_vec_1 = man.ContactPoint - man.rb1->CenterOfMassWorld;
-		auto contact_vec_2 = man.ContactPoint - man.rb2->CenterOfMassWorld;
+		auto contact_vec_1 = man.ContactPoint - man.rb1->centerOfMassWorld;
+		auto contact_vec_2 = man.ContactPoint - man.rb2->centerOfMassWorld;
 		auto angular_1 = contact_vec_1.cross(man.Normal);
 		angular_1 *= angular_1;
 		auto angular_2 = contact_vec_2.cross(man.Normal);
 		angular_2 *= angular_2;
-		j /= man.rb1->getInvMass() + man.rb2->getInvMass() + angular_1 + angular_2;
+		j /= man.rb1->invMass + man.rb2->invMass + angular_1 + angular_2;
 		Vec2 impulse = j * man.Normal;
 
-		man.rb1->setVelocity(man.rb1->getVelocity() + Vec2(man.rb1->getInvMass() * impulse.X, man.rb1->getInvMass() * impulse.X));
-		man.rb2->setVelocity(man.rb2->getVelocity() - Vec2(man.rb2->getInvMass() * impulse.X, man.rb2->getInvMass() * impulse.Y));
-		man.rb1->AngularVelocity += man.rb1->InvInertia * contact_vec_1.cross(impulse);
-		man.rb2->AngularVelocity -= man.rb2->InvInertia * contact_vec_2.cross(impulse);
+		man.rb1->setVelocity(man.rb1->getVelocity() + Vec2(man.rb1->invMass * impulse.x, man.rb1->invMass * impulse.x));
+		man.rb2->setVelocity(man.rb2->getVelocity() - Vec2(man.rb2->invMass * impulse.x, man.rb2->invMass * impulse.y));
+		man.rb1->velocityAngular += man.rb1->invInertia * contact_vec_1.cross(impulse);
+		man.rb2->velocityAngular -= man.rb2->invInertia * contact_vec_2.cross(impulse);
 
-		const float percent = 0.2f;
-		const float slop = 0.3f;
-		Vec2 correction = std::max(man.Penetration - slop, 0.0f) / (man.rb1->getInvMass() + man.rb2->getInvMass()) * percent * man.Normal;
-		man.rb1->Correction += -man.rb1->getInvMass() * correction;
-		man.rb2->Correction += man.rb2->getInvMass() * correction;
+		const float percent = 0.75f;
+		const float slop = 0.0f;
+		Vec2 correction = std::max(man.Penetration - slop, 0.0f) / (man.rb1->invMass + man.rb2->invMass) * percent * man.Normal;
+		man.rb1->correction += -man.rb1->invMass * correction;
+		man.rb2->correction += man.rb2->invMass * correction;
 		man.Penetration -= correction.magnitude() * 2;
 	}
 
-	mManifolds.clear();
+	manifolds_.clear();
 }
 
-void PhysicsManager::updateRigidbodies()
+void PhysicsManager::updateRigidBodies()
 {
-	for (auto& body : mRigidBodies)
+	for (auto& body : rigidBodies_)
 	{
 		Vec2 force(0, 0);
 
@@ -150,88 +150,57 @@ void PhysicsManager::updateRigidbodies()
 			force += i;
 
 		body->getImpulses().clear();
-		body->setAcceleration(force * body->getInvMass());
-		body->setVelocity(body->getVelocity() + body->getAcceleration() * mStep);
-		body->Position += body->getVelocity() * mStep + body->Correction;
-		body->Correction = Vec2(0, 0);
-		body->CenterOfMassWorld = body->Position + body->CenterOfMassLocal;
-		body->Rotation += body->AngularVelocity * mStep;
+		body->acceleration = force * body->invMass;
+		body->setVelocity(body->getVelocity() + body->acceleration * step_);
+		body->position += body->getVelocity() * step_ + body->correction;
+		body->setVelocity(body->getVelocity() * body->friction);
+		body->correction = Vec2(0, 0);
+		body->centerOfMassWorld = body->position + body->centerOfMassLocal;
+		body->rotation += body->velocityAngular * step_;
 	}
 
-	for (auto coll : mColliders)
+	for (auto coll : colliders_)
 	{
 		auto tf =
-			glm::translate(glm::mat4(1.0f), { coll->Body->Position.X, coll->Body->Position.Y, 0 }) *
-			glm::rotate(glm::mat4(1.0f), coll->Body->Rotation, { 0, 0, 1 }) *
-			glm::translate(glm::mat4(1.0f), { coll->CenterLocal.X, coll->CenterLocal.Y, 0 }) *
-			glm::scale(glm::mat4(1.0f), { coll->Radius * 2, coll->Radius * 2, 1 });
+			glm::translate(glm::mat4(1.0f), { coll->body->position.x, coll->body->position.y, 0 }) *
+			glm::rotate(glm::mat4(1.0f), coll->body->rotation, { 0, 0, 1 }) *
+			glm::translate(glm::mat4(1.0f), { coll->centerLocal.x, coll->centerLocal.y, 0 }) *
+			glm::scale(glm::mat4(1.0f), { coll->radius * 2, coll->radius * 2, 1 });
 
-		coll->Transform = tf;
-		coll->CenterWorld = glm::vec2(tf * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		coll->transform = tf;
+		coll->centerWorld = glm::vec2(tf * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 	}
-}
-
-void RigidBody::correctPosition(float delta)
-{
-	//mGo->move(mVelocity * delta.asSeconds() + mCorrection);
-	mCorrection.X = mCorrection.Y = 0;
 }
 
 void RigidBody::onCollision(CircleCollider* other)
 {
 }
-
-float RigidBody::getInvMass()
-{
-	return InvMass;
-}
-
-void RigidBody::setInvMass(float Value)
-{
-	InvMass = Value;
-}
-
-Vec2 RigidBody::getAcceleration()
-{
-	return Acceleration;
-}
-
-void RigidBody::setAcceleration(Vec2 acc)
-{
-	Acceleration = acc;
-}
-
 Vec2 RigidBody::getVelocity()
 {
-	return Velocity;
+	return velocity;
 }
 
 void RigidBody::setVelocity(Vec2 vel)
 {
-	Velocity = vel;
+	velocity = vel;
 }
 
 void RigidBody::addForce(Vec2 force)
 {
-	Forces.push_back(force);
+	forces.push_back(force);
 }
 
 void RigidBody::addImpulse(Vec2 impulse)
 {
-	Impulses.push_back(impulse);
+	impulses.push_back(impulse);
 }
 
 std::list<Vec2>& RigidBody::getForces()
 {
-	return Forces;
+	return forces;
 }
 
 std::list<Vec2>& RigidBody::getImpulses()
 {
-	return Impulses;
-}
-
-void RigidBody::addCorrection(const Vec2& correction)
-{
-	mCorrection += correction;
+	return impulses;
 }

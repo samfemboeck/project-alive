@@ -1,19 +1,20 @@
 #include "../pch.h"
 #include "Timer.h"
 
-ClockTimer::ClockTimer(long interval_ms)
+ClockTimer::ClockTimer(long intervalMs) :
+	intervalMs_(intervalMs)
 {
-	m_start = clock();
+	start_ = clock();
 }
 
 bool ClockTimer::update()
 {
 	auto now = clock();
-	m_elapsed_ms += (now - m_start) / CLOCKS_PER_SEC * 1000;
-	if (m_elapsed_ms >= m_interval_ms)
+	elapsedMs_ += (now - start_) / CLOCKS_PER_SEC * 1000;
+	if (elapsedMs_ >= intervalMs_)
 	{
-		m_elapsed_ms -= m_interval_ms;
-		m_start = now;
+		elapsedMs_ -= intervalMs_;
+		start_ = now;
 		return true;
 	}
 
@@ -21,50 +22,50 @@ bool ClockTimer::update()
 }
 
 TickCountTimer::TickCountTimer(long interval_ms) :
-	m_interval_ms(interval_ms),
-	m_start(std::chrono::high_resolution_clock::now())
+	intervalMs_(interval_ms),
+	start_(std::chrono::high_resolution_clock::now())
 {
 }
 
-void TickCountTimer::add_time(long time)
+void TickCountTimer::addTime(long time)
 {
-	m_interval_ms += time;
+	intervalMs_ += time;
 }
 
 bool TickCountTimer::update()
 {
 	auto now = std::chrono::high_resolution_clock::now();
-	auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_start).count();
-	m_start = now;
-	m_elapsed_ms += diff;
-	if (m_elapsed_ms >= m_interval_ms)
+	auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_).count();
+	start_ = now;
+	elapsedMs_ += diff;
+	if (elapsedMs_ >= intervalMs_)
 	{
-		m_elapsed_ms -= m_interval_ms;
+		elapsedMs_ -= intervalMs_;
 		return true;
 	}
 
 	return false;
 }
 
-long TickCountTimer::get_elapsed_ms()
+long TickCountTimer::getElapsedMs()
 {
-	return m_elapsed_ms;
+	return elapsedMs_;
 }
 
-long TickCountTimer::get_interval_ms()
+long TickCountTimer::getIntervalMs()
 {
-	return m_interval_ms;
+	return intervalMs_;
 }
 
-ScopeTimer::ScopeTimer(const std::string& method_name) :
-	m_method_name(method_name)
+ScopeTimer::ScopeTimer(const std::string& methodName) :
+	methodName_(methodName)
 {
-	m_start = std::chrono::high_resolution_clock::now();
+	start_ = std::chrono::high_resolution_clock::now();
 }
 
 ScopeTimer::~ScopeTimer()
 {
 	auto now = std::chrono::high_resolution_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_start).count();
-	LOG("{}: {} ms", m_method_name, elapsed);
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_).count();
+	Data.push_back(std::format("{}: {} ms", methodName_, elapsed).c_str());
 }

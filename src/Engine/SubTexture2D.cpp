@@ -3,14 +3,14 @@
 #include "Texture.h"
 
 SubTexture2D::SubTexture2D(Texture2D& texture, const glm::vec2& min, const glm::vec2& max, const glm::vec2& cellSize, const glm::vec2& spriteSize) :
-	m_texture(texture),
-	m_spriteSize(spriteSize),
-	m_cellSize(cellSize)
+	texture_(texture),
+	spriteSize_(spriteSize),
+	cellSize_(cellSize)
 {
-	m_texCoords[0] = glm::vec2{ min.x, min.y };
-	m_texCoords[1] = glm::vec2{ max.x, min.y };
-	m_texCoords[2] = glm::vec2{ max.x, max.y };
-	m_texCoords[3] = glm::vec2{ min.x, max.y };
+	texCoords_[0] = glm::vec2{ min.x, min.y };
+	texCoords_[1] = glm::vec2{ max.x, min.y };
+	texCoords_[2] = glm::vec2{ max.x, max.y };
+	texCoords_[3] = glm::vec2{ min.x, max.y };
 }
 
 SubTexture2D* SubTexture2D::createFromCoords(Texture2D& texture, const glm::vec2& coords, const glm::vec2& cellSize, const glm::vec2& spriteSize)

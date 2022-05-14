@@ -7,8 +7,7 @@
 #include "Engine/App.h"
 #include "Engine/OrthoCamController.h"
 #include "Engine/Timer.h"
-#include "ContactListener.h"
-
+#include <thread>
 
 static std::vector<Organism*> SOrganisms;
 static long SInitialTTL = 5000;
@@ -34,11 +33,7 @@ static std::string get_random_DNA(unsigned max_length)
 
 	return dna.str();
 }
-
-RigidBody* rb1;
-CircleCollider* cc1;
-RigidBody* rb2;
-CircleCollider* cc2;
+std::array<std::array<wchar_t, 5>, 5000> test_arr;
 
 class AliveApp : public App
 {
@@ -48,7 +43,7 @@ public:
 	{
 		srand(time(NULL));
 
-		m_cam_controller.set_dimensions(m_window_data.Width, m_window_data.Height / (float)m_window_data.Width);
+		m_cam_controller.setDimensions(windowData_.width, windowData_.height / (float)windowData_.width);
 
 		Renderer2D::init();
 		Renderer2D::setClearColor({ 0, 0, 0, 1 });
@@ -59,36 +54,17 @@ public:
 		TextureManager::add("cell_light.png");
 		TextureManager::add("collider.png");
 		TextureManager::add("light_circle.png");
-
-		rb1 = new RigidBody();
-		rb1->setVelocity({ 10, 10 });
-		rb1->Position = { 0, 0 };
-		rb2 = new RigidBody();
-		rb2->setVelocity({ -10, -10 });
-		rb2->Position = { 200, 200 };
-
-		PhysicsManager::getInstance().add(rb1);
-		PhysicsManager::getInstance().add(rb2);
-
-		cc2 = new CircleCollider();
-		cc2->Body = rb2;
-		cc2->CenterLocal = rb2->Position;
-		cc2->Radius = 100;
-		cc1 = new CircleCollider();
-		cc1->Body = rb1;
-		cc1->CenterLocal = rb1->Position;
-		cc1->Radius = 100;
-		PhysicsManager::getInstance().add(cc2);
-		PhysicsManager::getInstance().add(cc1);
+		TextureManager::add("light_warm.png");
+		TextureManager::add("background.png");
 	}
 
-	void update() override
+	void onUpdate()
 	{
-		PROFILE("AliveApp::update()");
+		ScopeTimer timer("Update Main");
 		m_cam_controller.update();
 
 		{
-			PROFILE("Organism::tick()");
+			ScopeTimer timer("Tick Organisms");
 			static std::vector<Organism*> to_delete;
 			static std::vector<int> results;
 
@@ -110,7 +86,7 @@ public:
 
 			for (unsigned i = 0; i < results.size(); i++)
 			{
-				if (SOrganisms.size() < Organism::MAX_INSTANCES)
+				if (SOrganisms.size() < Organism::MaxInstances)
 				{
 					for (unsigned a = 0; a < results[i]; a++)
 						SOrganisms.push_back(to_delete[i]->clone());
@@ -124,74 +100,120 @@ public:
 		}
 
 		{
-			PROFILE("Physics::update()");
+			ScopeTimer timer("Tick Physics");
 			PhysicsManager::getInstance().update();
 			//Physics::update(Time::DeltaSeconds);
 		}
 
 		{
 			Renderer2D::clear();
-			Renderer2D::beginTextures(m_cam_controller.get_view_projection());
+			
+			Renderer2D::beginWater(m_cam_controller.getView(), m_cam_controller.getProjection());
+			Renderer2D::pushQuad({ -windowData_.width * 100, -windowData_.height * 100 }, { windowData_.width * 100, windowData_.height * 100 }, RED);
+			Renderer2D::endWater();
 
+			Renderer2D::beginTextures(m_cam_controller.getView(), m_cam_controller.getProjection());
+			//Renderer2D::pushQuad(glm::scale(glm::mat4(1.0f), { m_window_data.Width * 4, m_window_data.Height * 4, 1 }), TextureManager::get("background.png"), glm::vec4(1.0f), false);
 			{
 				{
-					PROFILE("Organism::draw_light()");
-					for (auto* org : SOrganisms)
-						org->draw_light();
-				}
-				{
-					PROFILE("Organism::draw()");
+					ScopeTimer timer("Push Cells");
 					for (auto* org : SOrganisms)
 						org->draw();
 				}
 			}
-
 			{
-				PROFILE("Renderer2D::endTextures()");
+				ScopeTimer timer("Flush");
 				Renderer2D::endTextures();
+				Renderer2D::setClearColor(BLACK);
 			}
 		}
 	}
 
-	void key_pressed(int key) override
+	void onKeyPressed(int key)
 	{
-		m_cam_controller.key_pressed(key);
+		m_cam_controller.pressKey(key);
 
-		if (key >= GLFW_KEY_1 && key < GLFW_KEY_1 + Organism::DEFAULT_DNAS.size())
+		if (key >= GLFW_KEY_1 && key < GLFW_KEY_1 + Organism::DefaultDNAs.size())
 		{
-			Organism::DNA_INDEX = (key - GLFW_KEY_1);
-			LOG("Selected DNA: {}", Organism::DEFAULT_DNAS[Organism::DNA_INDEX]);
+			Organism::DNAIndex = (key - GLFW_KEY_1);
 		}
 
 		static const float scroll_speed_ttl = 250;
 
 		if (key == GLFW_KEY_UP)
 		{
-			Organism::TTL += scroll_speed_ttl;
-			LOG("TTL: {}", Organism::TTL);
+			Organism::TimeToLive += scroll_speed_ttl;
 		}
 		else if (key == GLFW_KEY_DOWN)
 		{
-			Organism::TTL -= scroll_speed_ttl;
-			LOG("TTL: {}", Organism::TTL);
+			Organism::TimeToLive -= scroll_speed_ttl;
 		}
 	}
 
-	void key_released(int key) override
+	void onKeyReleased(int key)
 	{
-		m_cam_controller.key_released(key);
+		m_cam_controller.releaseKey(key);		
+
+		if (key == GLFW_KEY_TAB)
+		{
+			m_is_tab_pressed = !m_is_tab_pressed;
+		}
 	}
 
-	void mouse_scrolled(double x_offset, double y_offset) override
+	void onMouseScrolled(double offsetX, double offsetY)
 	{
-		m_cam_controller.mouse_scrolled(y_offset);
+		m_cam_controller.scrollMouse(offsetY);
 	}
 
-	virtual void mouse_pressed(int button)
+	void onDrawImGui()
+	{
+		static std::vector<std::string> data;
+		static float elapsed = 0;
+		elapsed += Time::DeltaSeconds;
+
+		if (elapsed > 1)
+		{
+			elapsed = 0;
+			data = ScopeTimer::Data;
+		}
+
+		if (m_is_tab_pressed)
+		{
+			bool show_demo = false;
+			//ImGui::ShowDemoWindow(&show_demo);
+			ImGui::Begin("Organism");
+			ImGui::InputInt("Max Instances", &Organism::MaxInstances, 100);
+			ImGui::Text(std::format("Selected DNA: {}", Organism::DefaultDNAs[Organism::DNAIndex]).c_str());
+			ImGui::Text(std::format("Time To Live: {}", Organism::TimeToLive).c_str());
+			ImGui::Text(std::format("Active Organisms: {}", Organism::ActiveInstances).c_str());
+			ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
+			ImGui::End();
+			ImGui::Begin("Physics");
+			ImGui::InputFloat("Linear Friction", &RigidBody::LinearFriction);
+			ImGui::End();
+			ImGui::Begin("Performance");
+
+			for (const auto& profile : data)
+				ImGui::Text(profile.c_str());
+
+			ImGui::End();
+			ImGui::Begin("Water");
+			ImGui::ColorEdit3("Water Color", &Renderer2DStorage::WaterColor.x);
+			ImGui::InputInt("Tile Level", &Renderer2DStorage::TileLevel);
+			ImGui::InputFloat3("Light Attenuation", &Renderer2DStorage::LightAttenuation.x);
+			ImGui::InputFloat3("Ambient Light", &Renderer2DStorage::AmbientLight.x);
+			ImGui::End();
+			//
+		}
+
+		ScopeTimer::Data.clear();
+	}
+
+	void onMousePressed(int button)
 	{
 		if (button == 0)
 		{
-			float amplitude = Random<float>::range(0.25f, 3.0f);
+			float amplitude = Random<float>::range(3.0f, 30.0f);
 			float offset_sin1 = Random<float>::range(0.0f, 10.0f);
 			float multiplier_x_sin1 = Random<int>::range(1, 5);
 			float offset_sin2 = Random<float>::range(0.0f, 10.0f);
@@ -202,8 +224,8 @@ public:
 				return amplitude * (sin(multiplier_x_sin1 * x + offset_sin1) + sin(multiplier_x_sin2 * x + offset_sin2));
 			};
 
-			auto mouse_pos_world = Camera::screen_to_world_point({ m_window_data.MousePos.X / m_window_data.Width, m_window_data.MousePos.Y / m_window_data.Height }, m_cam_controller.get_view_projection());
-			SOrganisms.push_back(new Organism(Organism::DEFAULT_DNAS[Organism::DNA_INDEX], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi)));
+			auto mouse_pos_world = Camera::screenToWorldPoint({ windowData_.mousePos.x / windowData_.width, windowData_.mousePos.y / windowData_.height }, m_cam_controller.getViewProjection());
+			SOrganisms.push_back(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi)));
 		}
 		else
 		{
@@ -218,15 +240,16 @@ public:
 				return amplitude * (sin(multiplier_x_sin1 * x + offset_sin1) + sin(multiplier_x_sin2 * x + offset_sin2));
 			};
 
-			auto mouse_pos_world = Camera::screen_to_world_point({ m_window_data.MousePos.X / m_window_data.Width, m_window_data.MousePos.Y / m_window_data.Height }, m_cam_controller.get_view_projection());
-			auto org = new Organism(Organism::DEFAULT_DNAS[Organism::DNA_INDEX], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi));
-			org->m_rb->setVelocity({ 10, 10 });
+			auto mouse_pos_world = Camera::screenToWorldPoint({ windowData_.mousePos.x / windowData_.width, windowData_.mousePos.y / windowData_.height }, m_cam_controller.getViewProjection());
+			auto org = new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi));
+			org->rigidBody_->setVelocity({ 10, 10 });
 			SOrganisms.push_back(org);
 		}
 	}
 
 private:
 	OrthoCamController m_cam_controller;
+	bool m_is_tab_pressed = false;
 
 };
 

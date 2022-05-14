@@ -27,22 +27,22 @@ static uint32_t ShaderDataTypeSize(ShaderDataType type)
 
 struct BufferElement
 {
-	std::string Name;
-	ShaderDataType Type;
-	uint32_t Size;
-	uint32_t Offset;
-	bool Normalized;
+	std::string name;
+	ShaderDataType type;
+	uint32_t size;
+	uint32_t offset;
+	bool normalized;
 
 	BufferElement() {}
 
 	BufferElement(ShaderDataType type, const std::string& name, bool normalized = false)
-		: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized)
+		: name(name), type(type), size(ShaderDataTypeSize(type)), offset(0), normalized(normalized)
 	{
 	}
 
 	uint32_t GetComponentCount() const
 	{
-		switch (Type)
+		switch (type)
 		{
 		case ShaderDataType::Float:   return 1;
 		case ShaderDataType::Float2:  return 2;
@@ -67,33 +67,33 @@ public:
 	BufferLayout() {}
 
 	BufferLayout(const std::initializer_list<BufferElement>& elements)
-		: m_elements(elements)
+		: elements_(elements)
 	{
 		CalculateOffsetsAndStride();
 	}
 
-	inline uint32_t GetStride() const { return m_stride; }
-	inline const std::vector<BufferElement>& GetElements() const { return m_elements; }
+	inline uint32_t GetStride() const { return stride_; }
+	inline const std::vector<BufferElement>& GetElements() const { return elements_; }
 
-	std::vector<BufferElement>::iterator begin() { return m_elements.begin(); }
-	std::vector<BufferElement>::iterator end() { return m_elements.end(); }
-	std::vector<BufferElement>::const_iterator begin() const { return m_elements.begin(); }
-	std::vector<BufferElement>::const_iterator end() const { return m_elements.end(); }
+	std::vector<BufferElement>::iterator begin() { return elements_.begin(); }
+	std::vector<BufferElement>::iterator end() { return elements_.end(); }
+	std::vector<BufferElement>::const_iterator begin() const { return elements_.begin(); }
+	std::vector<BufferElement>::const_iterator end() const { return elements_.end(); }
 private:
 	void CalculateOffsetsAndStride()
 	{
 		uint32_t offset = 0;
-		m_stride = 0;
-		for (auto& element : m_elements)
+		stride_ = 0;
+		for (auto& element : elements_)
 		{
-			element.Offset = offset;
-			offset += element.Size;
-			m_stride += element.Size;
+			element.offset = offset;
+			offset += element.size;
+			stride_ += element.size;
 		}
 	}
 private:
-	std::vector<BufferElement> m_elements;
-	uint32_t m_stride = 0;
+	std::vector<BufferElement> elements_;
+	uint32_t stride_ = 0;
 };
 
 class VertexBuffer
@@ -108,11 +108,11 @@ public:
 
 	virtual void setData(const void* data, uint32_t size);
 
-	virtual const BufferLayout& getLayout() const { return m_layout; }
-	virtual void setLayout(const BufferLayout& layout) { m_layout = layout; }
+	virtual const BufferLayout& getLayout() const { return layout_; }
+	virtual void setLayout(const BufferLayout& layout) { layout_ = layout; }
 private:
-	uint32_t m_rendererId;
-	BufferLayout m_layout;
+	uint32_t id_;
+	BufferLayout layout_;
 };
 
 class IndexBuffer
@@ -124,8 +124,8 @@ public:
 	virtual void bind() const;
 	virtual void unbind() const;
 
-	virtual uint32_t getCount() const { return m_count; }
+	virtual uint32_t getCount() const { return count_; }
 private:
-	uint32_t m_rendererId;
-	uint32_t m_count;
+	uint32_t id_;
+	uint32_t count_;
 };

@@ -7,23 +7,23 @@
 
 LeafCell::LeafCell() : 
 	Cell("cell_leaf.png"),
-	Timer(1000)
+	timer(1000)
 {
 }
 
 void LeafCell::tick(Organism* org)
 {
-	if (Timer.update())
+	if (timer.update())
 	{
-		org->m_timer_ttl.add_time(50 * LightLevel);
+		org->timerTTL_.addTime(50 * lightLevel);
 	}
 }
 
-void LeafCell::on_collision(CircleCollider* other)
+void LeafCell::onCollision(CircleCollider* other)
 {
-	if (other->Cell == nullptr && std::find(m_light_cells.begin(), m_light_cells.end(), other->Cell) == m_light_cells.end())
+	if (other->cell == nullptr && std::find(lightCells.begin(), lightCells.end(), other->cell) == lightCells.end())
 	{
-		m_light_cells.push_back(other->Cell);
-		LightLevel++;
+		lightCells.push_back(other->cell);
+		lightLevel++;
 	}
 }

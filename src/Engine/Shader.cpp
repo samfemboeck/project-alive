@@ -25,11 +25,11 @@ Shader::Shader(const std::string& filepath)
 	lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
 	auto lastDot = filepath.rfind('.');
 	auto count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
-	m_name = filepath.substr(lastSlash, count);
+	name_ = filepath.substr(lastSlash, count);
 }
 
 Shader::Shader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc) :
-	m_name(name)
+	name_(name)
 {
 	std::unordered_map<GLenum, std::string> sources;
 	sources[GL_VERTEX_SHADER] = vertexSrc;
@@ -39,12 +39,12 @@ Shader::Shader(const std::string& name, const std::string& vertexSrc, const std:
 
 Shader::~Shader()
 {
-	glDeleteProgram(m_rendererId);
+	glDeleteProgram(id_);
 }
 
 void Shader::bind() const
 {
-	glUseProgram(m_rendererId);
+	glUseProgram(id_);
 }
 
 void Shader::unbind() const
@@ -54,49 +54,61 @@ void Shader::unbind() const
 
 void Shader::uploadUniformInt(const std::string& name, int value) const
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniform1i(location, value);
 }
 
 void Shader::uploadUniformIntArray(const std::string& name, int* values, uint32_t count)
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniform1iv(location, count, values);
 }
 
 void Shader::uploadUniformFloat(const std::string& name, float value) const
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniform1f(location, value);
 }
 
 void Shader::uploadUniformFloat2(const std::string& name, const glm::vec2& value) const
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniform2f(location, value.x, value.y);
+}
+
+void Shader::uploadUniformFloat2Array(const std::string& name, float* values, uint32_t count) const
+{	
+	GLint location = glGetUniformLocation(id_, name.c_str());
+	glUniform2fv(location, count, values);
 }
 
 void Shader::uploadUniformFloat3(const std::string& name, const glm::vec3& value) const
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniform3f(location, value.x, value.y, value.z);
+}
+
+void Shader::uploadUniformFloat3Array(const std::string& name, float* values, uint32_t count) const
+{
+	GLint location = glGetUniformLocation(id_, name.c_str());
+	glUniform3fv(location, count, values);
 }
 
 void Shader::uploadUniformFloat4(const std::string& name, const glm::vec4& value) const
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniform4f(location, value.x, value.y, value.z, value.w);
 }
 
 void Shader::uploadUniformMat3(const std::string& name, const glm::mat3& matrix) const
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
 void Shader::uploadUniformMat4(const std::string& name, const glm::mat4& matrix) const
 {
-	GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+	GLint location = glGetUniformLocation(id_, name.c_str());
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
@@ -161,6 +173,8 @@ void Shader::compile(const std::unordered_map<GLenum, std::string>& shaderSource
 			std::vector<GLchar> infoLog(maxLength);
 			glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
 
+			std::cout << "Shader compilation failed for '"  << kv.second << "':" << std::endl << &infoLog[0] << std::endl;
+
 			glDeleteShader(shader);
 
 			break;
@@ -170,7 +184,7 @@ void Shader::compile(const std::unordered_map<GLenum, std::string>& shaderSource
 		glShaderIDs[glShaderIDIdx++] = shader;
 	}
 
-	m_rendererId = program;
+	id_ = program;
 
 	// Link our program
 	glLinkProgram(program);
@@ -198,16 +212,4 @@ void Shader::compile(const std::unordered_map<GLenum, std::string>& shaderSource
 
 	for (int i = 0; i < glShaderIDIdx; ++i)
 		glDetachShader(program, glShaderIDs[i]);
-}
-
-std::unordered_map<std::string, std::unique_ptr<Shader>> ShaderLibrary::s_shaders;
-
-void ShaderLibrary::add(const std::string& name, const std::string& path)
-{
-	s_shaders[name] = std::make_unique<Shader>(path);
-}
-
-Shader* ShaderLibrary::get(const std::string& name)
-{
-	return s_shaders[name].get();
 }

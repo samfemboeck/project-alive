@@ -6,27 +6,28 @@ class App;
 
 struct WindowData
 {
-	int Width;
-	int Height;
-	Vec2 MousePos;
-	App* App;
+	int width;
+	int height;
+	Vec2 mousePos;
+	App* app;
 };
 
 class App
 {
 public:
 	App();
+	~App();
 	void start();
 protected:
-	virtual void update();
-	virtual void mouse_scrolled(double x_offset, double y_offset) {};
-	virtual void mouse_pressed(int button) {};
-	virtual void mouse_released(int button) {};
-	virtual void key_pressed(int key) {};
-	virtual void key_released(int key) {};
-	virtual void window_closed() {};
+	virtual void onUpdate();
+	virtual void onMouseScrolled(double offsetX, double offsetY) {};
+	virtual void onMousePressed(int button) {};
+	virtual void onMouseReleased(int button) {};
+	virtual void onKeyPressed(int key) {};
+	virtual void onKeyReleased(int key) {};
+	virtual void onWindowClosed() {};
+	virtual void onDrawImGui() {};
 protected:
-	WindowData m_window_data;
-	GLFWwindow* m_window;
-	clock_t m_frame_start;
+	WindowData windowData_;
+	GLFWwindow* window_;
 };

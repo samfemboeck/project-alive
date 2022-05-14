@@ -11,11 +11,11 @@ public:
 	void unbind();
 	void setSize(float width, float height);
 	void loadFromPath();
-	int getColorBufferRendererId() { return m_colorBufferRendererId; }
+	int getColorBufferRendererId() { return colorBufferRendererId_; }
 
 private:
-	float m_width = 0, m_height = 0;
-	bool m_isDirty = false;
-	uint32_t m_rendererId;
-	uint32_t m_colorBufferRendererId;
+	float width_ = 0, height_ = 0;
+	bool isDirty_ = false;
+	uint32_t rendererId_;
+	uint32_t colorBufferRendererId_;
 };

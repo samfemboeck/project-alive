@@ -21,55 +21,55 @@ class Registry
 {
 public:
 	static Registry& get();
-	entity create_entity();
+	entity createEntity();
 	void add(entity e, IComponent* cmp);
 	void remove(entity e, IComponent* cmp);
-	const std::array<IComponent*, NUM_COMPONENTS>& get_components(entity e) const;
+	const std::array<IComponent*, NUM_COMPONENTS>& getComponents(entity e) const;
 	size_t size();
 
 private:
-	std::vector<std::array<IComponent*, NUM_COMPONENTS>> m_entities;
+	std::vector<std::array<IComponent*, NUM_COMPONENTS>> entities_;
 };
 
-template<typename T, size_t max_components>
+template<typename T, size_t maxComponents>
 class ComponentSys
 {
 public:
-	static ComponentSys<T, max_components>& get()
+	static ComponentSys<T, maxComponents>& get()
 	{
 		static ComponentSys<T> instance;
 		return instance;
 	}
 
-	T& add_component(entity e)
+	T& addComponent(entity e)
 	{
-		Registry::get().add(e, &m_components[e]);
-		m_components[e].IsAlive = true;
-		return m_components[e];
+		Registry::get().add(e, &components_[e]);
+		components_[e].IsAlive = true;
+		return components_[e];
 	}
 
-	void delete_component(entity e)
+	void deleteComponent(entity e)
 	{
-		Registry::get().remove(e, &m_components[e]);
-		m_components[e].IsAlive = false;
+		Registry::get().remove(e, &components_[e]);
+		components_[e].IsAlive = false;
 	}
 
-	T* get_component(entity e)
+	T* getComponent(entity e)
 	{
-		return m_components[e].IsAlive ? &m_components[e] : nullptr;
+		return components_[e].IsAlive ? &components_[e] : nullptr;
 	}
 
 	void update()
 	{
 	}
 
-	auto& get_components() const
+	auto& getComponents() const
 	{
-		return m_components;
+		return components_;
 	}
 
 protected:
-	std::array<T, max_components> m_components;
+	std::array<T, maxComponents> components_;
 
 private:
 	ComponentSys() = default;

@@ -36,6 +36,8 @@ add_executable(alive
 	src/Engine/Time.h
 	src/Engine/App.h
 	src/Engine/App.cpp
+	src/Engine/ImGuiHandler.h
+	src/Engine/ImGuiHandler.cpp
 
 	src/Main.cpp
 	src/Organism.h
@@ -50,12 +52,25 @@ add_executable(alive
 	src/ThornCell.cpp
 	src/LightCell.h
 	src/LightCell.cpp
-	src/ContactListener.h
-	src/ContactListener.cpp
 
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c
 	external/stb/stb_image.h
+	external/imgui/imgui.h
+	external/imgui/imgui.cpp
+	external/imgui/imconfig.h
+	external/imgui/imgui_demo.cpp
+	external/imgui/imgui_draw.cpp
+	external/imgui/imgui_internal.h
+	external/imgui/imgui_tables.cpp
+	external/imgui/imgui_widgets.cpp
+	external/imgui/imstb_rectpack.h
+	external/imgui/imstb_textedit.h
+	external/imgui/imstb_truetype.h
+	external/imgui/backends/imgui_impl_opengl3.h
+	external/imgui/backends/imgui_impl_opengl3.cpp
+	external/imgui/backends/imgui_impl_glfw.h
+	external/imgui/backends/imgui_impl_glfw.cpp
  )
 
 add_subdirectory ("external/glfw")
@@ -82,6 +97,6 @@ target_link_libraries (
 )
 
 add_custom_command(TARGET alive POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/Shaders ${CMAKE_BINARY_DIR}/Testinger/Shaders
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/Shaders ${CMAKE_BINARY_DIR}/Shaders
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/Textures ${CMAKE_BINARY_DIR}/Textures
 	)

@@ -8,72 +8,73 @@
 
 void OrthoCamController::update()
 {
-	if (m_key_a_down)
-		m_position.x -= m_translation_speed * Time::DeltaSeconds;
-	else if (m_key_d_down)
-		m_position.x += m_translation_speed * Time::DeltaSeconds;
+	if (isKeyADown_)
+		position_.x -= speedTranslation_ * Time::DeltaSeconds;
+	else if (isKeyDDown_)
+		position_.x += speedTranslation_ * Time::DeltaSeconds;
 
-	if (m_key_w_down)
-		m_position.y += m_translation_speed * Time::DeltaSeconds;
-	else if (m_key_s_down)
-		m_position.y -= m_translation_speed * Time::DeltaSeconds;
+	if (isKeyWDown_)
+		position_.y += speedTranslation_ * Time::DeltaSeconds;
+	else if (isKeySDown_)
+		position_.y -= speedTranslation_ * Time::DeltaSeconds;
 
-	m_translation_speed = m_zoom_level * 1000;
+	speedTranslation_ = zoomLevel_ * 1000;
 }
 
-void OrthoCamController::set_dimensions(float width, float aspect)
+void OrthoCamController::setDimensions(float width, float aspect)
 {
-	m_aspect = aspect;
-	m_width = width;
-	m_camera.set_ortho(-width * 0.5f * m_zoom_level, width * 0.5f * m_zoom_level, -aspect * width * 0.5f * m_zoom_level, aspect * width * 0.5f * m_zoom_level);
+	aspectRatio_ = aspect;
+	width_ = width;
+	camera_.setOrtho(-width * 0.5f * zoomLevel_, width * 0.5f * zoomLevel_, -aspect * width * 0.5f * zoomLevel_, aspect * width * 0.5f * zoomLevel_);
 }
 
-void OrthoCamController::key_pressed(int key)
+void OrthoCamController::pressKey(int key)
 {
 	switch (key)
 	{
 		case GLFW_KEY_W:
-			m_key_w_down = true;
+			isKeyWDown_ = true;
 			break;
 		case GLFW_KEY_A:
-			m_key_a_down = true;
+			isKeyADown_ = true;
 			break;
 		case GLFW_KEY_S:
-			m_key_s_down = true;
+			isKeySDown_ = true;
 			break;
 		case GLFW_KEY_D:
-			m_key_d_down = true;
+			isKeyDDown_ = true;
 			break;
 		default:
 			break;
 	}
 }
 
-void OrthoCamController::key_released(int key)
+void OrthoCamController::releaseKey(int key)
 {
 	switch (key)
 	{
 	case GLFW_KEY_W:
-		m_key_w_down = false;
+		isKeyWDown_ = false;
 		break;
 	case GLFW_KEY_A:
-		m_key_a_down = false;
+		isKeyADown_ = false;
 		break;
 	case GLFW_KEY_S:
-		m_key_s_down = false;
+		isKeySDown_ = false;
 		break;
 	case GLFW_KEY_D:
-		m_key_d_down = false;
+		isKeyDDown_ = false;
 		break;
 	default:
 		break;
 	}
 }
 
-bool OrthoCamController::mouse_scrolled(double mouse_offset_y)
+bool OrthoCamController::scrollMouse(double mouse_offset_y)
 {
-	m_zoom_level -= mouse_offset_y * m_scroll_speed;
-	m_zoom_level = std::max(m_zoom_level, 0.1f);
-	m_camera.set_ortho(-m_width * 0.5f * m_zoom_level, m_width * 0.5f * m_zoom_level, -m_aspect * m_width * 0.5f * m_zoom_level, m_aspect * m_width * 0.5f * m_zoom_level);
+	zoomLevel_ -= mouse_offset_y * speedScroll_;
+	zoomLevel_ = std::max(zoomLevel_, 0.1f);
+	camera_.setOrtho(-width_ * 0.5f * zoomLevel_, width_ * 0.5f * zoomLevel_, -aspectRatio_ * width_ * 0.5f * zoomLevel_, aspectRatio_ * width_ * 0.5f * zoomLevel_);
+	speedScroll_ = 1 / zoomLevel_ * zoomLevel_ * zoomLevel_ * 0.1f;
 	return false;
 }

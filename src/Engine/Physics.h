@@ -8,13 +8,12 @@ class Collider;
 class RigidBody;
 class Cell;
 
-struct MTV
+struct ManifoldNotify
 {
-	Vec2 Normal;
-	float Penetration;
+	uint16_t indexOrganism;
 };
 
-struct Manifold
+struct ManifoldResolve
 {
 	RigidBody* rb1;
 	RigidBody* rb2;
@@ -25,14 +24,14 @@ struct Manifold
 
 struct CircleCollider
 {
-	Vec2 CenterLocal;
-	Vec2 CenterWorld;
-	glm::mat4 Transform;
-	float Radius;
-	RigidBody* Body = nullptr;
-	bool IsSensor = false;
-	Cell* Cell = nullptr;
-	std::function<void(CircleCollider*)> CollisionCallback;
+	Vec2 centerLocal;
+	Vec2 centerWorld;
+	glm::mat4 transform;
+	float radius;
+	RigidBody* body = nullptr;
+	bool isSensor = false;
+	Cell* cell = nullptr;
+	std::function<void(CircleCollider*)> collisionCallback;
 };
 
 class PhysicsManager
@@ -47,44 +46,38 @@ public:
 	void fixedUpdate();
 	void findCollisions();
 	void resolveCollisions();
-	void updateRigidbodies();
+	void updateRigidBodies();
 
 private:
-	std::vector<CircleCollider*> mColliders;
-	std::vector<RigidBody*> mRigidBodies;
-	std::vector<Manifold> mManifolds;
-	float mStep = 1/100.0f;
+	std::vector<CircleCollider*> colliders_;
+	std::vector<RigidBody*> rigidBodies_;
+	std::vector<ManifoldResolve> manifolds_;
+	float step_ = 1/100.0f;
 };
 
 struct RigidBody
 {
-	Vec2 Position;
-	Vec2 CenterOfMassLocal = Vec2(0, 0);
-	Vec2 CenterOfMassWorld = Vec2(0, 0);
-	Vec2 Correction = Vec2(0, 0);
-	float InvInertia = 0.01f;
-	float InvMass = 1;
-	float AngularVelocity = 0;
-	float Rotation = 0;
-	Vec2 Acceleration;
-	std::list<Vec2> Forces;
-	std::list<Vec2> Impulses;
-	Vec2 Velocity;
+	inline static float LinearFriction = 0.9f;
 
-	void correctPosition(float delta);
+	float friction = LinearFriction;
+	Vec2 position;
+	Vec2 centerOfMassLocal = Vec2(0, 0);
+	Vec2 centerOfMassWorld = Vec2(0, 0);
+	Vec2 correction = Vec2(0, 0);
+	float invInertia = 0.01f;
+	float invMass = 1;
+	float velocityAngular = 0;
+	float rotation = 0;
+	Vec2 acceleration;
+	std::list<Vec2> forces;
+	std::list<Vec2> impulses;
+	Vec2 velocity;
+
 	void onCollision(CircleCollider* other);
-	float getInvMass();
-	void setInvMass(float Value);
-	Vec2 getAcceleration();
-	void setAcceleration(Vec2);
 	Vec2 getVelocity();
 	void setVelocity(Vec2);
 	void addForce(Vec2);
 	void addImpulse(Vec2);
 	std::list<Vec2>& getForces();
 	std::list<Vec2>& getImpulses();
-	void addCorrection(const Vec2& correction);
-
-private:
-	Vec2 mCorrection;
 };

@@ -5,34 +5,34 @@
 class ClockTimer
 {
 public:
-	ClockTimer(long interval_ms);
+	ClockTimer(long intervalMs);
 	bool update();
 private:
-	clock_t m_elapsed_ms = 0;
-	clock_t m_start;
-	long m_interval_ms;
+	clock_t elapsedMs_ = 0;
+	clock_t start_;
+	long intervalMs_;
 };
 
 class TickCountTimer
 {
 public:
-	TickCountTimer(long interval_ms);
+	TickCountTimer(long intervalMs);
 	bool update();
-	void add_time(long time_ms);
-	long get_elapsed_ms();
-	long get_interval_ms();
+	void addTime(long timeMs);
+	long getElapsedMs();
+	long getIntervalMs();
 private:
-	long m_interval_ms;
-	long m_elapsed_ms = 0;
-	std::chrono::high_resolution_clock::time_point m_start;
+	long intervalMs_;
+	long elapsedMs_ = 0;
+	std::chrono::high_resolution_clock::time_point start_;
 };
 
 class ScopeTimer
 {
 public:
-	ScopeTimer(const std::string& method_name);
+	inline static std::vector<std::string> Data;
+	ScopeTimer(const std::string& methodName);
 	~ScopeTimer();
-private:
-	std::string m_method_name;
-	std::chrono::high_resolution_clock::time_point m_start;
+	std::string methodName_;
+	std::chrono::high_resolution_clock::time_point start_;
 };

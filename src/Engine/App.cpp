@@ -2,6 +2,7 @@
 #include "App.h"
 #include "QuickMaths.h"
 #include "Time.h"
+#include "ImGuiHandler.h"
 
 void onWindowResize(GLFWwindow * m_window, int w, int h)
 {
@@ -10,7 +11,7 @@ void onWindowResize(GLFWwindow * m_window, int w, int h)
 
 App::App()
 {
-	glfwSetErrorCallback([](int error_code, const char* desc) { LOG("GLFW error: {}", desc); });
+	glfwSetErrorCallback([](int errorCode, const char* desc) { LOG("GLFW error: {}", desc); });
 
 	if (!glfwInit())
 	{
@@ -21,26 +22,26 @@ App::App()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	m_window_data.App = this;
-	m_window_data.Width = 1600;
-	m_window_data.Height = 800;
+	windowData_.app = this;
+	windowData_.width = 1600;
+	windowData_.height = 800;
 
-	m_window = glfwCreateWindow(m_window_data.Width, m_window_data.Height, "Project Alive", 0, nullptr);
-	if (m_window == NULL)
+	window_ = glfwCreateWindow(windowData_.width, windowData_.height, "Project Alive", 0, nullptr);
+	if (window_ == NULL)
 	{
 		LOG("Failed to create GLFW window!");
 		glfwTerminate();
 		return;
 	}
 
-	glfwSetWindowUserPointer(m_window, &m_window_data);
+	glfwSetWindowUserPointer(window_, &windowData_);
 
-	glfwMakeContextCurrent(m_window);
-	glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int w, int h)
+	glfwMakeContextCurrent(window_);
+	glfwSetWindowSizeCallback(window_, [](GLFWwindow* window, int w, int h)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		data->Width = w;
-		data->Height = h;
+		data->width = w;
+		data->height = h;
 		glViewport(0, 0, w, h);
 	});
 
@@ -50,38 +51,19 @@ App::App()
 		return;
 	}
 
-	glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double x_pos, double y_pos)
+	glfwSetCursorPosCallback(window_, [](GLFWwindow* window, double posX, double posY)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		data->MousePos = Vec2(x_pos, y_pos);
+		data->mousePos = Vec2(posX, posY);
 	});
 
-	glfwSetScrollCallback(m_window, [](GLFWwindow* window, double x_offset, double y_offset)
+	glfwSetScrollCallback(window_, [](GLFWwindow* window, double offsetX, double offsetY)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		data->App->mouse_scrolled(x_offset, y_offset);
+		data->app->onMouseScrolled(offsetX, offsetY);
 	});
 
-	glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods)
-	{
-		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-
-		switch (action)
-		{
-			case GLFW_PRESS:
-			{
-				data->App->mouse_pressed(button);
-				break;
-			}
-			case GLFW_RELEASE:
-			{
-				data->App->mouse_released(button);
-				break;
-			}
-		}
-	});
-
-	glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+	glfwSetMouseButtonCallback(window_, [](GLFWwindow* window, int button, int action, int mods)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
@@ -89,40 +71,121 @@ App::App()
 		{
 			case GLFW_PRESS:
 			{
-				data->App->key_pressed(key);
+				data->app->onMousePressed(button);
 				break;
 			}
 			case GLFW_RELEASE:
 			{
-				data->App->key_released(key);
+				data->app->onMouseReleased(button);
 				break;
 			}
 		}
 	});
 
-	glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window)
+	glfwSetKeyCallback(window_, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		data->App->window_closed();
+
+		switch (action)
+		{
+			case GLFW_PRESS:
+			{
+				data->app->onKeyPressed(key);
+				break;
+			}
+			case GLFW_RELEASE:
+			{
+				data->app->onKeyReleased(key);
+				break;
+			}
+		}
 	});
+
+	glfwSetWindowCloseCallback(window_, [](GLFWwindow* window)
+	{
+		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+		data->app->onWindowClosed();
+	});
+
+	IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    //io.ConfigViewportsNoAutoMerge = true;
+    //io.ConfigViewportsNoTaskBarIcon = true;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window_, true);
+	ImGui_ImplOpenGL3_Init("#version 330");
+}
+
+App::~App()
+{
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	glfwDestroyWindow(window_);
+	glfwTerminate();
 }
 
 void App::start()
 {
-	while (!glfwWindowShouldClose(m_window))
-	{
+	while (!glfwWindowShouldClose(window_))
+	{	
+		glfwPollEvents();
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		onDrawImGui();
+
+		ImGui::Render();
+        int displayW, displayH;
+        glfwGetFramebufferSize(window_, &displayW, &displayH);
+        //glViewport(0, 0, display_w, display_h);
+		Renderer2D::clear();		
+		
 		static clock_t start = clock();
 		clock_t now = clock();
 		Time::DeltaSeconds = (now - start) / (float)CLOCKS_PER_SEC;
 		Time::DeltaMillis = (now - start) / (float)CLOCKS_PER_SEC * 1000;
 		start = now;
 		Time::ElapsedSeconds += Time::DeltaSeconds;
-		update();
-		glfwSwapBuffers(m_window);
-		glfwPollEvents();
+
+		onUpdate();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    	
+        // Update and Render additional Platform Windows
+        // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
+        //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
+
+		glfwSwapBuffers(window_);
 	}
 }
 
-void App::update()
+void App::onUpdate()
 {
 }

@@ -2,17 +2,17 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-void Camera::set_ortho(float left, float right, float bottom, float top)
+void Camera::setOrtho(float left, float right, float bottom, float top)
 {
-	m_projectionMatrix = glm::ortho(left, right, bottom, top);
+	projectionMatrix_ = glm::ortho(left, right, bottom, top);
 }
 
-void Camera::set_perspective(float fov, float aspect, float nearPlane, float farPlane)
+void Camera::setPerspective(float fov, float aspect, float nearPlane, float farPlane)
 {
-	m_projectionMatrix = glm::perspective(fov, aspect, nearPlane, farPlane);
+	projectionMatrix_ = glm::perspective(fov, aspect, nearPlane, farPlane);
 }
 
-glm::vec2 Camera::screen_to_world_point(const glm::vec2& screenPoint, const glm::mat4& viewProjectionMat)
+glm::vec2 Camera::screenToWorldPoint(const glm::vec2& screenPoint, const glm::mat4& viewProjectionMat)
 {
 	glm::vec2 mousePosClip = (2.0f * screenPoint) - 1.0f;
 	mousePosClip.y *= -1.0f;

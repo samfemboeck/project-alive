@@ -3,19 +3,19 @@
 class Texture2D
 {
 public:
-	Texture2D(const std::string& path);
+	Texture2D(const std::string& path, bool mirroredRepeat = false);
 	~Texture2D();
 
-	uint32_t getWidth() const { return m_width; }
-	uint32_t getHeight() const { return m_height; }
-	uint32_t getId() const { return m_id; }
+	uint32_t getWidth() const { return width_; }
+	uint32_t getHeight() const { return height_; }
+	uint32_t getId() const { return id_; }
 	void bind(uint32_t slot = 0) const;
-	std::string getFilePath() { return m_path; }
-	void loadFromPath(const std::string& path);
+	std::string getFilePath() { return path_; }
+	void loadFromPath(const std::string& path, bool);
 
-	bool operator==(const Texture2D& other) const { return m_id == other.m_id; }
+	bool operator==(const Texture2D& other) const { return id_ == other.id_; }
 private:
-	std::string m_path;
-	uint32_t m_width, m_height;
-	uint32_t m_id;
+	std::string path_;
+	uint32_t width_, height_;
+	uint32_t id_;
 };

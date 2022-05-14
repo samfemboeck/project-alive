@@ -8,26 +8,26 @@ public:
 	OrthoCamController() = default;
 
 	void update();
-	void set_dimensions(float width, float aspect);
-	void key_pressed(int key);
-	void key_released(int key);
-	bool mouse_scrolled(double mouse_offset_y);
-	inline glm::mat4 get_view_projection() { return getProjection() * getView(); }
-	inline glm::mat4 getView() { return glm::inverse(glm::translate(glm::mat4(1), m_position)); }
-	inline glm::mat4 getProjection() { return m_camera.getProjectionMatrix(); }
-	inline Camera& getCamera() { return m_camera; }
+	void setDimensions(float width, float aspect);
+	void pressKey(int key);
+	void releaseKey(int key);
+	bool scrollMouse(double mouseOffsetY);
+	inline glm::mat4 getViewProjection() { return getProjection() * getView(); }
+	inline glm::mat4 getView() { return glm::inverse(glm::translate(glm::mat4(1), position_)); }
+	inline glm::mat4 getProjection() { return camera_.getProjectionMatrix(); }
+	inline Camera& getCamera() { return camera_; }
 
 private:
-	Camera m_camera;
+	Camera camera_;
 
-	float m_aspect;
-	float m_width = 0;
-	float m_zoom_level = 1;
-	glm::vec3 m_position = glm::vec3{ 0.0f, 0.0f, 0.0f };
-	float m_translation_speed = 5.0f;
-	float m_scroll_speed = 0.25f;
-	bool m_key_w_down = false;
-	bool m_key_a_down = false;
-	bool m_key_s_down = false;
-	bool m_key_d_down = false;
+	float aspectRatio_ = 0;
+	float width_ = 0;
+	float zoomLevel_ = 1;
+	glm::vec3 position_ = glm::vec3{ 0.0f, 0.0f, 0.0f };
+	float speedTranslation_ = 5.0f;
+	float speedScroll_ = 0.25f;
+	bool isKeyWDown_ = false;
+	bool isKeyADown_ = false;
+	bool isKeySDown_ = false;
+	bool isKeyDDown_ = false;
 };

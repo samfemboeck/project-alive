@@ -8,11 +8,140 @@
 #include "Engine/Time.h"
 #include "Engine/Timer.h"
 
-bool Organism::overlaps_position(const Vec2& pos) const
+Organism::Organism(const std::string& dna, std::function<float(float)> instinct, Vec2 position_, float angle) :
+	dna_(dna),
+	initialTTL_(Organism::TimeToLive),
+	timerTTL_(initialTTL_)
 {
-	for (auto* cell : m_cells)
+	Organism::ActiveInstances++;
+	rigidBody_ = new RigidBody();
+	rigidBody_->position = position_;
+	PhysicsManager::getInstance().add(rigidBody_);
+
+	Vec2 curPos = { 0, 0 };
+	Vec2 offset = { 0, 0 };
+
+	for (size_t index = 0; index < dna_.size(); index += 4)
 	{
-		if ((cell->LocalPos - pos).magnitude() < Cell::Size)
+		const char symbol = dna_[index];
+		Cell* cell = getCellForSymbol(symbol);		
+		cells_.push_back(cell);
+
+		curPos += offset;	
+
+		cell->localPos = curPos;
+		CircleCollider* cc = new CircleCollider();
+		cc->radius = Cell::Size * 0.5f;
+		cc->centerLocal = curPos;
+		cc->body = rigidBody_;
+		cc->cell = cell;
+		cc->collisionCallback = std::bind(&Cell::onCollision, cell, std::placeholders::_1);
+		colliders_.push_back(cc);
+		PhysicsManager::getInstance().add(cc);
+		
+		if (dynamic_cast<MoverCell*>(cell))
+		{
+			moverCell_ = cell;
+		}
+		else if (dynamic_cast<LightCell*>(cell))
+		{
+			lightCell_ = cell;
+
+			CircleCollider* cc = new CircleCollider();
+			cc->isSensor = true;
+			cc->radius = LightCell::Radius;
+			cc->centerLocal = curPos;
+			cc->body = rigidBody_;
+			cc->cell = nullptr;
+			colliders_.push_back(cc);
+			PhysicsManager::getInstance().add(cc);
+		}
+
+		unsigned param = dna_[index + 2] - '0';
+		bool error = true;
+
+		while (error)
+		{
+			offset = getOffsetForParam(param);
+
+			if (!overlapsPosition(curPos + offset))
+				error = false;
+			else
+				param = (param + 1) % 4;
+		}
+	}
+
+	std::reverse(cells_.begin(), cells_.end());
+
+	instinct_ = instinct;
+}
+
+Organism::~Organism()
+{
+	for (auto coll : colliders_)
+		PhysicsManager::getInstance().remove(coll);
+
+	PhysicsManager::getInstance().remove(rigidBody_);
+
+	for (auto Cell : cells_)
+		delete Cell;
+
+	Organism::ActiveInstances--;
+}
+
+int Organism::tick()
+{
+	if (lightCell_)
+		return -1;
+
+	for (auto* Cell : cells_)
+	{
+		Cell->tick(this);
+	}
+
+	if (moverCell_)
+	{
+		//m_rb->AngularVelocity = (m_instinct(Time::ElapsedSeconds));
+		Vec2 forward = b2Rot(rigidBody_->rotation).GetYAxis();
+		rigidBody_->forces.push_back(forward);
+	}
+
+	bool isLifeOver = timerTTL_.update();
+	if (isLifeOver)
+	{
+		if (timerTTL_.getIntervalMs() > initialTTL_)
+			return 2;
+		else
+			return 0;
+	}
+
+	return -1;
+}
+
+void Organism::destroy()
+{
+	//Physics::destroy_body(m_body);
+}
+
+Organism* Organism::clone()
+{
+	return new Organism(dna_, instinct_, rigidBody_->position + Random<Vec2>::range({ -50, -50 }, { 50, 50 }), Random<float>::range(0, 2 * std::numbers::pi));
+}
+
+void Organism::draw() const
+{
+	for (auto coll : colliders_)
+	{
+		if (coll->cell && !dynamic_cast<LightCell*>(coll->cell))
+			Renderer2D::pushQuad(coll->transform, TextureManager::get(coll->cell->textureName), glm::vec4(1.0f), false);
+	}
+}
+
+bool Organism::overlapsPosition(const Vec2& pos) const
+{
+	for (auto* Cell : cells_)
+	{
+		if ((Cell->localPos - pos).magnitude() < Cell::Size)
 		{
 			return true;
 		}
@@ -21,7 +150,7 @@ bool Organism::overlaps_position(const Vec2& pos) const
 	return false;
 }
 
-Vec2 Organism::get_offset_for_param(const unsigned param) const
+Vec2 Organism::getOffsetForParam(const unsigned param) const
 {
 	switch (param)
 	{
@@ -38,7 +167,7 @@ Vec2 Organism::get_offset_for_param(const unsigned param) const
 	throw std::runtime_error("Invalid parameter.");
 }
 
-Cell* Organism::get_cell_for_symbol(const char symbol) const
+Cell* Organism::getCellForSymbol(const char symbol) const
 {
 	switch (symbol)
 	{
@@ -53,150 +182,4 @@ Cell* Organism::get_cell_for_symbol(const char symbol) const
 	}
 
 	throw std::runtime_error("Invalid cell type.");
-}
-
-Organism::Organism(const std::string& dna, std::function<float(float)> instinct, Vec2 position, float angle) :
-	m_dna(dna),
-	m_initial_ttl(Organism::TTL),
-	m_timer_ttl(m_initial_ttl),
-	m_timer_clock(1000)
-{
-	m_rb = new RigidBody();
-	m_rb->Position = position;
-	PhysicsManager::getInstance().add(m_rb);
-
-	Vec2 curPos = { 0, 0 };
-	Vec2 offset = { 0, 0 };
-
-	for (size_t index = 0; index < m_dna.size(); index += 4)
-	{
-		const char symbol = m_dna[index];
-		Cell* cell = get_cell_for_symbol(symbol);		
-		m_cells.push_back(cell);
-
-		curPos += offset;	
-
-		cell->LocalPos = curPos;
-		CircleCollider* cc = new CircleCollider();
-		cc->Radius = Cell::Size * 0.5f;
-		cc->CenterLocal = curPos;
-		cc->Body = m_rb;
-		cc->Cell = cell;
-		cc->CollisionCallback = std::bind(&Cell::on_collision, cell, std::placeholders::_1);
-		m_colliders.push_back(cc);
-		PhysicsManager::getInstance().add(cc);
-		
-		if (dynamic_cast<MoverCell*>(cell))
-		{
-			m_mover_cell = cell;
-		}
-		else if (dynamic_cast<LightCell*>(cell))
-		{
-			m_light_cell = cell;
-
-			CircleCollider* cc = new CircleCollider();
-			cc->IsSensor = true;
-			cc->Radius = LightCell::Radius;
-			cc->CenterLocal = curPos;
-			cc->Body = m_rb;
-			cc->Cell = nullptr;
-			m_colliders.push_back(cc);
-			PhysicsManager::getInstance().add(cc);
-		}
-
-		unsigned param = m_dna[index + 2] - '0';
-		bool error = true;
-
-		while (error)
-		{
-			offset = get_offset_for_param(param);
-
-			if (!overlaps_position(curPos + offset))
-				error = false;
-			else
-				param = (param + 1) % 4;
-		}
-	}
-
-	std::reverse(m_cells.begin(), m_cells.end());
-
-	m_instinct = instinct;
-}
-
-Organism::~Organism()
-{
-	for (auto coll : m_colliders)
-		PhysicsManager::getInstance().remove(coll);
-
-	PhysicsManager::getInstance().remove(m_rb);
-}
-
-int Organism::tick()
-{
-	if (m_light_cell)
-		return -1;
-
-	for (auto* cell : m_cells)
-	{
-		cell->tick(this);
-	}
-
-	if (m_mover_cell)
-	{
-		m_rb->AngularVelocity = (m_instinct(Time::ElapsedSeconds));
-		Vec2 forward = b2Rot(m_rb->Rotation).GetYAxis();
-		m_rb->Forces.push_back(forward);
-	}
-
-	bool is_life_over = m_timer_ttl.update();
-	if (is_life_over)
-	{
-		if (m_timer_ttl.get_interval_ms() > m_initial_ttl)
-			return 2;
-		else
-			return 0;
-	}
-
-	return -1;
-}
-
-void Organism::destroy()
-{
-	//Physics::destroy_body(m_body);
-}
-
-Organism* Organism::clone()
-{
-	return new Organism(m_dna, m_instinct, m_rb->Position + Random<Vec2>::range({ -50, -50 }, { 50, 50 }), Random<float>::range(0, 2 * std::numbers::pi));
-}
-
-void Organism::draw() const
-{
-	for (auto coll : m_colliders)
-	{
-		if (coll->Cell)
-			Renderer2D::pushQuad(coll->Transform, TextureManager::get(coll->Cell->TextureName), glm::vec4(1.0f), false);
-	}
-}
-
-void Organism::draw_light() const
-{
-	if (!m_light_cell)
-		return;
-
-	auto rbPos = glm::vec3{ m_rb->Position.X, m_rb->Position.Y, 0 };
-	//auto angle = m_body->GetAngle();
-	for (auto coll : m_colliders)
-	{
-		Cell* cell = coll->Cell;
-		if (cell && dynamic_cast<LightCell*>(cell))
-		{
-			auto tf =
-				glm::translate(glm::mat4(1.0f), rbPos) *
-				glm::rotate(glm::mat4(1.0f), 0.0f, { 0, 0, 1 }) *
-				glm::translate(glm::mat4(1.0f), { coll->CenterLocal.X, coll->CenterLocal.Y, 0 }) *
-				glm::scale(glm::mat4(1.0f), { LightCell::Radius * 2, LightCell::Radius * 2, 1 });
-			Renderer2D::pushQuad(tf, TextureManager::get("light_circle.png"), glm::vec4(1.0f), false);
-		}
-	}
 }
