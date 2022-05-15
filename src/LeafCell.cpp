@@ -1,29 +1,17 @@
 #include "pch.h"
 #include "LeafCell.h"
-#include "Engine/Timer.h"
 #include "Organism.h"
-#include "LightCell.h"
 #include "Engine/Physics.h"
 
-LeafCell::LeafCell() : 
-	Cell("cell_leaf.png"),
-	timer(1000)
+LeafCell::LeafCell(Organism* org, CircleCollider* collider) : 
+	Cell(org, collider, "cell_leaf.png")
 {
 }
 
-void LeafCell::tick(Organism* org)
+void LeafCell::tick()
 {
-	if (timer.update())
-	{
-		org->timerTTL_.addTime(50 * lightLevel);
-	}
 }
 
-void LeafCell::onCollision(CircleCollider* other)
+void LeafCell::onCollision(Cell* other)
 {
-	if (other->cell == nullptr && std::find(lightCells.begin(), lightCells.end(), other->cell) == lightCells.end())
-	{
-		lightCells.push_back(other->cell);
-		lightLevel++;
-	}
 }

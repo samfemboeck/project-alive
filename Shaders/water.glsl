@@ -62,10 +62,10 @@ void main()
     vec3 norm = normal(uv);
     vec4 water = mix(
                     mix(waterColor, texture(uChannels[0], uv), 0.5),
-                    texture(uChannels[0], norm.xz * 0.5 + 0.5), 0.3
-                    );
+                    texture(uChannels[0], norm.xz * 0.5 + 0.5), 1.0
+                    ) * 0.5;
     vec2 lightPos = uLightPositions[0];
     float dist = length(vWorldPos - lightPos);
 	float attenuation = 1.0 / (uLightAttenuation.x + uLightAttenuation.y * dist + uLightAttenuation.z * dist * dist);	
-    Color = water * attenuation + vec4(uAmbient, 1);
+    Color = attenuation + vec4(uAmbient, 1);
 }			

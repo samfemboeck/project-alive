@@ -73,9 +73,9 @@ void PhysicsManager::findCollisions()
 			if (dir.magnitude_squared() <= sum_radii * sum_radii)
 			{
 				if (col1->collisionCallback)
-					col1->collisionCallback(col2);
+					col1->collisionCallback(col2->cell);
 				if (col2->collisionCallback)
-					col2->collisionCallback(col1);
+					col2->collisionCallback(col1->cell);
 
 				if (col1->isSensor || col2->isSensor)
 					continue;

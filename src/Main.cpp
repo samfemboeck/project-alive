@@ -8,6 +8,8 @@
 #include "Engine/OrthoCamController.h"
 #include "Engine/Timer.h"
 #include <thread>
+#include "Engine/Renderer2D.h"
+#include "Cell.h"
 
 static std::vector<Organism*> SOrganisms;
 static long SInitialTTL = 5000;
@@ -107,11 +109,6 @@ public:
 
 		{
 			Renderer2D::clear();
-			
-			Renderer2D::beginWater(m_cam_controller.getView(), m_cam_controller.getProjection());
-			Renderer2D::pushQuad({ -windowData_.width * 100, -windowData_.height * 100 }, { windowData_.width * 100, windowData_.height * 100 }, RED);
-			Renderer2D::endWater();
-
 			Renderer2D::beginTextures(m_cam_controller.getView(), m_cam_controller.getProjection());
 			//Renderer2D::pushQuad(glm::scale(glm::mat4(1.0f), { m_window_data.Width * 4, m_window_data.Height * 4, 1 }), TextureManager::get("background.png"), glm::vec4(1.0f), false);
 			{
@@ -226,24 +223,6 @@ public:
 
 			auto mouse_pos_world = Camera::screenToWorldPoint({ windowData_.mousePos.x / windowData_.width, windowData_.mousePos.y / windowData_.height }, m_cam_controller.getViewProjection());
 			SOrganisms.push_back(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi)));
-		}
-		else
-		{
-			float amplitude = Random<float>::range(0.25f, 3.0f);
-			float offset_sin1 = Random<float>::range(0.0f, 10.0f);
-			float multiplier_x_sin1 = Random<int>::range(1, 5);
-			float offset_sin2 = Random<float>::range(0.0f, 10.0f);
-			float multiplier_x_sin2 = Random<int>::range(1, 5);
-
-			auto instinct = [=](float x) -> float
-			{
-				return amplitude * (sin(multiplier_x_sin1 * x + offset_sin1) + sin(multiplier_x_sin2 * x + offset_sin2));
-			};
-
-			auto mouse_pos_world = Camera::screenToWorldPoint({ windowData_.mousePos.x / windowData_.width, windowData_.mousePos.y / windowData_.height }, m_cam_controller.getViewProjection());
-			auto org = new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi));
-			org->rigidBody_->setVelocity({ 10, 10 });
-			SOrganisms.push_back(org);
 		}
 	}
 

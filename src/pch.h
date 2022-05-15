@@ -46,10 +46,9 @@
 #include "Engine/SubTexture2D.h"
 #include "Engine/VertexArray.h"
 #include "Engine/Shader.h"
-#include "Engine/Renderer2D.h"
 #include "Engine/TextureManager.h"
-#include "Engine/Component.h"
 
+#define DEB
 #define LOG(...) std::cout << std::format(__VA_ARGS__) << std::endl
 
 #define PROFILE(...) ScopeTimer timer(__VA_ARGS__)

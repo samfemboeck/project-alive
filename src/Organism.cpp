@@ -7,6 +7,7 @@
 #include "Engine/Physics.h"
 #include "Engine/Time.h"
 #include "Engine/Timer.h"
+#include "Engine/Renderer2D.h"
 
 Organism::Organism(const std::string& dna, std::function<float(float)> instinct, Vec2 position_, float angle) :
 	dna_(dna),
@@ -23,64 +24,66 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 
 	for (size_t index = 0; index < dna_.size(); index += 4)
 	{
-		const char symbol = dna_[index];
-		Cell* cell = getCellForSymbol(symbol);		
+		const char symbol = dna_[index];	
+		
+		Cell* cell;
+		CircleCollider* cc = new CircleCollider();
+
+		switch (symbol)
+		{
+		case 'L':
+			cell = new LeafCell(this, cc);
+			break;
+		case 'T':
+			cell = new ThornCell(this, cc);
+			break;
+		case 'M':
+			cell = new MoverCell(this, cc);
+			break;
+		case 'A':
+			cell = new LightCell(this, cc);
+			break;
+		default:
+			LOG("Invalid DNA symbol: {}", symbol);
+		}
+
 		cells_.push_back(cell);
 
 		curPos += offset;	
 
-		cell->localPos = curPos;
-		CircleCollider* cc = new CircleCollider();
 		cc->radius = Cell::Size * 0.5f;
 		cc->centerLocal = curPos;
 		cc->body = rigidBody_;
 		cc->cell = cell;
 		cc->collisionCallback = std::bind(&Cell::onCollision, cell, std::placeholders::_1);
-		colliders_.push_back(cc);
 		PhysicsManager::getInstance().add(cc);
 		
-		if (dynamic_cast<MoverCell*>(cell))
+		unsigned param = dna_[index + 2] - '0';	
+		
+		switch (param)
 		{
-			moverCell_ = cell;
-		}
-		else if (dynamic_cast<LightCell*>(cell))
-		{
-			lightCell_ = cell;
-
-			CircleCollider* cc = new CircleCollider();
-			cc->isSensor = true;
-			cc->radius = LightCell::Radius;
-			cc->centerLocal = curPos;
-			cc->body = rigidBody_;
-			cc->cell = nullptr;
-			colliders_.push_back(cc);
-			PhysicsManager::getInstance().add(cc);
-		}
-
-		unsigned param = dna_[index + 2] - '0';
-		bool error = true;
-
-		while (error)
-		{
-			offset = getOffsetForParam(param);
-
-			if (!overlapsPosition(curPos + offset))
-				error = false;
-			else
-				param = (param + 1) % 4;
+		case 0:
+			offset = { 0, Cell::Size };
+			break;
+		case 1:
+			offset = { Cell::Size, 0 };
+			break;
+		case 2:
+			offset = { 0, -Cell::Size };
+			break;
+		case 3:
+			offset = { -Cell::Size, 0 };
+			break;
+		default:
+			LOG("Invalid DNA param: {}", param);
 		}
 	}
-
-	std::reverse(cells_.begin(), cells_.end());
 
 	instinct_ = instinct;
 }
 
 Organism::~Organism()
 {
-	for (auto coll : colliders_)
-		PhysicsManager::getInstance().remove(coll);
-
 	PhysicsManager::getInstance().remove(rigidBody_);
 
 	for (auto Cell : cells_)
@@ -91,20 +94,8 @@ Organism::~Organism()
 
 int Organism::tick()
 {
-	if (lightCell_)
-		return -1;
-
 	for (auto* Cell : cells_)
-	{
-		Cell->tick(this);
-	}
-
-	if (moverCell_)
-	{
-		//m_rb->AngularVelocity = (m_instinct(Time::ElapsedSeconds));
-		Vec2 forward = b2Rot(rigidBody_->rotation).GetYAxis();
-		rigidBody_->forces.push_back(forward);
-	}
+		Cell->tick();
 
 	bool isLifeOver = timerTTL_.update();
 	if (isLifeOver)
@@ -118,11 +109,6 @@ int Organism::tick()
 	return -1;
 }
 
-void Organism::destroy()
-{
-	//Physics::destroy_body(m_body);
-}
-
 Organism* Organism::clone()
 {
 	return new Organism(dna_, instinct_, rigidBody_->position + Random<Vec2>::range({ -50, -50 }, { 50, 50 }), Random<float>::range(0, 2 * std::numbers::pi));
@@ -130,56 +116,6 @@ Organism* Organism::clone()
 
 void Organism::draw() const
 {
-	for (auto coll : colliders_)
-	{
-		if (coll->cell && !dynamic_cast<LightCell*>(coll->cell))
-			Renderer2D::pushQuad(coll->transform, TextureManager::get(coll->cell->textureName), glm::vec4(1.0f), false);
-	}
-}
-
-bool Organism::overlapsPosition(const Vec2& pos) const
-{
-	for (auto* Cell : cells_)
-	{
-		if ((Cell->localPos - pos).magnitude() < Cell::Size)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-Vec2 Organism::getOffsetForParam(const unsigned param) const
-{
-	switch (param)
-	{
-	case 0:
-		return { 0, Cell::Size };
-	case 1:
-		return { Cell::Size, 0 };
-	case 2:
-		return { 0, -Cell::Size };
-	case 3:
-		return { -Cell::Size, 0 };
-	}
-
-	throw std::runtime_error("Invalid parameter.");
-}
-
-Cell* Organism::getCellForSymbol(const char symbol) const
-{
-	switch (symbol)
-	{
-	case 'L':
-		return new LeafCell();
-	case 'T':
-		return new ThornCell();
-	case 'M':
-		return new MoverCell();
-	case 'A':
-		return new LightCell();
-	}
-
-	throw std::runtime_error("Invalid cell type.");
+	for (auto* cell : cells_)
+		cell->draw();
 }

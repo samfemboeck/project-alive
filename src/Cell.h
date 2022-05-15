@@ -4,17 +4,21 @@
 class Organism;
 class CircleCollider;
 
-struct Cell
+class Cell
 {
+public:
 	inline static int Instances = 0;
-	inline static const float Size = 10;
+	inline static const float Size = 40;
 
-	std::string textureName;
-	Vec2 localPos;
-
-	Cell(std::string textureName);
+public:
+	Cell(Organism* organism, CircleCollider* collider, std::string textureName);
+	virtual void tick() {};
+	virtual ~Cell();
+	virtual void onCollision(Cell* other) {}
 	void draw();
-	virtual void tick(Organism* org) {};
-	inline virtual ~Cell() { Instances--; };
-	virtual void onCollision(CircleCollider* coll) {}
+
+protected:
+	CircleCollider* collider_;
+	std::string textureName_;
+	Organism* organism_;
 };

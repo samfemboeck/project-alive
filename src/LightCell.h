@@ -2,8 +2,9 @@
 
 #include "Cell.h"
 
-struct LightCell final : public Cell
+class LightCell final : public Cell
 {
-	inline static float Radius = Cell::Size * 20;
-	LightCell();
+public:
+	inline static float LightRadius = Cell::Size * 20;
+	LightCell(Organism* org, CircleCollider* collider);
 };

@@ -30,7 +30,7 @@ void Texture2D::loadFromPath(const std::string& path, bool mirrored_repeat)
 	stbi_uc* data = stbi_load(path_.c_str(), &width, &height, &channels, 0);
 	if (!data)
 	{
-		std::cout << "Failed to load texture" << std::endl;
+		LOG("Failed to load texture '{}'", path);
 		return;
 	}
 

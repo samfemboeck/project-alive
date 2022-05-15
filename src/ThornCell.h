@@ -5,7 +5,5 @@
 class ThornCell final : public Cell
 {
 public:
-	ThornCell() : Cell("cell_thorn.png")
-	{
-	};
+	ThornCell(Organism*, CircleCollider*);
 };

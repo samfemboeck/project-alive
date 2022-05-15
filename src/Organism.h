@@ -1,13 +1,12 @@
 #pragma once
 
 #include "Engine/QuickMaths.h"
-#include "Cell.h"
 #include "Engine/Timer.h"
 
 class RigidBody;
-class CircleCollider;
+class Cell;
 
-struct Organism : IComponent
+struct Organism
 {
 public:
 	inline static int MaxInstances = 2000;
@@ -29,25 +28,17 @@ public:
 	~Organism();
 	void draw() const;
 	int tick();
-	void destroy();
 	Organism* clone();
-	RigidBody* rigidBody_;
 
 private:
-	friend struct LeafCell;
+	friend class LeafCell;
+	friend class MoverCell;
 	
 private:
 	std::string dna_;
 	std::vector<Cell*> cells_;
-	std::vector<CircleCollider*> colliders_;
-	Cell* moverCell_ = nullptr;
-	Cell* lightCell_ = nullptr;
 	std::function<float(float)> instinct_;
 	long initialTTL_;
 	TickCountTimer timerTTL_;
-
-private:
-	bool overlapsPosition(const Vec2& pos) const;
-	Vec2 getOffsetForParam(const unsigned param) const;
-	Cell* getCellForSymbol(const char symbol) const;
+	RigidBody* rigidBody_;
 };

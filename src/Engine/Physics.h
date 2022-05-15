@@ -8,11 +8,6 @@ class Collider;
 class RigidBody;
 class Cell;
 
-struct ManifoldNotify
-{
-	uint16_t indexOrganism;
-};
-
 struct ManifoldResolve
 {
 	RigidBody* rb1;
@@ -31,7 +26,7 @@ struct CircleCollider
 	RigidBody* body = nullptr;
 	bool isSensor = false;
 	Cell* cell = nullptr;
-	std::function<void(CircleCollider*)> collisionCallback;
+	std::function<void(Cell*)> collisionCallback;
 };
 
 class PhysicsManager

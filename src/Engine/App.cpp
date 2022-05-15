@@ -3,6 +3,7 @@
 #include "QuickMaths.h"
 #include "Time.h"
 #include "ImGuiHandler.h"
+#include "Renderer2D.h"
 
 void onWindowResize(GLFWwindow * m_window, int w, int h)
 {

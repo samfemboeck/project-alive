@@ -42,7 +42,7 @@ void main()
 {
     vec2 lightPos = uLightPositions[0];
     float dist = length(vWorldPos - lightPos);
-	float attenuation = 1.0 / (uLightAttenuation.x + uLightAttenuation.y * dist * 0.15 + uLightAttenuation.z * dist * dist);	
+	float attenuation = 1.0 / (uLightAttenuation.x + uLightAttenuation.y * dist + uLightAttenuation.z * dist * dist);	
     vec4 col = texture(uTextures[int(vTexIndex)], vTexCoord) * vColor;
     if (col.a == 0)
         Color = col;

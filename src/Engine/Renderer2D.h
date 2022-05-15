@@ -48,7 +48,7 @@ struct Renderer2DStorage
 
 	inline static glm::vec3 WaterColor = { 119.0f, 154.0f, 251.0f };
 	inline static int TileLevel = 300;
-	inline static glm::vec3 LightAttenuation = { 0.3f, 0.02f, 0.0f };
+	inline static glm::vec3 LightAttenuation = { 1.0f, 0.02f, 0.0001f };
 	inline static glm::vec3 AmbientLight = { 0.0f, 0.0f, 0.05f };
 
 	VertexArray* quadVertexArray;
