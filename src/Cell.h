@@ -15,10 +15,11 @@ public:
 	virtual void tick() {};
 	virtual ~Cell();
 	virtual void onCollision(Cell* other) {}
-	void draw();
+	virtual void draw();
 
 protected:
 	CircleCollider* collider_;
 	std::string textureName_;
+	std::string textureNameFilled_;
 	Organism* organism_;
 };

@@ -55,7 +55,7 @@ App::App()
 	glfwSetCursorPosCallback(window_, [](GLFWwindow* window, double posX, double posY)
 	{
 		auto* data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		data->mousePos = Vec2(posX, posY);
+		data->mousePos = Vec2f(posX, posY);
 	});
 
 	glfwSetScrollCallback(window_, [](GLFWwindow* window, double offsetX, double offsetY)
@@ -185,6 +185,11 @@ void App::start()
 
 		glfwSwapBuffers(window_);
 	}
+}
+
+WindowData& App::getWindowData()
+{
+	return windowData_;
 }
 
 void App::onUpdate()

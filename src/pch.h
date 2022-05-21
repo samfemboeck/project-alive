@@ -48,7 +48,8 @@
 #include "Engine/Shader.h"
 #include "Engine/TextureManager.h"
 
-#define DEB
 #define LOG(...) std::cout << std::format(__VA_ARGS__) << std::endl
-
-#define PROFILE(...) ScopeTimer timer(__VA_ARGS__)
+#define PROFILE(methodName) ScopeTimer timer(methodName)
+#define TRANSLATE(pos) glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0))
+#define ROTATE(angle) glm::rotate(glm::mat4(1.0f), angle, {0, 0, 1})
+#define SCALE(s) glm::scale(glm::mat4(1.0f), glm::vec3(s, s, 1))

@@ -8,16 +8,18 @@ struct WindowData
 {
 	int width;
 	int height;
-	Vec2 mousePos;
+	Vec2f mousePos;
 	App* app;
 };
 
 class App
 {
 public:
-	App();
 	~App();
 	void start();
+	WindowData& getWindowData();
+	App();
+
 protected:
 	virtual void onUpdate();
 	virtual void onMouseScrolled(double offsetX, double offsetY) {};
@@ -27,6 +29,7 @@ protected:
 	virtual void onKeyReleased(int key) {};
 	virtual void onWindowClosed() {};
 	virtual void onDrawImGui() {};
+
 protected:
 	WindowData windowData_;
 	GLFWwindow* window_;

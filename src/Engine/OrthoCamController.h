@@ -5,6 +5,7 @@
 class OrthoCamController
 {
 public:
+	static OrthoCamController& getInstance();
 	OrthoCamController() = default;
 
 	void update();
@@ -12,6 +13,7 @@ public:
 	void pressKey(int key);
 	void releaseKey(int key);
 	bool scrollMouse(double mouseOffsetY);
+	float getZoomLevel();
 	inline glm::mat4 getViewProjection() { return getProjection() * getView(); }
 	inline glm::mat4 getView() { return glm::inverse(glm::translate(glm::mat4(1), position_)); }
 	inline glm::mat4 getProjection() { return camera_.getProjectionMatrix(); }

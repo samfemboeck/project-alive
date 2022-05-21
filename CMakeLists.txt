@@ -38,6 +38,8 @@ add_executable(alive
 	src/Engine/App.cpp
 	src/Engine/ImGuiHandler.h
 	src/Engine/ImGuiHandler.cpp
+	src/Engine/EntityGrid.h
+	src/Engine/EntityGrid.cpp
 
 	src/Main.cpp
 	src/Organism.h

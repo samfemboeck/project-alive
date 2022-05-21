@@ -6,6 +6,12 @@
 #include "OrthoCamController.h"
 #include "Time.h"
 
+OrthoCamController& OrthoCamController::getInstance()
+{
+	static OrthoCamController controller;
+	return controller;
+}
+
 void OrthoCamController::update()
 {
 	if (isKeyADown_)
@@ -70,11 +76,16 @@ void OrthoCamController::releaseKey(int key)
 	}
 }
 
-bool OrthoCamController::scrollMouse(double mouse_offset_y)
+bool OrthoCamController::scrollMouse(double mouseOffsetY)
 {
-	zoomLevel_ -= mouse_offset_y * speedScroll_;
+	zoomLevel_ -= mouseOffsetY * speedScroll_;
 	zoomLevel_ = std::max(zoomLevel_, 0.1f);
 	camera_.setOrtho(-width_ * 0.5f * zoomLevel_, width_ * 0.5f * zoomLevel_, -aspectRatio_ * width_ * 0.5f * zoomLevel_, aspectRatio_ * width_ * 0.5f * zoomLevel_);
 	speedScroll_ = 1 / zoomLevel_ * zoomLevel_ * zoomLevel_ * 0.1f;
 	return false;
+}
+
+float OrthoCamController::getZoomLevel()
+{
+	return zoomLevel_;
 }

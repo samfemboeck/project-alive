@@ -47,5 +47,5 @@ void main()
     if (col.a == 0)
         Color = col;
     else
-        Color = mix(vec4(1, 1, 1, 1), col, attenuation);
+        Color = mix(vec4(1, 1, 1, 1), col, 1/*attenuation*/);
 }

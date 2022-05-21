@@ -39,31 +39,46 @@ std::array<std::array<wchar_t, 5>, 5000> test_arr;
 
 class AliveApp : public App
 {
-public:
-	AliveApp() :
-		App()
+private:
+	AliveApp()	
 	{
 		srand(time(NULL));
 
-		m_cam_controller.setDimensions(windowData_.width, windowData_.height / (float)windowData_.width);
+		OrthoCamController::getInstance().setDimensions(windowData_.width, windowData_.height / (float)windowData_.width);
 
 		Renderer2D::init();
 		Renderer2D::setClearColor({ 0, 0, 0, 1 });
 
 		TextureManager::add("cell_leaf.png");
+		TextureManager::add("cell_leaf_filled.png");
 		TextureManager::add("cell_thorn.png");
+		TextureManager::add("cell_thorn_filled.png");
 		TextureManager::add("cell_mover.png");
+		TextureManager::add("cell_mover_filled.png");
 		TextureManager::add("cell_light.png");
+		TextureManager::add("cell_light_filled.png");
 		TextureManager::add("collider.png");
 		TextureManager::add("light_circle.png");
 		TextureManager::add("light_warm.png");
 		TextureManager::add("background.png");
+		TextureManager::add("aabb.png");
+
+		PhysicsManager::getInstance().setSpatialHashPosition({ -windowData_.width * 0.5f, -windowData_.height * 0.5f });
+	}
+
+public:
+	static AliveApp& getInstance()
+	{
+		static AliveApp app;
+		return app;
 	}
 
 	void onUpdate()
 	{
+		std::vector<AABB*> out;
+		PhysicsManager::getInstance().squareCast({ 0, 0 }, { 1, 1 }, out);
 		ScopeTimer timer("Update Main");
-		m_cam_controller.update();
+		OrthoCamController::getInstance().update();
 
 		{
 			ScopeTimer timer("Tick Organisms");
@@ -109,7 +124,7 @@ public:
 
 		{
 			Renderer2D::clear();
-			Renderer2D::beginTextures(m_cam_controller.getView(), m_cam_controller.getProjection());
+			Renderer2D::beginTextures(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
 			//Renderer2D::pushQuad(glm::scale(glm::mat4(1.0f), { m_window_data.Width * 4, m_window_data.Height * 4, 1 }), TextureManager::get("background.png"), glm::vec4(1.0f), false);
 			{
 				{
@@ -117,6 +132,7 @@ public:
 					for (auto* org : SOrganisms)
 						org->draw();
 				}
+				PhysicsManager::getInstance().draw();
 			}
 			{
 				ScopeTimer timer("Flush");
@@ -128,7 +144,7 @@ public:
 
 	void onKeyPressed(int key)
 	{
-		m_cam_controller.pressKey(key);
+		OrthoCamController::getInstance().pressKey(key);
 
 		if (key >= GLFW_KEY_1 && key < GLFW_KEY_1 + Organism::DefaultDNAs.size())
 		{
@@ -149,7 +165,7 @@ public:
 
 	void onKeyReleased(int key)
 	{
-		m_cam_controller.releaseKey(key);		
+		OrthoCamController::getInstance().releaseKey(key);		
 
 		if (key == GLFW_KEY_TAB)
 		{
@@ -159,7 +175,8 @@ public:
 
 	void onMouseScrolled(double offsetX, double offsetY)
 	{
-		m_cam_controller.scrollMouse(offsetY);
+		OrthoCamController::getInstance().scrollMouse(offsetY);
+		//
 	}
 
 	void onDrawImGui()
@@ -200,7 +217,6 @@ public:
 			ImGui::InputFloat3("Light Attenuation", &Renderer2DStorage::LightAttenuation.x);
 			ImGui::InputFloat3("Ambient Light", &Renderer2DStorage::AmbientLight.x);
 			ImGui::End();
-			//
 		}
 
 		ScopeTimer::Data.clear();
@@ -221,20 +237,26 @@ public:
 				return amplitude * (sin(multiplier_x_sin1 * x + offset_sin1) + sin(multiplier_x_sin2 * x + offset_sin2));
 			};
 
-			auto mouse_pos_world = Camera::screenToWorldPoint({ windowData_.mousePos.x / windowData_.width, windowData_.mousePos.y / windowData_.height }, m_cam_controller.getViewProjection());
+			auto mouse_pos_world = Camera::screenToWorldPoint(glm::vec2(windowData_.mousePos.x / windowData_.width, windowData_.mousePos.y / windowData_.height ), OrthoCamController::getInstance().getViewProjection());
 			SOrganisms.push_back(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi)));
 		}
 	}
 
 private:
-	OrthoCamController m_cam_controller;
 	bool m_is_tab_pressed = false;
 
 };
 
 int main()
 {
-	AliveApp app;
-	app.start();
+	try
+	{
+		auto& app = AliveApp::getInstance();
+		app.start();
+	}
+	catch (std::exception e)
+	{
+		LOG("{}", e.what());
+	}
 	return 0;
 }

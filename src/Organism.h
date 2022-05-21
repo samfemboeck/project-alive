@@ -5,6 +5,7 @@
 
 class RigidBody;
 class Cell;
+class AABB;
 
 struct Organism
 {
@@ -24,7 +25,7 @@ public:
 	inline static std::vector<Organism*> Instances;
 
 public:
-	Organism(const std::string& dna, std::function<float(float)> instinct, Vec2 position_, float angle);
+	Organism(const std::string& dna, std::function<float(float)> instinct, Vec2f position_, float angle);
 	~Organism();
 	void draw() const;
 	int tick();
@@ -33,6 +34,7 @@ public:
 private:
 	friend class LeafCell;
 	friend class MoverCell;
+	friend class LightCell;
 	
 private:
 	std::string dna_;
@@ -41,4 +43,6 @@ private:
 	long initialTTL_;
 	TickCountTimer timerTTL_;
 	RigidBody* rigidBody_;
+	AABB* aabb_;
+	bool isLight_ = false;
 };

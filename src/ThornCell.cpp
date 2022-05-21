@@ -4,6 +4,6 @@
 #include "Engine/Physics.h"
 
 ThornCell::ThornCell(Organism* org, CircleCollider* collider) :
-	Cell(org, collider, "cell_thorn.png")
+	Cell(org, collider, "cell_thorn")
 {
 }
