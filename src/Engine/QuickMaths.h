@@ -62,6 +62,16 @@ struct Vec2
 	Vec2<T> operator-(const Vec2<T>& rhs) const
 	{
 		return Vec2<T>(x - rhs.x, y - rhs.y);
+	}	
+	
+	Vec2<T> operator-(const float& f) const
+	{
+		return Vec2<T>(x - f, y - f);
+	}
+
+	Vec2<T> operator+(const float& f) const
+	{
+		return Vec2<T>(x + f, y + f);
 	}
 
 	T magnitude()

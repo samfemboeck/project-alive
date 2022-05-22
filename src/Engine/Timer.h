@@ -18,7 +18,6 @@ class TickCountTimer
 public:
 	TickCountTimer(long intervalMs);
 	bool update();
-	void addTime(long timeMs);
 	long getElapsedMs();
 	long getIntervalMs();
 private:

@@ -40,6 +40,8 @@ add_executable(alive
 	src/Engine/ImGuiHandler.cpp
 	src/Engine/EntityGrid.h
 	src/Engine/EntityGrid.cpp
+	src/Engine/Util.h
+	src/Engine/Util.cpp
 
 	src/Main.cpp
 	src/Organism.h
@@ -54,6 +56,10 @@ add_executable(alive
 	src/ThornCell.cpp
 	src/LightCell.h
 	src/LightCell.cpp
+	src/FruitCell.h
+	src/FruitCell.cpp
+	src/FoodCell.h
+	src/FoodCell.cpp
 
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c

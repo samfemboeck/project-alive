@@ -2,7 +2,7 @@
 #include "Engine/QuickMaths.h"
 
 class Organism;
-class CircleCollider;
+struct CircleCollider;
 
 class Cell
 {

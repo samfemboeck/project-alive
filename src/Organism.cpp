@@ -3,15 +3,18 @@
 #include "LeafCell.h"
 #include "ThornCell.h"
 #include "MoverCell.h"
+#include "FruitCell.h"
+#include "FoodCell.h"
 #include "LightCell.h"
 #include "Engine/Physics.h"
 #include "Engine/Time.h"
 #include "Engine/Timer.h"
 #include "Engine/Renderer2D.h"
+#include "Engine/Util.h"
 
 Organism::Organism(const std::string& dna, std::function<float(float)> instinct, Vec2f position_, float angle) :
 	dna_(dna),
-	initialTTL_(Organism::TimeToLive),
+	initialTTL_(MaxTTL),
 	timerTTL_(initialTTL_)
 {
 	Organism::ActiveInstances++;
@@ -43,6 +46,12 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 			break;
 		case 'M':
 			cell = new MoverCell(this, cc);
+			break;
+		case 'R':
+			cell = new FruitCell(this, cc);
+			break;
+		case 'X':
+			cell = new FoodCell(this, cc);
 			break;
 		case 'A':
 			cell = new LightCell(this, cc);
@@ -124,13 +133,17 @@ int Organism::tick()
 	for (auto* Cell : cells_)
 		Cell->tick();
 
-	if (isLight_)
+	if (isLight_ || isCorpse_)
 		return -1;
 
-	bool isLifeOver = timerTTL_.update();
-	if (isLifeOver)
+	if (timerTTL_.update())
+		return 2;
+
+	energy_ -= Time::DeltaSeconds * 100.0f;
+
+	if (energy_ <= 0)
 	{
-		if (timerTTL_.getIntervalMs() > initialTTL_)
+		if (timerTTL_.getElapsedMs() > 1000)
 			return 2;
 		else
 			return 0;
@@ -139,9 +152,27 @@ int Organism::tick()
 	return -1;
 }
 
-Organism* Organism::clone()
+Organism* Organism::clone(Vec2f pos)
 {
-	return new Organism(dna_, instinct_, rigidBody_->position + Random<Vec2f>::range({ -50, -50 }, { 50, 50 }), Random<float>::range(0, 2 * std::numbers::pi));
+	return new Organism(dna_, instinct_, pos, Random<float>::range(0, 2 * std::numbers::pi));
+}
+
+Organism* Organism::createCorpse()
+{
+	std::string dna = dna_;
+	dna = Util::replaceAll(dna, "L", "X");
+	dna = Util::replaceAll(dna, "T", "X");
+	dna = Util::replaceAll(dna, "M", "X");
+	dna = Util::replaceAll(dna, "R", "X");
+
+	auto* ret = new Organism(dna, instinct_, rigidBody_->position, rigidBody_->rotation);
+	ret->isCorpse_ = true;
+	return ret;
+}
+
+AABB* Organism::getAABB()
+{
+	return aabb_;
 }
 
 void Organism::draw() const
@@ -149,5 +180,5 @@ void Organism::draw() const
 	for (auto* cell : cells_)
 		cell->draw();
 
-	Renderer2D::pushQuad(aabb_->boundsWorld.min, aabb_->boundsWorld.max, TextureManager::get("aabb.png"));
+	//Renderer2D::pushQuad(aabb_->boundsWorld.min, aabb_->boundsWorld.max, TextureManager::get("aabb.png"));
 }

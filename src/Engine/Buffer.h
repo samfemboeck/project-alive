@@ -33,7 +33,12 @@ struct BufferElement
 	uint32_t offset;
 	bool normalized;
 
-	BufferElement() {}
+	BufferElement() :
+		name("default"),
+		size(0),
+		offset(0),
+		normalized(false)
+	{}
 
 	BufferElement(ShaderDataType type, const std::string& name, bool normalized = false)
 		: name(name), type(type), size(ShaderDataTypeSize(type)), offset(0), normalized(normalized)

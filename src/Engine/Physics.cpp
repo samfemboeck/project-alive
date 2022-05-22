@@ -22,6 +22,7 @@ void PhysicsManager::add(RigidBody* rb)
 void PhysicsManager::add(AABB* aabb)
 {
 	aabbs_.push_back(aabb);
+	update(aabb);
 }
 
 void PhysicsManager::remove(CircleCollider* collider)
@@ -38,7 +39,6 @@ void PhysicsManager::remove(RigidBody* rb)
 
 void PhysicsManager::remove(AABB* aabb)
 {
-	aabbs_.erase(std::find(aabbs_.begin(), aabbs_.end(), aabb));
 	aabb->isDeleted = true;
 }
 
@@ -46,6 +46,17 @@ void PhysicsManager::update()
 {
 	static float accumulator = 0;
 	accumulator += Time::DeltaSeconds;
+
+	for (auto it = aabbs_.begin(); it != aabbs_.end();)
+	{
+		if ((*it)->isDeleted)
+		{
+			delete *it;
+			it = aabbs_.erase(it);
+		}
+		else
+			it++;
+	}
 
 	while (accumulator > step_)
 	{
@@ -60,15 +71,15 @@ void PhysicsManager::fixedUpdate()
 
 	unsigned collisionQueries = 0;
 
-	for (unsigned x = 0; x < SpatialHash::GridWidth; x++)
+	for (unsigned x = 0; x < EntityGrid::GridWidth; x++)
 	{
-		for (unsigned y = 0; y < SpatialHash::GridHeight; y++)
+		for (unsigned y = 0; y < EntityGrid::GridHeight; y++)
 		{
 			auto& entitiesInSquare = spatialHash_.get(x, y);
 
-			for (unsigned i = 0; entitiesInSquare[i] && i < SpatialHash::MaxEntitiesPerSquare - 1; i++)
+			for (unsigned i = 0; entitiesInSquare[i] && i < EntityGrid::MaxEntitiesPerSquare - 1; i++)
 			{
-				for (unsigned a = i + 1; entitiesInSquare[a] && a < SpatialHash::MaxEntitiesPerSquare; a++)
+				for (unsigned a = i + 1; a < EntityGrid::MaxEntitiesPerSquare && entitiesInSquare[a]; a++)
 				{
 					auto& collidersI = entitiesInSquare[i]->rigidBody->colliders;
 					auto& collidersA = entitiesInSquare[a]->rigidBody->colliders;
@@ -85,7 +96,7 @@ void PhysicsManager::fixedUpdate()
 		}
 	}
 
-	LOG("Total Queries: {}", collisionQueries);
+	//LOG("Total Queries: {}", collisionQueries);
 
 	resolveCollisions();
 }
@@ -95,10 +106,14 @@ void PhysicsManager::testCollision(CircleCollider* col1, CircleCollider* col2)
 	auto rb1 = col1->rigidBody;
 	auto rb2 = col2->rigidBody;
 
-	float sum_radii = col1->radius + col2->radius;
 	Vec2f dir = col2->centerWorld - col1->centerWorld;
 
-	if (dir.magnitude_squared() <= sum_radii * sum_radii)
+	if (dir.x == 0.0f && dir.y == 0.0f)
+		dir = col2->centerWorld - (col2->centerWorld - 1.0f);
+
+	float sumRadii = col1->radius + col2->radius;
+
+	if (dir.magnitude_squared() < sumRadii * sumRadii)
 	{
 		if (col1->collisionCallback)
 			col1->collisionCallback(col2->cell);
@@ -109,13 +124,20 @@ void PhysicsManager::testCollision(CircleCollider* col1, CircleCollider* col2)
 			return;
 
 		ManifoldResolve manifold;
-		manifold.Penetration = (sum_radii - dir.magnitude()) * 0.5f;
+		manifold.Penetration = (sumRadii - dir.magnitude()) * 0.5f;
 		manifold.Normal = dir.normalize();
 		manifold.ContactPoint = col1->centerWorld + manifold.Normal * (col1->radius - manifold.Penetration);
 		manifold.rb1 = rb1;
 		manifold.rb2 = rb2;
 		manifolds_.push_back(manifold);
 	}
+}
+
+bool PhysicsManager::circleVsCircle(Vec2f centerA, float radiusA, Vec2f centerB, float radiusB)
+{
+	float sumRadii = radiusA + radiusB;
+	Vec2f dir = centerB - centerA;
+	return dir.magnitude_squared() < sumRadii * sumRadii;
 }
 
 void PhysicsManager::resolveCollisions()
@@ -200,23 +222,17 @@ void PhysicsManager::updateRigidBodies()
 	spatialHash_.clear();
 
 	for (auto* aabb : aabbs_)
-	{
-		auto toWorld = TRANSLATE(aabb->rigidBody->position);
-		aabb->boundsWorld.min = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.min.x, aabb->boundsLocal.min.y, 0.0f, 1.0f));
-		aabb->boundsWorld.max = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.max.x, aabb->boundsLocal.max.y, 0.0f, 1.0f));
-		spatialHash_.add(aabb);
-	}
+		if (!aabb->isDeleted)
+			update(aabb);
 }
 
-void PhysicsManager::setSpatialHashPosition(Vec2f pos)
+void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore)
 {
-	spatialHash_.setPos(pos);
-}
+	Vec2i startGrid = spatialHash_.getLocalCoord(start);
+	Vec2i endGrid = spatialHash_.getLocalCoord(end);
 
-bool PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out)
-{
-	Vec2i startGrid = spatialHash_.getCoord(start);
-	Vec2i endGrid = spatialHash_.getCoord(end);
+	if (startGrid.x < 0 || startGrid.y < 0 || endGrid.x >= EntityGrid::GridWidth || endGrid.y > EntityGrid::GridHeight)
+		return;
 
 	for (unsigned x = startGrid.x; x <= endGrid.x; x++)
 	{
@@ -228,20 +244,84 @@ bool PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out)
 				if (!entity)
 					break;
 
-				if (entity->isDeleted)
+				if (entity->isDeleted || entity->rigidBody == ignore)
 					continue;
 
 				out.push_back(entity);
 			}
 		}
 	}
-
-	return out.size() > 0;
 }
 
 void PhysicsManager::draw()
 {
-	spatialHash_.draw();
+	//spatialHash_.draw();
+}
+
+bool PhysicsManager::findAdjacentPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos)
+{
+	int width = aabb->boundsLocal.max.x - aabb->boundsLocal.min.x;
+	int height = aabb->boundsLocal.max.y - aabb->boundsLocal.min.y;
+
+	std::array<Vec2i, 8> offsets =
+	{
+		Vec2i{-width, 0},
+		{-width, height},
+		{0, height},
+		{width, height},
+		{width, 0},
+		{-width, -height},
+		{0, -height},
+	};
+
+	for (const auto& offset : offsets)
+	{
+		Vec2f newStart = { aabb->boundsWorld.min.x + offset.x, aabb->boundsWorld.min.y + offset.y };
+		Vec2f newEnd = { aabb->boundsWorld.max.x + offset.x, aabb->boundsWorld.max.y + offset.y };
+		
+		unsigned numEntities = 0;
+
+		Vec2i newGridStart = spatialHash_.getLocalCoord(newStart);
+		Vec2i newGridEnd = spatialHash_.getLocalCoord(newEnd);
+
+		if (newGridStart.x < 0 || newGridStart.y < 0 || newGridEnd.x >= EntityGrid::GridWidth || newGridEnd.y > EntityGrid::GridHeight)
+			return false;
+
+		for (unsigned x = newGridStart.x; x <= newGridEnd.x; x++)
+		{
+			for (unsigned y = newGridStart.y; y <= newGridEnd.y; y++)
+			{
+				auto& entitiesInSquare = spatialHash_.get(x, y);
+				for (auto* entity : entitiesInSquare)
+				{
+					if (!entity)
+						break;
+
+					if (entity->isDeleted)
+						continue;
+
+					numEntities++;
+				}
+			}
+		}
+
+		if (numEntities <= maxNearbyEntities)
+		{
+			outPos = newStart + ((newEnd - newStart) * 0.5f);
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+void PhysicsManager::update(AABB* aabb)
+{
+	auto toWorld = TRANSLATE(aabb->rigidBody->position);
+	aabb->boundsWorld.min = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.min.x, aabb->boundsLocal.min.y, 0.0f, 1.0f));
+	aabb->boundsWorld.max = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.max.x, aabb->boundsLocal.max.y, 0.0f, 1.0f));	
+
+	spatialHash_.add(aabb);
 }
 
 PhysicsManager::PhysicsManager()

@@ -57,13 +57,15 @@ private:
 		TextureManager::add("cell_mover_filled.png");
 		TextureManager::add("cell_light.png");
 		TextureManager::add("cell_light_filled.png");
+		TextureManager::add("cell_fruit.png");
+		TextureManager::add("cell_fruit_filled.png");
+		TextureManager::add("cell_food.png");
+		TextureManager::add("cell_food_filled.png");
 		TextureManager::add("collider.png");
 		TextureManager::add("light_circle.png");
 		TextureManager::add("light_warm.png");
 		TextureManager::add("background.png");
 		TextureManager::add("aabb.png");
-
-		PhysicsManager::getInstance().setSpatialHashPosition({ -windowData_.width * 0.5f, -windowData_.height * 0.5f });
 	}
 
 public:
@@ -75,8 +77,6 @@ public:
 
 	void onUpdate()
 	{
-		std::vector<AABB*> out;
-		PhysicsManager::getInstance().squareCast({ 0, 0 }, { 1, 1 }, out);
 		ScopeTimer timer("Update Main");
 		OrthoCamController::getInstance().update();
 
@@ -103,14 +103,20 @@ public:
 
 			for (unsigned i = 0; i < results.size(); i++)
 			{
-				if (SOrganisms.size() < Organism::MaxInstances)
+				SOrganisms.push_back(to_delete[i]->createCorpse());
+
+				auto* aabb = to_delete[i]->getAABB();
+				for (unsigned a = 0; a < results[i]; a++)
 				{
-					for (unsigned a = 0; a < results[i]; a++)
-						SOrganisms.push_back(to_delete[i]->clone());
+					Vec2f spawnPos;
+					if (PhysicsManager::getInstance().findAdjacentPosition(aabb, 10, spawnPos) && Organism::MaxInstances > SOrganisms.size())
+					{
+						SOrganisms.push_back(to_delete[i]->clone(spawnPos));
+					}
 				}
 
 				delete to_delete[i];
-			}			
+			}
 
 			to_delete.clear();
 			results.clear();
@@ -155,17 +161,17 @@ public:
 
 		if (key == GLFW_KEY_UP)
 		{
-			Organism::TimeToLive += scroll_speed_ttl;
+			Organism::MaxTTL += scroll_speed_ttl;
 		}
 		else if (key == GLFW_KEY_DOWN)
 		{
-			Organism::TimeToLive -= scroll_speed_ttl;
+			Organism::MaxTTL -= scroll_speed_ttl;
 		}
 	}
 
 	void onKeyReleased(int key)
 	{
-		OrthoCamController::getInstance().releaseKey(key);		
+		OrthoCamController::getInstance().releaseKey(key);
 
 		if (key == GLFW_KEY_TAB)
 		{
@@ -198,7 +204,7 @@ public:
 			ImGui::Begin("Organism");
 			ImGui::InputInt("Max Instances", &Organism::MaxInstances, 100);
 			ImGui::Text(std::format("Selected DNA: {}", Organism::DefaultDNAs[Organism::DNAIndex]).c_str());
-			ImGui::Text(std::format("Time To Live: {}", Organism::TimeToLive).c_str());
+			ImGui::Text(std::format("Time To Live: {}", Organism::MaxTTL).c_str());
 			ImGui::Text(std::format("Active Organisms: {}", Organism::ActiveInstances).c_str());
 			ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
 			ImGui::End();
@@ -237,7 +243,7 @@ public:
 				return amplitude * (sin(multiplier_x_sin1 * x + offset_sin1) + sin(multiplier_x_sin2 * x + offset_sin2));
 			};
 
-			auto mouse_pos_world = Camera::screenToWorldPoint(glm::vec2(windowData_.mousePos.x / windowData_.width, windowData_.mousePos.y / windowData_.height ), OrthoCamController::getInstance().getViewProjection());
+			auto mouse_pos_world = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection());
 			SOrganisms.push_back(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi)));
 		}
 	}

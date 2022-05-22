@@ -5,8 +5,7 @@
 #include "QuickMaths.h"
 #include "EntityGrid.h"
 
-class Collider;
-class RigidBody;
+struct RigidBody;
 class Cell;
 
 struct ManifoldResolve
@@ -50,6 +49,7 @@ struct AABB
 class PhysicsManager
 {
 public:
+	static bool circleVsCircle(Vec2f centerA, float radiusA, Vec2f centerB, float radiusB);
 	static PhysicsManager& getInstance();
 	void add(CircleCollider* collider);
 	void add(RigidBody* rb);
@@ -62,9 +62,10 @@ public:
 	void testCollision(CircleCollider* collA, CircleCollider* collB);
 	void resolveCollisions();
 	void updateRigidBodies();
-	void setSpatialHashPosition(Vec2f pos);
-	bool squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out);
+	void squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore = nullptr);
 	void draw();
+	bool findAdjacentPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos);
+	void update(AABB* aabb);
 
 private:
 	PhysicsManager();
@@ -73,7 +74,7 @@ private:
 	std::vector<AABB*> aabbs_;
 	std::vector<RigidBody*> rigidBodies_;
 	std::vector<ManifoldResolve> manifolds_;
-	SpatialHash spatialHash_;
+	EntityGrid spatialHash_;
 	float step_ = 1/100.0f;
 };
 

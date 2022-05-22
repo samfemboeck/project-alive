@@ -11,6 +11,7 @@ Cell::Cell(Organism* org, CircleCollider* collider, std::string textureName) :
 	textureName_(textureName + ".png"),
 	textureNameFilled_(textureName + "_filled.png")
 {
+	Instances++;
 }
 
 Cell::~Cell()

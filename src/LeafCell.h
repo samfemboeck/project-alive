@@ -3,7 +3,7 @@
 #include "Engine/Timer.h"
 
 class Organism;
-class CircleCollider;
+struct CircleCollider;
 
 class LeafCell final : public Cell
 {
@@ -15,5 +15,4 @@ public:
 
 private:
 	bool isLit_ = false;
-	TickCountTimer timerAddTTL_;
 };

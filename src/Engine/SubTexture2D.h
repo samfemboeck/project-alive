@@ -9,7 +9,7 @@ public:
 
 	Texture2D& getTexture() const { return texture_; }
 	const glm::vec2* getTexCoords() { return texCoords_; }
-	const glm::vec2& getSize() { return spriteSize_ * cellSize_; }
+	const glm::vec2 getSize() { return spriteSize_ * cellSize_; }
 
 	static SubTexture2D* createFromCoords(Texture2D& texture, const glm::vec2& coords, const glm::vec2& cellSize, const glm::vec2& spriteSize);
 private:

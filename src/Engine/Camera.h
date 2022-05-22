@@ -1,11 +1,12 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "QuickMaths.h"
 
 class Camera
 {
 public:
-	static glm::vec2 screenToWorldPoint(const glm::vec2&, const glm::mat4&);
+	static Vec2f screenToWorldPoint(const Vec2f&, const glm::mat4&);
 
 public:
 	void setOrtho(float left, float right, float bottom, float top);

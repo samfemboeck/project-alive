@@ -7,11 +7,11 @@ class RigidBody;
 class Cell;
 class AABB;
 
-struct Organism
+class Organism
 {
 public:
 	inline static int MaxInstances = 2000;
-	inline static long TimeToLive = 2000;
+	inline static long MaxTTL = 10000;
 	inline static long ActiveInstances = 0;
 
 	inline static std::vector<std::string> DefaultDNAs = {
@@ -19,6 +19,8 @@ public:
 		"M(0)L(0)T(3)T(3)T(3)",
 		"A(0)", 
 		"L(0)T(0)",
+		"L(0)T(0)R(0)",
+		"L(1)R(3)R(0)",
 	};
 
 	inline static unsigned DNAIndex = 0;
@@ -29,7 +31,9 @@ public:
 	~Organism();
 	void draw() const;
 	int tick();
-	Organism* clone();
+	Organism* clone(Vec2f pos);
+	Organism* createCorpse();
+	AABB* getAABB();
 
 private:
 	friend class LeafCell;
@@ -45,4 +49,6 @@ private:
 	RigidBody* rigidBody_;
 	AABB* aabb_;
 	bool isLight_ = false;
+	float energy_ = 100.0f;
+	bool isCorpse_ = false;
 };

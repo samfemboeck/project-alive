@@ -2,10 +2,10 @@
 #include "LeafCell.h"
 #include "Organism.h"
 #include "Engine/Physics.h"
+#include "Engine/Time.h"
 
 LeafCell::LeafCell(Organism* org, CircleCollider* collider) : 
-	Cell(org, collider, "cell_leaf"),
-	timerAddTTL_(1000)
+	Cell(org, collider, "cell_leaf")
 {
 }
 
@@ -14,10 +14,7 @@ void LeafCell::tick()
 	if (!isLit_)
 		return;
 
-	if (timerAddTTL_.update())
-	{
-		organism_->timerTTL_.addTime(500);
-	}
+	organism_->energy_ += Time::DeltaSeconds * 50.0f;
 }
 
 void LeafCell::onCollision(Cell* other)

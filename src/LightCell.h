@@ -8,7 +8,7 @@ struct AABB;
 class LightCell final : public Cell
 {
 public:
-	inline static float LightRadius = Cell::Size * 80;
+	inline static float LightRadius = Cell::Size * 40;
 	LightCell(Organism* org, CircleCollider* collider);
 	void draw() override;
 	void tick() override;

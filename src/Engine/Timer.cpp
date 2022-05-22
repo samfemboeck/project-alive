@@ -27,11 +27,6 @@ TickCountTimer::TickCountTimer(long interval_ms) :
 {
 }
 
-void TickCountTimer::addTime(long time)
-{
-	intervalMs_ += time;
-}
-
 bool TickCountTimer::update()
 {
 	auto now = std::chrono::high_resolution_clock::now();

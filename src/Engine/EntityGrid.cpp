@@ -5,20 +5,17 @@
 #include "../Cell.h"
 #include "Renderer2D.h"
 
-SpatialHash::SpatialHash()
+EntityGrid::EntityGrid() :
+	pos_({0, 0}),
+	grid_{}
 {
-	AABB* a1 = new AABB();
-	a1->boundsWorld.min = { 0, 0 };
-	a1->boundsWorld.max = { Cell::Size, Cell::Size };
-	add(a1);
-	clear();
-	AABB* a2 = new AABB();
-	a1->boundsWorld.min = { 0, 0 };
-	a1->boundsWorld.max = { Cell::Size, Cell::Size };
-	add(a2);
+	int x = GridWidth * SquareSize * 0.5f;
+	int y = GridHeight * SquareSize * 0.5f;
+	pos_ = Vec2f(-x, -y);
+	LOG("pos: {}", pos_.str());
 }
 
-bool SpatialHash::add(AABB* aabb)
+bool EntityGrid::add(AABB* aabb)
 {
 	Bounds& bounds = aabb->boundsWorld;
 	int startX = (bounds.min.x - pos_.x) / SquareSize;
@@ -62,17 +59,12 @@ bool SpatialHash::add(AABB* aabb)
 	return true;
 }
 
-void SpatialHash::clear()
+void EntityGrid::clear()
 {
 	memset(grid_.data(), 0, GridWidth * GridHeight * MaxEntitiesPerSquare * sizeof(AABB*));
 }
 
-void SpatialHash::setPos(Vec2f pos)
-{
-	pos_ = pos;
-}
-
-void SpatialHash::draw()
+void EntityGrid::draw()
 {
 	for (unsigned x = 0; x < GridWidth; x++)
 	{
@@ -89,14 +81,20 @@ void SpatialHash::draw()
 	}
 }
 
-Vec2i SpatialHash::getCoord(Vec2f worldPos)
+Vec2i EntityGrid::getLocalCoord(Vec2f worldPos)
 {
 	int x = (worldPos.x - pos_.x) / SquareSize;
 	int y = (worldPos.y - pos_.y) / SquareSize;
 	return { x, y };
 }
 
-std::array<AABB*, SpatialHash::MaxEntitiesPerSquare>& SpatialHash::get(unsigned x, unsigned y)
+Vec2f EntityGrid::getWorldPos(Vec2i localCoord)
+{
+	Vec2i newPos = localCoord * SquareSize + 0.5f * SquareSize;
+	return pos_ + newPos;
+}
+
+std::array<AABB*, EntityGrid::MaxEntitiesPerSquare>& EntityGrid::get(unsigned x, unsigned y)
 {
 	return grid_[x][y];
 }

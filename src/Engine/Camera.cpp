@@ -12,9 +12,9 @@ void Camera::setPerspective(float fov, float aspect, float nearPlane, float farP
 	projectionMatrix_ = glm::perspective(fov, aspect, nearPlane, farPlane);
 }
 
-glm::vec2 Camera::screenToWorldPoint(const glm::vec2& screenPoint, const glm::mat4& viewProjectionMat)
+Vec2f Camera::screenToWorldPoint(const Vec2f& screenPoint, const glm::mat4& viewProjectionMat)
 {
-	glm::vec2 mousePosClip = (2.0f * screenPoint) - 1.0f;
+	Vec2f mousePosClip = (screenPoint * 2.0f) - 1.0f;
 	mousePosClip.y *= -1.0f;
-	return glm::vec2{ glm::inverse(viewProjectionMat) * glm::vec4{ mousePosClip, 0, 1 } };
+	return glm::vec2{ glm::inverse(viewProjectionMat) * glm::vec4{ mousePosClip.x, mousePosClip.y, 0, 1 } };
 }
