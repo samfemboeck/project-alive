@@ -84,7 +84,7 @@ struct Vec2
 		return x * x + y * y;
 	}
 
-	Vec2<float> normalize()
+	Vec2<float> normalized()
 	{
 		float mag = magnitude();
 		return Vec2<float>(x / mag, y / mag);
@@ -106,8 +106,11 @@ struct Vec2
 using Vec2f = Vec2<float>;
 using Vec2i = Vec2<int>;
 
-template<typename T>
 struct Random
 {
-	static T range(const T& min, const T& max);
+	static float floatRange(float min, float max);
+	static int intRange(int min, int max);
+	static Vec2f vec2Range(const Vec2f& min, const Vec2f& max);
+	static Vec2f unitVector();
+	static Vec2f vec2FromAngle(float rad);
 };

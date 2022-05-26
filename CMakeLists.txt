@@ -46,6 +46,8 @@ add_executable(alive
 	src/Main.cpp
 	src/Organism.h
 	src/Organism.cpp
+	src/OrganismManager.h
+	src/OrganismManager.cpp
 	src/Cell.h
 	src/Cell.cpp
 	src/LeafCell.h

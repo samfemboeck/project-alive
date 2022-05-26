@@ -12,15 +12,13 @@
 #include "Engine/Renderer2D.h"
 #include "Engine/Util.h"
 
-Organism::Organism(const std::string& dna, std::function<float(float)> instinct, Vec2f position_, float angle) :
+Organism::Organism(const std::string& dna, std::function<float(float)> instinct, Vec2f position, float angle) :
 	dna_(dna),
 	initialTTL_(MaxTTL),
 	timerTTL_(initialTTL_)
 {
 	Organism::ActiveInstances++;
 	rigidBody_ = new RigidBody();
-	rigidBody_->position = position_;
-	PhysicsManager::getInstance().add(rigidBody_);
 
 	Vec2f curPos = { 0, 0 };
 	Vec2f offset = { 0, 0 };
@@ -112,6 +110,11 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 	aabb->rigidBody = rigidBody_;
 	aabb_ = aabb;
 
+	offsetCenterToRb_ = rigidBody_->position - aabb->boundsLocal.center();
+
+	setPosition(position);
+
+	PhysicsManager::getInstance().add(rigidBody_);
 	PhysicsManager::getInstance().add(aabb);
 
 	instinct_ = instinct;
@@ -154,7 +157,7 @@ int Organism::tick()
 
 Organism* Organism::clone(Vec2f pos)
 {
-	return new Organism(dna_, instinct_, pos, Random<float>::range(0, 2 * std::numbers::pi));
+	return new Organism(dna_, instinct_, pos, Random::floatRange(0, 2 * std::numbers::pi));
 }
 
 Organism* Organism::createCorpse()
@@ -173,6 +176,11 @@ Organism* Organism::createCorpse()
 AABB* Organism::getAABB()
 {
 	return aabb_;
+}
+
+void Organism::setPosition(Vec2f pos)
+{
+	rigidBody_->position = pos + offsetCenterToRb_;
 }
 
 void Organism::draw() const

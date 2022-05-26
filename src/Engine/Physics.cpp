@@ -51,7 +51,7 @@ void PhysicsManager::update()
 	{
 		if ((*it)->isDeleted)
 		{
-			delete *it;
+			delete* it;
 			it = aabbs_.erase(it);
 		}
 		else
@@ -125,7 +125,7 @@ void PhysicsManager::testCollision(CircleCollider* col1, CircleCollider* col2)
 
 		ManifoldResolve manifold;
 		manifold.Penetration = (sumRadii - dir.magnitude()) * 0.5f;
-		manifold.Normal = dir.normalize();
+		manifold.Normal = dir.normalized();
 		manifold.ContactPoint = col1->centerWorld + manifold.Normal * (col1->radius - manifold.Penetration);
 		manifold.rb1 = rb1;
 		manifold.rb2 = rb2;
@@ -258,38 +258,29 @@ void PhysicsManager::draw()
 	//spatialHash_.draw();
 }
 
-bool PhysicsManager::findAdjacentPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos)
+static std::random_device rd; // obtain a random number from hardware
+static std::mt19937 gen(rd()); // seed the generator
+
+bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos)
 {
-	int width = aabb->boundsLocal.max.x - aabb->boundsLocal.min.x;
-	int height = aabb->boundsLocal.max.y - aabb->boundsLocal.min.y;
+	float size = aabb->boundsLocal.max.x - aabb->boundsLocal.min.x;
+	float rotation = Random::floatRange(0.0f, 2 * std::numbers::pi);
 
-	std::array<Vec2i, 8> offsets =
+	for (unsigned i = 0; i < 4; i++)
 	{
-		Vec2i{-width, 0},
-		{-width, height},
-		{0, height},
-		{width, height},
-		{width, 0},
-		{-width, -height},
-		{0, -height},
-	};
-
-	for (const auto& offset : offsets)
-	{
-		Vec2f newStart = { aabb->boundsWorld.min.x + offset.x, aabb->boundsWorld.min.y + offset.y };
-		Vec2f newEnd = { aabb->boundsWorld.max.x + offset.x, aabb->boundsWorld.max.y + offset.y };
-		
+		Vec2f dir = Random::vec2FromAngle(rotation + i * std::numbers::pi * 0.5f) * size * 2.0f;
+		Vec2f newMin = aabb->boundsWorld.min + dir;
+		Vec2f newMax = aabb->boundsWorld.max + dir;
 		unsigned numEntities = 0;
+		Vec2i gridMin = spatialHash_.getLocalCoord(newMin);
+		Vec2i gridMax = spatialHash_.getLocalCoord(newMax);
 
-		Vec2i newGridStart = spatialHash_.getLocalCoord(newStart);
-		Vec2i newGridEnd = spatialHash_.getLocalCoord(newEnd);
-
-		if (newGridStart.x < 0 || newGridStart.y < 0 || newGridEnd.x >= EntityGrid::GridWidth || newGridEnd.y > EntityGrid::GridHeight)
+		if (gridMin.x < 0 || gridMin.y < 0 || gridMax.x >= EntityGrid::GridWidth || gridMax.y > EntityGrid::GridHeight)
 			return false;
 
-		for (unsigned x = newGridStart.x; x <= newGridEnd.x; x++)
+		for (unsigned x = gridMin.x; x <= gridMax.x; x++)
 		{
-			for (unsigned y = newGridStart.y; y <= newGridEnd.y; y++)
+			for (unsigned y = gridMin.y; y <= gridMax.y; y++)
 			{
 				auto& entitiesInSquare = spatialHash_.get(x, y);
 				for (auto* entity : entitiesInSquare)
@@ -303,15 +294,15 @@ bool PhysicsManager::findAdjacentPosition(AABB* aabb, unsigned maxNearbyEntities
 					numEntities++;
 				}
 			}
-		}
-
+		}	
+		
 		if (numEntities <= maxNearbyEntities)
 		{
-			outPos = newStart + ((newEnd - newStart) * 0.5f);
+			outPos = aabb->boundsWorld.center() + dir;
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -319,7 +310,7 @@ void PhysicsManager::update(AABB* aabb)
 {
 	auto toWorld = TRANSLATE(aabb->rigidBody->position);
 	aabb->boundsWorld.min = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.min.x, aabb->boundsLocal.min.y, 0.0f, 1.0f));
-	aabb->boundsWorld.max = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.max.x, aabb->boundsLocal.max.y, 0.0f, 1.0f));	
+	aabb->boundsWorld.max = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.max.x, aabb->boundsLocal.max.y, 0.0f, 1.0f));
 
 	spatialHash_.add(aabb);
 }

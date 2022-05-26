@@ -33,6 +33,11 @@ struct Bounds
 {
 	Vec2f min;
 	Vec2f max;
+
+	Vec2f center()
+	{
+		return min + ((max - min) * 0.5f);
+	}
 };
 
 struct AABB
@@ -64,7 +69,7 @@ public:
 	void updateRigidBodies();
 	void squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore = nullptr);
 	void draw();
-	bool findAdjacentPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos);
+	bool findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outpos);
 	void update(AABB* aabb);
 
 private:
@@ -83,7 +88,7 @@ struct RigidBody
 	inline static float LinearFriction = 0.9f;
 
 	float friction = LinearFriction;
-	Vec2f position;
+	Vec2f position = Vec2f(0, 0);
 	Vec2f centerOfMassLocal = Vec2f(0, 0);
 	Vec2f centerOfMassWorld = Vec2f(0, 0);
 	Vec2f correction = Vec2f(0, 0);

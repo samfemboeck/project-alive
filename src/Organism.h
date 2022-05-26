@@ -34,6 +34,7 @@ public:
 	Organism* clone(Vec2f pos);
 	Organism* createCorpse();
 	AABB* getAABB();
+	void setPosition(Vec2f pos);
 
 private:
 	friend class LeafCell;
@@ -51,4 +52,5 @@ private:
 	bool isLight_ = false;
 	float energy_ = 100.0f;
 	bool isCorpse_ = false;
+	Vec2f offsetCenterToRb_;
 };

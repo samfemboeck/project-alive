@@ -10,9 +10,7 @@
 #include <thread>
 #include "Engine/Renderer2D.h"
 #include "Cell.h"
-
-static std::vector<Organism*> SOrganisms;
-static long SInitialTTL = 5000;
+#include "OrganismManager.h"
 
 static std::string get_random_DNA(unsigned max_length)
 {
@@ -35,7 +33,6 @@ static std::string get_random_DNA(unsigned max_length)
 
 	return dna.str();
 }
-std::array<std::array<wchar_t, 5>, 5000> test_arr;
 
 class AliveApp : public App
 {
@@ -77,75 +74,19 @@ public:
 
 	void onUpdate()
 	{
-		ScopeTimer timer("Update Main");
-		OrthoCamController::getInstance().update();
-
-		{
-			ScopeTimer timer("Tick Organisms");
-			static std::vector<Organism*> to_delete;
-			static std::vector<int> results;
-
-			for (auto* org : SOrganisms)
-			{
-				int result = org->tick();
-
-				if (result != -1)
-				{
-					results.push_back(result);
-					to_delete.push_back(org);
-				}
-			}			
-			
-			for (auto* org : to_delete)
-			{
-				std::erase(SOrganisms, org);
-			}
-
-			for (unsigned i = 0; i < results.size(); i++)
-			{
-				SOrganisms.push_back(to_delete[i]->createCorpse());
-
-				auto* aabb = to_delete[i]->getAABB();
-				for (unsigned a = 0; a < results[i]; a++)
-				{
-					Vec2f spawnPos;
-					if (PhysicsManager::getInstance().findAdjacentPosition(aabb, 10, spawnPos) && Organism::MaxInstances > SOrganisms.size())
-					{
-						SOrganisms.push_back(to_delete[i]->clone(spawnPos));
-					}
-				}
-
-				delete to_delete[i];
-			}
-
-			to_delete.clear();
-			results.clear();
-		}
+		OrganismManager::getInstance().update();
 
 		{
 			ScopeTimer timer("Tick Physics");
 			PhysicsManager::getInstance().update();
-			//Physics::update(Time::DeltaSeconds);
 		}
 
-		{
-			Renderer2D::clear();
-			Renderer2D::beginTextures(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
-			//Renderer2D::pushQuad(glm::scale(glm::mat4(1.0f), { m_window_data.Width * 4, m_window_data.Height * 4, 1 }), TextureManager::get("background.png"), glm::vec4(1.0f), false);
-			{
-				{
-					ScopeTimer timer("Push Cells");
-					for (auto* org : SOrganisms)
-						org->draw();
-				}
-				PhysicsManager::getInstance().draw();
-			}
-			{
-				ScopeTimer timer("Flush");
-				Renderer2D::endTextures();
-				Renderer2D::setClearColor(BLACK);
-			}
-		}
+		Renderer2D::clear();
+		Renderer2D::beginTextures(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
+		PhysicsManager::getInstance().draw();
+		OrganismManager::getInstance().draw();
+		Renderer2D::endTextures();
+		Renderer2D::setClearColor(BLACK);
 	}
 
 	void onKeyPressed(int key)
@@ -202,7 +143,7 @@ public:
 			bool show_demo = false;
 			//ImGui::ShowDemoWindow(&show_demo);
 			ImGui::Begin("Organism");
-			ImGui::InputInt("Max Instances", &Organism::MaxInstances, 100);
+			ImGui::InputInt("Max Instances", &OrganismManager::MaxInstances, 100);
 			ImGui::Text(std::format("Selected DNA: {}", Organism::DefaultDNAs[Organism::DNAIndex]).c_str());
 			ImGui::Text(std::format("Time To Live: {}", Organism::MaxTTL).c_str());
 			ImGui::Text(std::format("Active Organisms: {}", Organism::ActiveInstances).c_str());
@@ -232,11 +173,11 @@ public:
 	{
 		if (button == 0)
 		{
-			float amplitude = Random<float>::range(3.0f, 30.0f);
-			float offset_sin1 = Random<float>::range(0.0f, 10.0f);
-			float multiplier_x_sin1 = Random<int>::range(1, 5);
-			float offset_sin2 = Random<float>::range(0.0f, 10.0f);
-			float multiplier_x_sin2 = Random<int>::range(1, 5);
+			float amplitude = Random::floatRange(3.0f, 30.0f);
+			float offset_sin1 = Random::floatRange(0.0f, 10.0f);
+			float multiplier_x_sin1 = Random::floatRange(1, 5);
+			float offset_sin2 = Random::floatRange(0.0f, 10.0f);
+			float multiplier_x_sin2 = Random::floatRange(1, 5);
 
 			auto instinct = [=](float x) -> float
 			{
@@ -244,7 +185,7 @@ public:
 			};
 
 			auto mouse_pos_world = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection());
-			SOrganisms.push_back(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random<float>::range(0, 2 * std::numbers::pi)));
+			OrganismManager::getInstance().add(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
 		}
 	}
 
