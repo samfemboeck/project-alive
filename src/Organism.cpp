@@ -76,7 +76,6 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 		cc->rigidBody = rigidBody_;
 		cc->cell = cell;
 		cc->collisionCallback = std::bind(&Cell::onCollision, cell, std::placeholders::_1);
-		PhysicsManager::getInstance().add(cc);
 		rigidBody_->colliders.push_back(cc);
 
 		unsigned param = dna_[index + 2] - '0';
@@ -114,7 +113,6 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 
 	setPosition(position);
 
-	PhysicsManager::getInstance().add(rigidBody_);
 	PhysicsManager::getInstance().add(aabb);
 
 	instinct_ = instinct;
@@ -122,10 +120,10 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 
 Organism::~Organism()
 {
-	PhysicsManager::getInstance().remove(rigidBody_);
-
 	for (auto Cell : cells_)
 		delete Cell;
+
+	delete rigidBody_;
 
 	PhysicsManager::getInstance().remove(aabb_);
 	Organism::ActiveInstances--;

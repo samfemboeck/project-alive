@@ -9,32 +9,10 @@ PhysicsManager& PhysicsManager::getInstance()
 	return instance;
 }
 
-void PhysicsManager::add(CircleCollider* collider)
-{
-	colliders_.push_back(collider);
-}
-
-void PhysicsManager::add(RigidBody* rb)
-{
-	rigidBodies_.push_back(rb);
-}
-
 void PhysicsManager::add(AABB* aabb)
 {
-	aabbs_.push_back(aabb);
 	update(aabb);
-}
-
-void PhysicsManager::remove(CircleCollider* collider)
-{
-	colliders_.erase(std::find(colliders_.begin(), colliders_.end(), collider));
-	delete collider;
-}
-
-void PhysicsManager::remove(RigidBody* rb)
-{
-	rigidBodies_.erase(std::find(rigidBodies_.begin(), rigidBodies_.end(), rb));
-	delete rb;
+	aabbs_.push_back(aabb);
 }
 
 void PhysicsManager::remove(AABB* aabb)
@@ -51,7 +29,7 @@ void PhysicsManager::update()
 	{
 		if ((*it)->isDeleted)
 		{
-			delete* it;
+			delete *it;
 			it = aabbs_.erase(it);
 		}
 		else
@@ -67,9 +45,11 @@ void PhysicsManager::update()
 
 void PhysicsManager::fixedUpdate()
 {
-	updateRigidBodies();
+	spatialHash_.clear();
 
-	unsigned collisionQueries = 0;
+	for (auto* aabb : aabbs_)
+		if (!aabb->isDeleted)
+			update(aabb);
 
 	for (unsigned x = 0; x < EntityGrid::GridWidth; x++)
 	{
@@ -88,15 +68,12 @@ void PhysicsManager::fixedUpdate()
 						for (auto* colliderA : collidersA)
 						{
 							testCollision(colliderI, colliderA);
-							collisionQueries++;
 						}
 					}
 				}
 			}
 		}
 	}
-
-	//LOG("Total Queries: {}", collisionQueries);
 
 	resolveCollisions();
 }
@@ -185,47 +162,6 @@ void PhysicsManager::resolveCollisions()
 	manifolds_.clear();
 }
 
-void PhysicsManager::updateRigidBodies()
-{
-	for (auto* rigidBody : rigidBodies_)
-	{
-		Vec2f force(0, 0);
-
-		for (const auto& f : rigidBody->getForces())
-			force += f;
-
-		for (const auto& i : rigidBody->getImpulses())
-			force += i;
-
-		rigidBody->getImpulses().clear();
-		rigidBody->acceleration = force * rigidBody->invMass;
-		rigidBody->setVelocity(rigidBody->getVelocity() + rigidBody->acceleration * step_);
-		rigidBody->position += rigidBody->getVelocity() * step_ + rigidBody->correction;
-		rigidBody->setVelocity(rigidBody->getVelocity() * rigidBody->friction);
-		rigidBody->correction = Vec2f(0, 0);
-		rigidBody->centerOfMassWorld = rigidBody->position + rigidBody->centerOfMassLocal;
-		rigidBody->rotation += rigidBody->velocityAngular * step_;
-	}
-
-	for (auto* coll : colliders_)
-	{
-		auto tf =
-			TRANSLATE(coll->rigidBody->position) *
-			ROTATE(coll->rigidBody->rotation) *
-			TRANSLATE(coll->centerLocal) *
-			SCALE(coll->radius * 2);
-
-		coll->transform = tf;
-		coll->centerWorld = glm::vec2(tf * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	}
-
-	spatialHash_.clear();
-
-	for (auto* aabb : aabbs_)
-		if (!aabb->isDeleted)
-			update(aabb);
-}
-
 void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore)
 {
 	Vec2i startGrid = spatialHash_.getLocalCoord(start);
@@ -307,10 +243,67 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 }
 
 void PhysicsManager::update(AABB* aabb)
-{
-	auto toWorld = TRANSLATE(aabb->rigidBody->position);
-	aabb->boundsWorld.min = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.min.x, aabb->boundsLocal.min.y, 0.0f, 1.0f));
-	aabb->boundsWorld.max = glm::vec2(toWorld * glm::vec4(aabb->boundsLocal.max.x, aabb->boundsLocal.max.y, 0.0f, 1.0f));
+{	
+	auto* rigidBody = aabb->rigidBody;
+	Vec2f force(0, 0);
+
+	for (const auto& f : rigidBody->getForces())
+		force += f;
+
+	for (const auto& i : rigidBody->getImpulses())
+		force += i;
+
+	rigidBody->getImpulses().clear();
+	rigidBody->acceleration = force * rigidBody->invMass;
+	rigidBody->setVelocity(rigidBody->getVelocity() + rigidBody->acceleration * step_);
+	rigidBody->position += rigidBody->getVelocity() * step_ + rigidBody->correction;
+	rigidBody->setVelocity(rigidBody->getVelocity() * rigidBody->friction);
+	rigidBody->correction = Vec2f(0, 0);
+	rigidBody->centerOfMassWorld = rigidBody->position + rigidBody->centerOfMassLocal;
+	rigidBody->velocityAngular += rigidBody->accelerationAngular * step_;
+	rigidBody->rotation += rigidBody->velocityAngular * step_;
+	rigidBody->velocityAngular *= rigidBody->dampingAngular;
+
+	for (auto* coll : rigidBody->colliders)
+	{
+		auto tf =
+			TRANSLATE(coll->rigidBody->position) *
+			ROTATE(coll->rigidBody->rotation) *
+			TRANSLATE(coll->centerLocal) *
+			SCALE(coll->radius * 2);
+
+		coll->transform = tf;
+		coll->centerWorld = glm::vec2(tf * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	}
+
+	static constexpr float fMax = std::numeric_limits<float>::max();
+	static constexpr float fMin = std::numeric_limits<float>::lowest();
+
+	Vec2f min = { fMax, fMax };
+	Vec2f max = { fMin, fMin };
+	auto& colliders = aabb->rigidBody->colliders;
+
+	for (const auto* collider : colliders)
+	{
+		const Vec2f& pos = collider->centerWorld;
+
+		if (pos.x < min.x)
+			min.x = pos.x;
+		if (pos.y < min.y)
+			min.y = pos.y;
+		if (pos.x > max.x)
+			max.x = pos.x;
+		if (pos.y > max.y)
+			max.y = pos.y;
+	}
+
+	min.x -= Cell::Size * 0.5f;
+	min.y -= Cell::Size * 0.5f;
+	max.x += Cell::Size * 0.5f;
+	max.y += Cell::Size * 0.5f;
+
+	aabb->boundsWorld.min = min;
+	aabb->boundsWorld.max = max;
 
 	spatialHash_.add(aabb);
 }

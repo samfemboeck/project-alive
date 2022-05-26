@@ -17,7 +17,6 @@ Cell::Cell(Organism* org, CircleCollider* collider, std::string textureName) :
 Cell::~Cell()
 {
 	Instances--;
-	PhysicsManager::getInstance().remove(collider_);
 }
 
 void Cell::draw()

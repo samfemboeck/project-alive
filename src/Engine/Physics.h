@@ -56,17 +56,12 @@ class PhysicsManager
 public:
 	static bool circleVsCircle(Vec2f centerA, float radiusA, Vec2f centerB, float radiusB);
 	static PhysicsManager& getInstance();
-	void add(CircleCollider* collider);
-	void add(RigidBody* rb);
 	void add(AABB* aabb);
-	void remove(CircleCollider* collider);
-	void remove(RigidBody* collider);
 	void remove(AABB* aabb);
 	void update();
 	void fixedUpdate();
 	void testCollision(CircleCollider* collA, CircleCollider* collB);
 	void resolveCollisions();
-	void updateRigidBodies();
 	void squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore = nullptr);
 	void draw();
 	bool findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outpos);
@@ -75,9 +70,7 @@ public:
 private:
 	PhysicsManager();
 private:
-	std::vector<CircleCollider*> colliders_;
 	std::vector<AABB*> aabbs_;
-	std::vector<RigidBody*> rigidBodies_;
 	std::vector<ManifoldResolve> manifolds_;
 	EntityGrid spatialHash_;
 	float step_ = 1/100.0f;
@@ -95,6 +88,8 @@ struct RigidBody
 	float invInertia = 0.01f;
 	float invMass = 1;
 	float velocityAngular = 0;
+	float accelerationAngular = 0;
+	float dampingAngular = 0.99f;
 	float rotation = 0;
 	Vec2f acceleration;
 	std::list<Vec2f> forces;
