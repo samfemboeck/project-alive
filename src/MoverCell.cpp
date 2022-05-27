@@ -3,6 +3,7 @@
 #include "Organism.h"
 #include "Engine/Physics.h"
 #include "Engine/Time.h"
+#include "OrganismManager.h"
 
 MoverCell::MoverCell(Organism* org, CircleCollider* collider) :
 	Cell(org, collider, "cell_mover")
@@ -32,6 +33,17 @@ void MoverCell::tick()
 	float distance = (target_ - organism_->aabb_->bounds.center()).magnitude();
 	if (distance <= 100.0f)
 		findNewTarget();
+}
+
+void MoverCell::onCollision(Cell* other)
+{	
+	if ((other->organism_->isLeaf_ || other->organism_->isCorpse_))
+	{
+		other->organism_->isDeleted_ = true;
+
+		if (++numFoodEaten % 3 == 0)
+			OrganismManager::getInstance().tryRespawn(organism_);
+	}
 }
 
 void MoverCell::findNewTarget()

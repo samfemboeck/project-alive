@@ -153,6 +153,7 @@ int Organism::tick()
 
 	if (energy_ <= 0 && isLeaf_)
 	{
+		energy_ = 100.0f;
 		return 2;
 	}
 
@@ -188,12 +189,6 @@ void Organism::setPosition(Vec2f pos)
 
 void Organism::onCollision(Cell* own, Cell* other)
 {
-	if ((other->organism_->isLeaf_ || other->organism_->isCorpse_) && !isLeaf_ && !isCorpse_ && !isLight_)
-	{
-		other->organism_->isDeleted_ = true;
-		OrganismManager::getInstance().tryRespawn(this);
-	}
-
 	for (auto* cell : cells_)
 		cell->onCollision(other);
 }
