@@ -213,5 +213,5 @@ void Organism::draw() const
 	for (auto* cell : cells_)
 		cell->draw();
 
-	Renderer2D::pushQuad(aabb_->bounds.min, aabb_->bounds.max, TextureManager::get("aabb.png"));
+	//Renderer2D::pushQuad(aabb_->bounds.min, aabb_->bounds.max, TextureManager::get("aabb.png"));
 }

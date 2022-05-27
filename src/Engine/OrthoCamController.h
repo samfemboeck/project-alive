@@ -18,6 +18,8 @@ public:
 	inline glm::mat4 getView() { return glm::inverse(glm::translate(glm::mat4(1), position_)); }
 	inline glm::mat4 getProjection() { return camera_.getProjectionMatrix(); }
 	inline Camera& getCamera() { return camera_; }
+	void setPosition(Vec2f pos);
+	Vec2f getPosition();
 
 private:
 	Camera camera_;

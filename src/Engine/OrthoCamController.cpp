@@ -89,3 +89,13 @@ float OrthoCamController::getZoomLevel()
 {
 	return zoomLevel_;
 }
+
+void OrthoCamController::setPosition(Vec2f pos)
+{
+	position_ = glm::vec3(pos.x, pos.y, 0.0f);
+}
+
+Vec2f OrthoCamController::getPosition()
+{
+	return { position_.x, position_.y };
+}

@@ -74,6 +74,12 @@ public:
 
 	void onUpdate()
 	{
+		if (isRightMouseDown_)
+		{
+			auto offset = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection()) - Camera::screenToWorldPoint(mousePosDown_, OrthoCamController::getInstance().getViewProjection());
+			OrthoCamController::getInstance().setPosition(camPos_ - offset);
+		}
+
 		OrganismManager::getInstance().update();
 
 		{
@@ -169,9 +175,9 @@ public:
 		ScopeTimer::Data.clear();
 	}
 
-	void onMousePressed(int button)
+	void onMousePressed(int button) override
 	{
-		if (button == 0)
+		if (button == GLFW_MOUSE_BUTTON_1)
 		{
 			float amplitude = Random::floatRange(1.0f, 10.0f);
 			float offset_sin1 = Random::floatRange(0.0f, 10.0f);
@@ -187,11 +193,25 @@ public:
 			auto mouse_pos_world = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection());
 			OrganismManager::getInstance().add(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
 		}
+		else if (button == GLFW_MOUSE_BUTTON_2)
+		{
+			mousePosDown_ = windowData_.mousePos;
+			isRightMouseDown_ = true;
+			camPos_ = OrthoCamController::getInstance().getPosition();
+		}
+	}
+
+	void onMouseReleased(int button) override
+	{
+		if (button == GLFW_MOUSE_BUTTON_2)
+			isRightMouseDown_ = false;
 	}
 
 private:
 	bool m_is_tab_pressed = false;
-
+	Vec2f mousePosDown_;
+	Vec2f camPos_;
+	bool isRightMouseDown_ = false;
 };
 
 int main()

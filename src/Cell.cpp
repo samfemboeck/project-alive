@@ -21,7 +21,7 @@ Cell::~Cell()
 
 void Cell::draw()
 {
-	if (OrthoCamController::getInstance().getZoomLevel() <= 1.5f)
+	if (OrthoCamController::getInstance().getZoomLevel() <= 2.0f)
 		Renderer2D::pushQuad(collider_->transform, TextureManager::get(textureName_), glm::vec4(1.0f), false);
 	else
 		Renderer2D::pushQuad(collider_->transform, TextureManager::get(textureNameFilled_), glm::vec4(1.0f), false);
