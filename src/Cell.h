@@ -16,10 +16,12 @@ public:
 	virtual ~Cell();
 	virtual void onCollision(Cell* other) {}
 	virtual void draw();
+	virtual void init() {};
+	Organism* organism_;
 
 protected:
+	friend class Organism;
 	CircleCollider* collider_;
 	std::string textureName_;
 	std::string textureNameFilled_;
-	Organism* organism_;
 };

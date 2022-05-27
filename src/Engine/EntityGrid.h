@@ -22,6 +22,7 @@ public:
 	Vec2i getLocalCoord(Vec2f worldPos);
 	Vec2f getWorldPos(Vec2i localCoord);
 	std::array<AABB*, MaxEntitiesPerSquare>& get(unsigned x, unsigned y);
+	Vec2f getPos();
 
 private:
 	Vec2f pos_ = Vec2f(0, 0);

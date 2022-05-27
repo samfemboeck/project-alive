@@ -12,12 +12,11 @@ EntityGrid::EntityGrid() :
 	int x = GridWidth * SquareSize * 0.5f;
 	int y = GridHeight * SquareSize * 0.5f;
 	pos_ = Vec2f(-x, -y);
-	LOG("pos: {}", pos_.str());
 }
 
 bool EntityGrid::add(AABB* aabb)
 {
-	Bounds& bounds = aabb->boundsWorld;
+	Bounds& bounds = aabb->bounds;
 	int startX = (bounds.min.x - pos_.x) / SquareSize;
 	int startY = (bounds.min.y - pos_.y) / SquareSize;
 	int endX = (bounds.max.x - pos_.x) / SquareSize;
@@ -31,12 +30,8 @@ bool EntityGrid::add(AABB* aabb)
 		endY >= GridHeight
 	)
 	{
-		LOG("Out of board bounds");
 		return false;
 	}
-
-	aabb->regStart = {startX, startY};
-	aabb->regEnd = {endX, endY};
 
 	for (unsigned x = startX; x <= endX; x++)
 	{
@@ -74,7 +69,6 @@ void EntityGrid::draw()
 	}
 	for (unsigned y = 0; y < GridHeight; y++)
 	{
-
 		Vec2i posMin = Vec2i(pos_.x, pos_.y + y * SquareSize);
 		Vec2i posMax = Vec2i(posMin.x + GridWidth * SquareSize, posMin.y + SquareSize);
 		Renderer2D::pushQuad(posMin, posMax, TextureManager::get("aabb.png"));
@@ -97,4 +91,9 @@ Vec2f EntityGrid::getWorldPos(Vec2i localCoord)
 std::array<AABB*, EntityGrid::MaxEntitiesPerSquare>& EntityGrid::get(unsigned x, unsigned y)
 {
 	return grid_[x][y];
+}
+
+Vec2f EntityGrid::getPos()
+{
+	return pos_;
 }

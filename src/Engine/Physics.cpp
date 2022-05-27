@@ -2,6 +2,7 @@
 #include "Physics.h"
 #include "Time.h"
 #include "Timer.h"
+#include "../Organism.h"
 
 PhysicsManager& PhysicsManager::getInstance()
 {
@@ -12,12 +13,8 @@ PhysicsManager& PhysicsManager::getInstance()
 void PhysicsManager::add(AABB* aabb)
 {
 	update(aabb);
+	map(aabb);
 	aabbs_.push_back(aabb);
-}
-
-void PhysicsManager::remove(AABB* aabb)
-{
-	aabb->isDeleted = true;
 }
 
 void PhysicsManager::update()
@@ -25,16 +22,6 @@ void PhysicsManager::update()
 	static float accumulator = 0;
 	accumulator += Time::DeltaSeconds;
 
-	for (auto it = aabbs_.begin(); it != aabbs_.end();)
-	{
-		if ((*it)->isDeleted)
-		{
-			delete *it;
-			it = aabbs_.erase(it);
-		}
-		else
-			it++;
-	}
 
 	while (accumulator > step_)
 	{
@@ -47,9 +34,22 @@ void PhysicsManager::fixedUpdate()
 {
 	spatialHash_.clear();
 
+	for (auto it = aabbs_.begin(); it != aabbs_.end();)
+	{
+		if ((*it)->isDeleted)
+		{
+			delete *it;
+			it = aabbs_.erase(it);
+		}
+		else
+			it++;
+	}
+
 	for (auto* aabb : aabbs_)
-		if (!aabb->isDeleted)
-			update(aabb);
+	{
+		update(aabb);
+		map(aabb);
+	}
 
 	for (unsigned x = 0; x < EntityGrid::GridWidth; x++)
 	{
@@ -61,8 +61,9 @@ void PhysicsManager::fixedUpdate()
 			{
 				for (unsigned a = i + 1; a < EntityGrid::MaxEntitiesPerSquare && entitiesInSquare[a]; a++)
 				{
-					auto& collidersI = entitiesInSquare[i]->rigidBody->colliders;
-					auto& collidersA = entitiesInSquare[a]->rigidBody->colliders;
+					auto& collidersI = entitiesInSquare[i]->colliders;
+					auto& collidersA = entitiesInSquare[a]->colliders;
+
 					for (auto* colliderI : collidersI)
 					{
 						for (auto* colliderA : collidersA)
@@ -93,9 +94,9 @@ void PhysicsManager::testCollision(CircleCollider* col1, CircleCollider* col2)
 	if (dir.magnitude_squared() < sumRadii * sumRadii)
 	{
 		if (col1->collisionCallback)
-			col1->collisionCallback(col2->cell);
+			col1->collisionCallback(col1->cell, col2->cell);
 		if (col2->collisionCallback)
-			col2->collisionCallback(col1->cell);
+			col2->collisionCallback(col2->cell, col1->cell);
 
 		if (col1->isSensor || col2->isSensor)
 			return;
@@ -199,26 +200,18 @@ static std::mt19937 gen(rd()); // seed the generator
 
 bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos)
 {
-	float size = aabb->boundsLocal.max.x - aabb->boundsLocal.min.x;
-	float rotation = Random::floatRange(0.0f, 2 * std::numbers::pi);
+	Vec2i gridMin = spatialHash_.getLocalCoord(aabb->bounds.min);
+	Vec2i gridMax = spatialHash_.getLocalCoord(aabb->bounds.max);
 
-	for (unsigned i = 0; i < 4; i++)
+	for (int x = gridMin.x - 1; x <= gridMax.x + 1; x++)
 	{
-		Vec2f dir = Random::vec2FromAngle(rotation + i * std::numbers::pi * 0.5f) * size * 2.0f;
-		Vec2f newMin = aabb->boundsWorld.min + dir;
-		Vec2f newMax = aabb->boundsWorld.max + dir;
-		unsigned numEntities = 0;
-		Vec2i gridMin = spatialHash_.getLocalCoord(newMin);
-		Vec2i gridMax = spatialHash_.getLocalCoord(newMax);
-
-		if (gridMin.x < 0 || gridMin.y < 0 || gridMax.x >= EntityGrid::GridWidth || gridMax.y > EntityGrid::GridHeight)
-			return false;
-
-		for (unsigned x = gridMin.x; x <= gridMax.x; x++)
+		for (int y = gridMin.y - 1; y <= gridMax.y + 1; y++)
 		{
-			for (unsigned y = gridMin.y; y <= gridMax.y; y++)
+			if ((x < gridMin.x || x > gridMax.x || y < gridMin.y || y > gridMax.y) && x >= 0 && x < EntityGrid::GridWidth && y >= 0 && y < EntityGrid::GridHeight)
 			{
+				unsigned numEntities = 0;
 				auto& entitiesInSquare = spatialHash_.get(x, y);
+
 				for (auto* entity : entitiesInSquare)
 				{
 					if (!entity)
@@ -229,13 +222,14 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 
 					numEntities++;
 				}
+
+				if (numEntities <= maxNearbyEntities)
+				{
+					float range = EntityGrid::SquareSize * 0.5f;
+					outPos = spatialHash_.getWorldPos({ x, y }) + Random::floatRange(-range, range);
+					return true;
+				}
 			}
-		}	
-		
-		if (numEntities <= maxNearbyEntities)
-		{
-			outPos = aabb->boundsWorld.center() + dir;
-			return true;
 		}
 	}
 
@@ -243,7 +237,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 }
 
 void PhysicsManager::update(AABB* aabb)
-{	
+{
 	auto* rigidBody = aabb->rigidBody;
 	Vec2f force(0, 0);
 
@@ -264,7 +258,7 @@ void PhysicsManager::update(AABB* aabb)
 	rigidBody->rotation += rigidBody->velocityAngular * step_;
 	rigidBody->velocityAngular *= rigidBody->dampingAngular;
 
-	for (auto* coll : rigidBody->colliders)
+	for (auto* coll : aabb->colliders)
 	{
 		auto tf =
 			TRANSLATE(coll->rigidBody->position) *
@@ -281,7 +275,7 @@ void PhysicsManager::update(AABB* aabb)
 
 	Vec2f min = { fMax, fMax };
 	Vec2f max = { fMin, fMin };
-	auto& colliders = aabb->rigidBody->colliders;
+	auto& colliders = aabb->colliders;
 
 	for (const auto* collider : colliders)
 	{
@@ -302,10 +296,21 @@ void PhysicsManager::update(AABB* aabb)
 	max.x += Cell::Size * 0.5f;
 	max.y += Cell::Size * 0.5f;
 
-	aabb->boundsWorld.min = min;
-	aabb->boundsWorld.max = max;
+	aabb->bounds.min = min;
+	aabb->bounds.max = max;
+}
 
+void PhysicsManager::map(AABB* aabb)
+{
 	spatialHash_.add(aabb);
+}
+
+bool PhysicsManager::hasValidPos(AABB* aabb)
+{
+	auto min = aabb->bounds.min;
+	auto max = aabb->bounds.max;
+	auto pos = spatialHash_.getPos();
+	return min.x > pos.x && min.y > pos.y && max.x < pos.x + EntityGrid::GridWidth * EntityGrid::SquareSize && max.y < pos.y + EntityGrid::GridHeight * EntityGrid::SquareSize;
 }
 
 PhysicsManager::PhysicsManager()
@@ -345,4 +350,8 @@ std::list<Vec2f>& RigidBody::getForces()
 std::list<Vec2f>& RigidBody::getImpulses()
 {
 	return impulses;
+}
+
+CircleCollider::~CircleCollider()
+{
 }

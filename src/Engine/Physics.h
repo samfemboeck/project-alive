@@ -17,8 +17,10 @@ struct ManifoldResolve
 	float Penetration;
 };
 
+
 struct CircleCollider
 {
+	~CircleCollider();
 	Vec2f centerLocal;
 	Vec2f centerWorld;
 	glm::mat4 transform;
@@ -26,7 +28,7 @@ struct CircleCollider
 	RigidBody* rigidBody = nullptr;
 	bool isSensor = false;
 	Cell* cell = nullptr;
-	std::function<void(Cell*)> collisionCallback;
+	std::function<void(Cell*,Cell*)> collisionCallback;
 };
 
 struct Bounds
@@ -42,12 +44,9 @@ struct Bounds
 
 struct AABB
 {
-	Bounds boundsLocal;
-	Bounds boundsWorld;
-	glm::mat4 transform;
+	Bounds bounds;
 	RigidBody* rigidBody;
-	Vec2i regStart;
-	Vec2i regEnd;
+	std::vector<CircleCollider*> colliders;
 	bool isDeleted = false;
 };
 
@@ -57,7 +56,6 @@ public:
 	static bool circleVsCircle(Vec2f centerA, float radiusA, Vec2f centerB, float radiusB);
 	static PhysicsManager& getInstance();
 	void add(AABB* aabb);
-	void remove(AABB* aabb);
 	void update();
 	void fixedUpdate();
 	void testCollision(CircleCollider* collA, CircleCollider* collB);
@@ -66,6 +64,8 @@ public:
 	void draw();
 	bool findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outpos);
 	void update(AABB* aabb);
+	void map(AABB* aabb);
+	bool hasValidPos(AABB* aabb);
 
 private:
 	PhysicsManager();
@@ -94,7 +94,6 @@ struct RigidBody
 	Vec2f acceleration;
 	std::list<Vec2f> forces;
 	std::list<Vec2f> impulses;
-	std::vector<CircleCollider*> colliders;
 	Vec2f velocity;
 
 	void onCollision(CircleCollider* other);

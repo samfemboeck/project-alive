@@ -9,6 +9,8 @@ public:
 	void update();
 	void draw();
 	bool add(Organism* org);
+	bool tryRespawn(Organism* org);
+	void remove(Organism* org);
 
 public:
 #ifdef _DEBUG

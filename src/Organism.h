@@ -16,9 +16,9 @@ public:
 
 	inline static std::vector<std::string> DefaultDNAs = {
 		"L(0)",
-		"M(0)L(0)T(3)T(3)T(3)",
+		"M(0)",
 		"A(0)", 
-		"L(0)T(0)",
+		"X(0)",
 		"L(0)T(0)R(0)",
 		"L(1)R(3)R(0)",
 	};
@@ -35,6 +35,11 @@ public:
 	Organism* createCorpse();
 	AABB* getAABB();
 	void setPosition(Vec2f pos);
+	void onCollision(Cell*,Cell*);
+	bool isDeleted();
+	bool isMover();
+	bool isLeaf();
+	std::string dna_;
 
 private:
 	friend class LeafCell;
@@ -42,7 +47,6 @@ private:
 	friend class LightCell;
 	
 private:
-	std::string dna_;
 	std::vector<Cell*> cells_;
 	std::function<float(float)> instinct_;
 	long initialTTL_;
@@ -52,5 +56,8 @@ private:
 	bool isLight_ = false;
 	float energy_ = 100.0f;
 	bool isCorpse_ = false;
+	bool isLeaf_ = false;
+	bool isMover_ = false;
+	bool isDeleted_ = false;
 	Vec2f offsetCenterToRb_;
 };

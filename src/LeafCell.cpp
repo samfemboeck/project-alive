@@ -14,7 +14,7 @@ void LeafCell::tick()
 	if (!isLit_)
 		return;
 
-	organism_->energy_ += Time::DeltaSeconds * 50.0f;
+	organism_->energy_ += Time::DeltaSeconds * 10.0f;
 }
 
 void LeafCell::onCollision(Cell* other)

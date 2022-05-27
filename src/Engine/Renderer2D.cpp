@@ -50,7 +50,6 @@ void Renderer2D::init()
 
 	s_data.textureShader->uploadUniformIntArray("uTextures", samplers, s_data.MaxTextureSlots);
 	glm::vec2 lightPositions[] = { {0.0f, 0.0f} };
-	LOG("test: {}", 1);
 	s_data.textureShader->uploadUniformFloat2Array("uLightPositions", &lightPositions->x, 1);
 	s_data.textureShader->uploadUniformInt("uNumLights", 1);
 

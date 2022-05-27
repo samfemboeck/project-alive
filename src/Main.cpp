@@ -173,7 +173,7 @@ public:
 	{
 		if (button == 0)
 		{
-			float amplitude = Random::floatRange(3.0f, 30.0f);
+			float amplitude = Random::floatRange(1.0f, 10.0f);
 			float offset_sin1 = Random::floatRange(0.0f, 10.0f);
 			float multiplier_x_sin1 = Random::floatRange(1, 5);
 			float offset_sin2 = Random::floatRange(0.0f, 10.0f);

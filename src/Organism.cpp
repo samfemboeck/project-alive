@@ -11,14 +11,22 @@
 #include "Engine/Timer.h"
 #include "Engine/Renderer2D.h"
 #include "Engine/Util.h"
+#include "OrganismManager.h"
 
-Organism::Organism(const std::string& dna, std::function<float(float)> instinct, Vec2f position, float angle) :
-	dna_(dna),
+void test(Cell*, Cell*)
+{}
+
+Organism::Organism(const std::string& dna__, std::function<float(float)> instinct__, Vec2f position__, float angle__) :
+	dna_(dna__),
+	instinct_(instinct__),
 	initialTTL_(MaxTTL),
 	timerTTL_(initialTTL_)
 {
 	Organism::ActiveInstances++;
 	rigidBody_ = new RigidBody();
+	rigidBody_->rotation = angle__;
+	aabb_ = new AABB();
+	aabb_->rigidBody = rigidBody_;
 
 	Vec2f curPos = { 0, 0 };
 	Vec2f offset = { 0, 0 };
@@ -38,12 +46,14 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 		{
 		case 'L':
 			cell = new LeafCell(this, cc);
+			isLeaf_ = true;
 			break;
 		case 'T':
 			cell = new ThornCell(this, cc);
 			break;
 		case 'M':
 			cell = new MoverCell(this, cc);
+			isMover_ = true;
 			break;
 		case 'R':
 			cell = new FruitCell(this, cc);
@@ -54,6 +64,7 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 		case 'A':
 			cell = new LightCell(this, cc);
 			isLight_ = true;
+			rigidBody_->invMass = 0;
 			break;
 		default:
 			LOG("Invalid DNA symbol: {}", symbol);
@@ -75,8 +86,8 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 		cc->centerLocal = curPos;
 		cc->rigidBody = rigidBody_;
 		cc->cell = cell;
-		cc->collisionCallback = std::bind(&Cell::onCollision, cell, std::placeholders::_1);
-		rigidBody_->colliders.push_back(cc);
+		cc->collisionCallback = std::bind(&Organism::onCollision, this, std::placeholders::_1, std::placeholders::_2);
+		aabb_->colliders.push_back(cc);
 
 		unsigned param = dna_[index + 2] - '0';
 
@@ -99,34 +110,32 @@ Organism::Organism(const std::string& dna, std::function<float(float)> instinct,
 		}
 	}
 
-	auto* aabb = new AABB();
-	float cellRadius = Cell::Size * 0.5f;
+	const float cellRadius = Cell::Size * 0.5f;
 	min.x -= cellRadius;
 	min.y -= cellRadius;
 	max.x += cellRadius;
 	max.y += cellRadius;
-	aabb->boundsLocal = { min, max };
-	aabb->rigidBody = rigidBody_;
-	aabb_ = aabb;
+	Bounds bounds(min, max);
+	offsetCenterToRb_ = rigidBody_->position - bounds.center();
+	setPosition(position__);
 
-	offsetCenterToRb_ = rigidBody_->position - aabb->boundsLocal.center();
-
-	setPosition(position);
-
-	PhysicsManager::getInstance().add(aabb);
-
-	instinct_ = instinct;
+	for (auto* cell : cells_)
+		cell->init();
 }
 
 Organism::~Organism()
 {
+	ActiveInstances--;
+
 	for (auto Cell : cells_)
 		delete Cell;
 
+	for (auto* collider : aabb_->colliders)
+		delete collider;
+
 	delete rigidBody_;
 
-	PhysicsManager::getInstance().remove(aabb_);
-	Organism::ActiveInstances--;
+	aabb_->isDeleted = true;
 }
 
 int Organism::tick()
@@ -138,16 +147,13 @@ int Organism::tick()
 		return -1;
 
 	if (timerTTL_.update())
-		return 2;
+		return 0;
 
 	energy_ -= Time::DeltaSeconds * 100.0f;
 
-	if (energy_ <= 0)
+	if (energy_ <= 0 && isLeaf_)
 	{
-		if (timerTTL_.getElapsedMs() > 1000)
-			return 2;
-		else
-			return 0;
+		return 2;
 	}
 
 	return -1;
@@ -165,7 +171,6 @@ Organism* Organism::createCorpse()
 	dna = Util::replaceAll(dna, "T", "X");
 	dna = Util::replaceAll(dna, "M", "X");
 	dna = Util::replaceAll(dna, "R", "X");
-
 	auto* ret = new Organism(dna, instinct_, rigidBody_->position, rigidBody_->rotation);
 	ret->isCorpse_ = true;
 	return ret;
@@ -181,10 +186,37 @@ void Organism::setPosition(Vec2f pos)
 	rigidBody_->position = pos + offsetCenterToRb_;
 }
 
+void Organism::onCollision(Cell* own, Cell* other)
+{
+	if ((other->organism_->isLeaf_ || other->organism_->isCorpse_) && !isLeaf_ && !isCorpse_ && !isLight_)
+	{
+		other->organism_->isDeleted_ = true;
+		OrganismManager::getInstance().tryRespawn(this);
+	}
+
+	for (auto* cell : cells_)
+		cell->onCollision(other);
+}
+
+bool Organism::isDeleted()
+{
+	return isDeleted_;
+}
+
+bool Organism::isMover()
+{
+	return isMover_;
+}
+
+bool Organism::isLeaf()
+{
+	return isLeaf_;
+}
+
 void Organism::draw() const
 {
 	for (auto* cell : cells_)
 		cell->draw();
 
-	//Renderer2D::pushQuad(aabb_->boundsWorld.min, aabb_->boundsWorld.max, TextureManager::get("aabb.png"));
+	Renderer2D::pushQuad(aabb_->bounds.min, aabb_->bounds.max, TextureManager::get("aabb.png"));
 }

@@ -20,23 +20,11 @@ void LightCell::draw()
 
 void LightCell::tick()
 {
+	return;
 	queryResult_.clear();
+
 	auto min = collider_->centerWorld - Vec2(LightRadius, LightRadius);
 	auto max = collider_->centerWorld + Vec2(LightRadius, LightRadius);
 
 	PhysicsManager::getInstance().squareCast(min, max, queryResult_, collider_->rigidBody);
-
-	for (AABB* result : queryResult_)
-	{
-		auto colliders = result->rigidBody->colliders;
-		for (auto* collider : colliders)
-		{
-			if (PhysicsManager::circleVsCircle(collider->centerWorld, collider->radius, collider_->centerWorld, LightRadius))
-			{
-				LeafCell* leafCell = dynamic_cast<LeafCell*>(collider->cell);
-				if (leafCell)
-					leafCell->setLit(true);
-			}
-		}
-	}
 }
