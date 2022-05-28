@@ -18,4 +18,6 @@ private:
 	float speedMove_ = 70.0f;
 	Vec2f target_;
 	unsigned numFoodEaten = 0;
+	long ttl_;
+	float energy_ = 0.0f;
 };

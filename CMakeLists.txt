@@ -56,12 +56,10 @@ add_executable(alive
 	src/MoverCell.cpp
 	src/ThornCell.h
 	src/ThornCell.cpp
-	src/LightCell.h
-	src/LightCell.cpp
 	src/FruitCell.h
 	src/FruitCell.cpp
-	src/FoodCell.h
-	src/FoodCell.cpp
+	src/CorpseCell.h
+	src/CorpseCell.cpp
 
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c

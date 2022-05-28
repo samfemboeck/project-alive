@@ -36,7 +36,7 @@ void PhysicsManager::fixedUpdate()
 
 	for (auto it = aabbs_.begin(); it != aabbs_.end();)
 	{
-		if ((*it)->isDeleted)
+		if ((*it)->wantsToBeDeleted)
 		{
 			delete *it;
 			it = aabbs_.erase(it);
@@ -94,9 +94,9 @@ void PhysicsManager::testCollision(CircleCollider* col1, CircleCollider* col2)
 	if (dir.magnitude_squared() < sumRadii * sumRadii)
 	{
 		if (col1->collisionCallback)
-			col1->collisionCallback(col1->cell, col2->cell);
+			col1->collisionCallback(col2->cell);
 		if (col2->collisionCallback)
-			col2->collisionCallback(col2->cell, col1->cell);
+			col2->collisionCallback(col1->cell);
 
 		if (col1->isSensor || col2->isSensor)
 			return;
@@ -181,7 +181,7 @@ void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out,
 				if (!entity)
 					break;
 
-				if (entity->isDeleted || entity->rigidBody == ignore)
+				if (entity->wantsToBeDeleted || entity->rigidBody == ignore)
 					continue;
 
 				out.push_back(entity);
@@ -217,7 +217,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 					if (!entity)
 						break;
 
-					if (entity->isDeleted)
+					if (entity->wantsToBeDeleted)
 						continue;
 
 					numEntities++;

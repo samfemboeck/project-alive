@@ -28,7 +28,7 @@ struct CircleCollider
 	RigidBody* rigidBody = nullptr;
 	bool isSensor = false;
 	Cell* cell = nullptr;
-	std::function<void(Cell*,Cell*)> collisionCallback;
+	std::function<void(Cell*)> collisionCallback;
 };
 
 struct Bounds
@@ -47,7 +47,7 @@ struct AABB
 	Bounds bounds;
 	RigidBody* rigidBody;
 	std::vector<CircleCollider*> colliders;
-	bool isDeleted = false;
+	bool wantsToBeDeleted = false;
 };
 
 class PhysicsManager

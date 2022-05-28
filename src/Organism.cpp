@@ -4,8 +4,7 @@
 #include "ThornCell.h"
 #include "MoverCell.h"
 #include "FruitCell.h"
-#include "FoodCell.h"
-#include "LightCell.h"
+#include "CorpseCell.h"
 #include "Engine/Physics.h"
 #include "Engine/Time.h"
 #include "Engine/Timer.h"
@@ -13,16 +12,12 @@
 #include "Engine/Util.h"
 #include "OrganismManager.h"
 
-void test(Cell*, Cell*)
-{}
-
-Organism::Organism(const std::string& dna__, std::function<float(float)> instinct__, Vec2f position__, float angle__) :
-	dna_(dna__),
-	instinct_(instinct__),
-	initialTTL_(MaxTTL),
-	timerTTL_(initialTTL_)
+Organism::Organism(const std::string& dna__, Vec2f position__, float angle__) :
+	dna_(dna__)
 {
-	Organism::ActiveInstances++;
+	start_ = std::chrono::high_resolution_clock::now();
+	Instances++;
+
 	rigidBody_ = new RigidBody();
 	rigidBody_->rotation = angle__;
 	aabb_ = new AABB();
@@ -59,15 +54,10 @@ Organism::Organism(const std::string& dna__, std::function<float(float)> instinc
 			cell = new FruitCell(this, cc);
 			break;
 		case 'X':
-			cell = new FoodCell(this, cc);
-			break;
-		case 'A':
-			cell = new LightCell(this, cc);
-			isLight_ = true;
-			rigidBody_->invMass = 0;
+			cell = new CorpseCell(this, cc);
 			break;
 		default:
-			LOG("Invalid DNA symbol: {}", symbol);
+			throw std::exception(std::format("Invalid DNA symbol: {}", symbol).c_str());
 		}
 
 		cells_.push_back(cell);
@@ -86,7 +76,7 @@ Organism::Organism(const std::string& dna__, std::function<float(float)> instinc
 		cc->centerLocal = curPos;
 		cc->rigidBody = rigidBody_;
 		cc->cell = cell;
-		cc->collisionCallback = std::bind(&Organism::onCollision, this, std::placeholders::_1, std::placeholders::_2);
+		cc->collisionCallback = std::bind(&Cell::onCollision, cell, std::placeholders::_1);
 		aabb_->colliders.push_back(cc);
 
 		unsigned param = dna_[index + 2] - '0';
@@ -106,7 +96,7 @@ Organism::Organism(const std::string& dna__, std::function<float(float)> instinc
 			offset = { -Cell::Size, 0 };
 			break;
 		default:
-			LOG("Invalid DNA param: {}", param);
+			throw std::exception(std::format("Invalid DNA param: {}", symbol).c_str());
 		}
 	}
 
@@ -125,44 +115,28 @@ Organism::Organism(const std::string& dna__, std::function<float(float)> instinc
 
 Organism::~Organism()
 {
-	ActiveInstances--;
+	Instances--;
 
-	for (auto Cell : cells_)
+	for (Cell* Cell : cells_)
 		delete Cell;
 
-	for (auto* collider : aabb_->colliders)
+	for (CircleCollider* collider : aabb_->colliders)
 		delete collider;
 
 	delete rigidBody_;
 
-	aabb_->isDeleted = true;
+	aabb_->wantsToBeDeleted = true;
 }
 
-int Organism::tick()
+void Organism::tick()
 {
-	for (auto* Cell : cells_)
-		Cell->tick();
-
-	if (isLight_ || isCorpse_)
-		return -1;
-
-	if (timerTTL_.update())
-		return 0;
-
-	energy_ -= Time::DeltaSeconds * 100.0f;
-
-	if (energy_ <= 0 && isLeaf_)
-	{
-		energy_ = 100.0f;
-		return 2;
-	}
-
-	return -1;
+	for (Cell* cell : cells_)
+		cell->tick();
 }
 
 Organism* Organism::clone(Vec2f pos)
 {
-	return new Organism(dna_, instinct_, pos, Random::floatRange(0, 2 * std::numbers::pi));
+	return new Organism(dna_, pos, Random::floatRange(0, 2 * std::numbers::pi));
 }
 
 Organism* Organism::createCorpse()
@@ -172,7 +146,7 @@ Organism* Organism::createCorpse()
 	dna = Util::replaceAll(dna, "T", "X");
 	dna = Util::replaceAll(dna, "M", "X");
 	dna = Util::replaceAll(dna, "R", "X");
-	auto* ret = new Organism(dna, instinct_, rigidBody_->position, rigidBody_->rotation);
+	auto* ret = new Organism(dna, rigidBody_->position, rigidBody_->rotation);
 	ret->isCorpse_ = true;
 	return ret;
 }
@@ -187,15 +161,9 @@ void Organism::setPosition(Vec2f pos)
 	rigidBody_->position = pos + offsetCenterToRb_;
 }
 
-void Organism::onCollision(Cell* own, Cell* other)
+bool Organism::wantsToBeDeleted()
 {
-	for (auto* cell : cells_)
-		cell->onCollision(other);
-}
-
-bool Organism::isDeleted()
-{
-	return isDeleted_;
+	return wantsToBeDeleted_;
 }
 
 bool Organism::isMover()
@@ -206,6 +174,47 @@ bool Organism::isMover()
 bool Organism::isLeaf()
 {
 	return isLeaf_;
+}
+
+bool Organism::isCorpse()
+{
+	return isCorpse_;
+}
+
+unsigned Organism::getReproductionCount()
+{
+	return reproductionCount_;
+}
+
+void Organism::setReproductionCount(unsigned count)
+{
+	reproductionCount_ = count;
+}
+
+long Organism::getAgeMs()
+{
+	auto now = std::chrono::high_resolution_clock::now();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start_).count();
+}
+
+void Organism::markForDeletion()
+{
+	wantsToBeDeleted_ = true;
+}
+
+void Organism::markForDeath()
+{
+	wantsToDie_ = true;
+}
+
+RigidBody* Organism::getRigidBody()
+{
+	return rigidBody_;
+}
+
+bool Organism::wantsToDie()
+{
+	return wantsToDie_;
 }
 
 void Organism::draw() const

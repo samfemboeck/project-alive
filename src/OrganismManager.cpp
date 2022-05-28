@@ -12,71 +12,50 @@ OrganismManager& OrganismManager::getInstance()
 
 void OrganismManager::update()
 {
-	std::vector<Organism*> to_delete;
-	std::vector<int> results;
+	static std::vector<Organism*> corpsesToSpawn;
+	static std::vector<Organism*> parentsToClone;
 
 	for (auto it = organisms_.begin(); it != organisms_.end();)
 	{
-		if ((*it)->isDeleted())
+		Organism* org = *it;
+		org->tick();
+
+		if (org->wantsToBeDeleted())
 		{
-			delete* it;
 			it = organisms_.erase(it);
+			delete org;
+		}
+		else if (org->wantsToDie())
+		{
+			it = organisms_.erase(it);
+			corpsesToSpawn.push_back(org->createCorpse());
+			delete org;
+		}
+		else if (org->getReproductionCount() > 0)
+		{
+			for (unsigned i = 0; i < org->getReproductionCount(); i++)
+				parentsToClone.push_back(org);
+
+			org->setReproductionCount(0);
+			++it;
 		}
 		else
 			++it;
 	}
 
-	for (auto* org : organisms_)
-	{
-		int result = org->tick();
+	for (Organism* corpse : corpsesToSpawn)
+		add(corpse);
 
-		if (result != -1)
-		{
-			results.push_back(result);
-			to_delete.push_back(org);
-		}
-	}
+	for (Organism* parent : parentsToClone)
+		tryClone(parent);
 
-	for (auto* org : to_delete)
-	{
-		if (org->isLeaf())
-			continue;
-
-		if (std::erase(organisms_, org) == 0)
-			LOG("erase failed!");
-	}
-
-
-	for (unsigned i = 0; i < results.size(); i++)
-	{
-		Organism* target = to_delete[i];
-
-		if (target->isLeaf())
-			continue;
-
-		add(target->createCorpse());
-	}
-
-	for (unsigned i = 0; i < results.size(); i++)
-	{
-		Organism* target = to_delete[i];
-
-		for (unsigned a = 0; a < results[i]; a++)
-			tryRespawn(target);
-
-		if (target->isLeaf())
-			continue;
-
-		delete target;
-	}
-
-	to_delete.clear();
-	results.clear();
+	corpsesToSpawn.clear();
+	parentsToClone.clear();
 }
 
 void OrganismManager::draw()
 {
-	for (auto* org : organisms_)
+	for (Organism* org : organisms_)
 		org->draw();
 }
 
@@ -95,34 +74,18 @@ bool OrganismManager::add(Organism* org)
 	return false;
 }
 
-bool OrganismManager::tryRespawn(Organism* org)
+void OrganismManager::tryClone(Organism* org)
 {
 	Vec2f spawnPos;
 
 	if (org->isMover())
 	{
-		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 1, spawnPos))
-		{
+		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 2, spawnPos))
 			add(org->clone(spawnPos));
-			return true;
-		}
 	}
 	else
 	{
 		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 0, spawnPos))
-		{
 			add(org->clone(spawnPos));
-			return true;
-		}
 	}
-
-	return false;
-}
-
-void OrganismManager::remove(Organism* org)
-{
-	if (std::erase(organisms_, org) == 0)
-		LOG("erase failed!");
-
-	delete org;
 }

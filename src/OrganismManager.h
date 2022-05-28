@@ -9,12 +9,11 @@ public:
 	void update();
 	void draw();
 	bool add(Organism* org);
-	bool tryRespawn(Organism* org);
-	void remove(Organism* org);
+	void tryClone(Organism* org);
 
 public:
 #ifdef _DEBUG
-	inline static int MaxInstances = 1000;
+	inline static int MaxInstances = 200;
 #else
 	inline static int MaxInstances = 8000;
 #endif

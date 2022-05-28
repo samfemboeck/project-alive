@@ -22,6 +22,12 @@ float Random::floatRange(float min, float max)
 	return d(gen);
 }
 
+long Random::longRange(long min, long max)
+{
+	std::uniform_int_distribution<long> d(min, max);
+	return d(gen);
+}
+
 int Random::intRange(int min, int max)
 {
 	std::uniform_int_distribution d(min, max); // define the range

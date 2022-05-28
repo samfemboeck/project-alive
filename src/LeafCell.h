@@ -11,8 +11,7 @@ public:
 	LeafCell(Organism*, CircleCollider*);
 	void tick() override;
 	void onCollision(Cell*) override;
-	void setLit(bool);
-
 private:
-	bool isLit_ = false;
+	float elapsed_ = 0;
+	long ttl_;
 };

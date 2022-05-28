@@ -152,7 +152,7 @@ public:
 			ImGui::InputInt("Max Instances", &OrganismManager::MaxInstances, 100);
 			ImGui::Text(std::format("Selected DNA: {}", Organism::DefaultDNAs[Organism::DNAIndex]).c_str());
 			ImGui::Text(std::format("Time To Live: {}", Organism::MaxTTL).c_str());
-			ImGui::Text(std::format("Active Organisms: {}", Organism::ActiveInstances).c_str());
+			ImGui::Text(std::format("Active Organisms: {}", Organism::Instances).c_str());
 			ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
 			ImGui::End();
 			ImGui::Begin("Physics");
@@ -179,19 +179,8 @@ public:
 	{
 		if (button == GLFW_MOUSE_BUTTON_1)
 		{
-			float amplitude = Random::floatRange(1.0f, 10.0f);
-			float offset_sin1 = Random::floatRange(0.0f, 10.0f);
-			float multiplier_x_sin1 = Random::floatRange(1, 5);
-			float offset_sin2 = Random::floatRange(0.0f, 10.0f);
-			float multiplier_x_sin2 = Random::floatRange(1, 5);
-
-			auto instinct = [=](float x) -> float
-			{
-				return amplitude * (sin(multiplier_x_sin1 * x + offset_sin1) + sin(multiplier_x_sin2 * x + offset_sin2));
-			};
-
 			auto mouse_pos_world = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection());
-			OrganismManager::getInstance().add(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], instinct, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
+			OrganismManager::getInstance().add(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
 		}
 		else if (button == GLFW_MOUSE_BUTTON_2)
 		{
