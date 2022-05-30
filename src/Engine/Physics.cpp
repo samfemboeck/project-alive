@@ -32,7 +32,7 @@ void PhysicsManager::update()
 
 void PhysicsManager::fixedUpdate()
 {
-	spatialHash_.clear();
+	entityGrid_.clear();
 
 	for (auto it = aabbs_.begin(); it != aabbs_.end();)
 	{
@@ -55,7 +55,7 @@ void PhysicsManager::fixedUpdate()
 	{
 		for (unsigned y = 0; y < EntityGrid::GridHeight; y++)
 		{
-			auto& entitiesInSquare = spatialHash_.get(x, y);
+			auto& entitiesInSquare = entityGrid_.get(x, y);
 
 			for (unsigned i = 0; entitiesInSquare[i] && i < EntityGrid::MaxEntitiesPerSquare - 1; i++)
 			{
@@ -122,7 +122,7 @@ void PhysicsManager::resolveCollisions()
 {
 	for (auto& man : manifolds_)
 	{
-		if (man.rb1->invMass == 0 && man.rb2->invMass == 0)
+		if (man.rb1->getInvMass() == 0 && man.rb2->getInvMass() == 0)
 		{
 			continue;
 		}
@@ -138,25 +138,25 @@ void PhysicsManager::resolveCollisions()
 		float e = 0.1f;
 
 		float j = (1 + e) * velAlongNormal;
-		auto contact_vec_1 = man.ContactPoint - man.rb1->centerOfMassWorld;
-		auto contact_vec_2 = man.ContactPoint - man.rb2->centerOfMassWorld;
+		auto contact_vec_1 = man.ContactPoint - man.rb1->getCenterOfMass();
+		auto contact_vec_2 = man.ContactPoint - man.rb2->getCenterOfMass();
 		auto angular_1 = contact_vec_1.cross(man.Normal);
 		angular_1 *= angular_1;
 		auto angular_2 = contact_vec_2.cross(man.Normal);
 		angular_2 *= angular_2;
-		j /= man.rb1->invMass + man.rb2->invMass + angular_1 + angular_2;
+		j /= man.rb1->getInvMass() + man.rb2->getInvMass() + angular_1 + angular_2;
 		Vec2f impulse = j * man.Normal;
 
-		man.rb1->setVelocity(man.rb1->getVelocity() + Vec2f(man.rb1->invMass * impulse.x, man.rb1->invMass * impulse.x));
-		man.rb2->setVelocity(man.rb2->getVelocity() - Vec2f(man.rb2->invMass * impulse.x, man.rb2->invMass * impulse.y));
-		man.rb1->velocityAngular += man.rb1->invInertia * contact_vec_1.cross(impulse);
-		man.rb2->velocityAngular -= man.rb2->invInertia * contact_vec_2.cross(impulse);
+		man.rb1->addImpulse(impulse);
+		man.rb2->addImpulse(impulse * -1.0f);
+		man.rb1->addTorque(contact_vec_1.cross(impulse));
+		man.rb2->addTorque(-contact_vec_2.cross(impulse));
 
 		const float percent = 0.75f;
 		const float slop = 0.0f;
-		Vec2f correction = std::max(man.Penetration - slop, 0.0f) / (man.rb1->invMass + man.rb2->invMass) * percent * man.Normal;
-		man.rb1->correction += -man.rb1->invMass * correction;
-		man.rb2->correction += man.rb2->invMass * correction;
+		Vec2f correction = std::max(man.Penetration - slop, 0.0f) / (man.rb1->getInvMass() + man.rb2->getInvMass()) * percent * man.Normal;
+		man.rb1->addPosCorrection(correction * -1.0f);
+		man.rb2->addPosCorrection(correction);
 		man.Penetration -= correction.magnitude() * 2;
 	}
 
@@ -165,8 +165,8 @@ void PhysicsManager::resolveCollisions()
 
 void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore)
 {
-	Vec2i startGrid = spatialHash_.getLocalCoord(start);
-	Vec2i endGrid = spatialHash_.getLocalCoord(end);
+	Vec2i startGrid = entityGrid_.getLocalCoord(start);
+	Vec2i endGrid = entityGrid_.getLocalCoord(end);
 
 	if (startGrid.x < 0 || startGrid.y < 0 || endGrid.x >= EntityGrid::GridWidth || endGrid.y > EntityGrid::GridHeight)
 		return;
@@ -175,7 +175,7 @@ void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out,
 	{
 		for (unsigned y = startGrid.y; y <= endGrid.y; y++)
 		{
-			auto& entitiesInSquare = spatialHash_.get(x, y);
+			auto& entitiesInSquare = entityGrid_.get(x, y);
 			for (auto* entity : entitiesInSquare)
 			{
 				if (!entity)
@@ -200,8 +200,8 @@ static std::mt19937 gen(rd()); // seed the generator
 
 bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos)
 {
-	Vec2i gridMin = spatialHash_.getLocalCoord(aabb->bounds.min);
-	Vec2i gridMax = spatialHash_.getLocalCoord(aabb->bounds.max);
+	Vec2i gridMin = entityGrid_.getLocalCoord(aabb->bounds.min);
+	Vec2i gridMax = entityGrid_.getLocalCoord(aabb->bounds.max);
 
 	for (int x = gridMin.x - 1; x <= gridMax.x + 1; x++)
 	{
@@ -210,7 +210,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 			if ((x < gridMin.x || x > gridMax.x || y < gridMin.y || y > gridMax.y) && x >= 0 && x < EntityGrid::GridWidth && y >= 0 && y < EntityGrid::GridHeight)
 			{
 				unsigned numEntities = 0;
-				auto& entitiesInSquare = spatialHash_.get(x, y);
+				auto& entitiesInSquare = entityGrid_.get(x, y);
 
 				for (auto* entity : entitiesInSquare)
 				{
@@ -226,7 +226,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 				if (numEntities <= maxNearbyEntities)
 				{
 					float range = EntityGrid::SquareSize * 0.5f;
-					outPos = spatialHash_.getWorldPos({ x, y }) + Random::floatRange(-range, range);
+					outPos = entityGrid_.getWorldPos({ x, y }) + Random::floatRange(-range, range);
 					return true;
 				}
 			}
@@ -239,30 +239,13 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 void PhysicsManager::update(AABB* aabb)
 {
 	auto* rigidBody = aabb->rigidBody;
-	Vec2f force(0, 0);
+	rigidBody->tick(step_);
 
-	for (const auto& f : rigidBody->getForces())
-		force += f;
-
-	for (const auto& i : rigidBody->getImpulses())
-		force += i;
-
-	rigidBody->getImpulses().clear();
-	rigidBody->acceleration = force * rigidBody->invMass;
-	rigidBody->setVelocity(rigidBody->getVelocity() + rigidBody->acceleration * step_);
-	rigidBody->position += rigidBody->getVelocity() * step_ + rigidBody->correction;
-	rigidBody->setVelocity(rigidBody->getVelocity() * rigidBody->friction);
-	rigidBody->correction = Vec2f(0, 0);
-	rigidBody->centerOfMassWorld = rigidBody->position + rigidBody->centerOfMassLocal;
-	rigidBody->velocityAngular += rigidBody->accelerationAngular * step_;
-	rigidBody->rotation += rigidBody->velocityAngular * step_;
-	rigidBody->velocityAngular *= rigidBody->dampingAngular;
-
-	for (auto* coll : aabb->colliders)
+	for (CircleCollider* coll : aabb->colliders)
 	{
 		auto tf =
-			TRANSLATE(coll->rigidBody->position) *
-			ROTATE(coll->rigidBody->rotation) *
+			TRANSLATE(coll->rigidBody->getPosition()) *
+			ROTATE(coll->rigidBody->getRotation()) *
 			TRANSLATE(coll->centerLocal) *
 			SCALE(coll->radius * 2);
 
@@ -275,9 +258,8 @@ void PhysicsManager::update(AABB* aabb)
 
 	Vec2f min = { fMax, fMax };
 	Vec2f max = { fMin, fMin };
-	auto& colliders = aabb->colliders;
 
-	for (const auto* collider : colliders)
+	for (const auto* collider : aabb->colliders)
 	{
 		const Vec2f& pos = collider->centerWorld;
 
@@ -302,15 +284,20 @@ void PhysicsManager::update(AABB* aabb)
 
 void PhysicsManager::map(AABB* aabb)
 {
-	spatialHash_.add(aabb);
+	entityGrid_.add(aabb);
 }
 
 bool PhysicsManager::hasValidPos(AABB* aabb)
 {
 	auto min = aabb->bounds.min;
 	auto max = aabb->bounds.max;
-	auto pos = spatialHash_.getPos();
+	auto pos = entityGrid_.getPos();
 	return min.x > pos.x && min.y > pos.y && max.x < pos.x + EntityGrid::GridWidth * EntityGrid::SquareSize && max.y < pos.y + EntityGrid::GridHeight * EntityGrid::SquareSize;
+}
+
+EntityGrid& PhysicsManager::getGrid()
+{
+	return entityGrid_;
 }
 
 PhysicsManager::PhysicsManager()
@@ -318,40 +305,110 @@ PhysicsManager::PhysicsManager()
 
 }
 
-void RigidBody::onCollision(CircleCollider* other)
+void RigidBody::addPosCorrection(Vec2f correction)
 {
+	correction_ += invMass_ * correction;
+}
+
+Vec2f RigidBody::getPosition()
+{
+	return position_;
+}
+
+void RigidBody::setPosition(const Vec2f& position)
+{
+	position_ = position;
+}
+
+float RigidBody::getRotation()
+{
+	return rotation_;
+}
+
+void RigidBody::tick(float dt)
+{	
+	
+	acceleration_ = {0, 0};
+
+	for (const auto& f : forces_)
+		acceleration_ += f;
+
+	for (const auto& i : impulses_)
+		acceleration_ += i;
+
+	acceleration_ *= invMass_;
+	impulses_.clear();
+	forces_.clear();
+	velocity_ += acceleration_ * dt;
+	position_ += velocity_ * dt + correction_;
+	correction_ = { 0, 0 };
+	velocity_ *= linearFriction_;
+	centerOfMassWorld_ = position_ + centerOfMassLocal_;
+
+	accelerationAngular_ = 0;
+
+	for (float f : torques)
+		accelerationAngular_ += f;
+
+	torques.clear();
+
+	velocityAngular_ += accelerationAngular_ * dt;
+	rotation_ += velocityAngular_ * dt;
+	velocityAngular_ *= dampingAngular_;
 }
 
 Vec2f RigidBody::getVelocity()
 {
-	return velocity;
+	return velocity_;
 }
 
-void RigidBody::setVelocity(Vec2f vel)
+void RigidBody::setVelocity(Vec2f velocity)
 {
-	velocity = vel;
+	velocity_ = velocity;
 }
 
-void RigidBody::addForce(Vec2f force)
+void RigidBody::setRotation(float rad)
 {
-	forces.push_back(force);
+	rotation_ = rad;
 }
 
-void RigidBody::addImpulse(Vec2f impulse)
+Vec2f RigidBody::getCenterOfMass()
 {
-	impulses.push_back(impulse);
-}
-
-std::list<Vec2f>& RigidBody::getForces()
-{
-	return forces;
-}
-
-std::list<Vec2f>& RigidBody::getImpulses()
-{
-	return impulses;
+	return centerOfMassWorld_;
 }
 
 CircleCollider::~CircleCollider()
 {
+}
+
+float RigidBody::getMass()
+{
+	return mass_;
+}
+
+float RigidBody::getInvMass()
+{
+	return invMass_;
+}
+
+void RigidBody::setMass(float mass)
+{
+	mass_ = mass;
+	invMass_ = 1.0f / mass;
+	invInertia_ = 0.01f / mass;	
+}
+
+void RigidBody::addImpulse(const Vec2f& impulse)
+{
+	impulses_.push_back(invMass_ * impulse);
+}
+
+void RigidBody::addTorque(float torque)
+{
+	torques.push_back(invMass_ * torque);
+}
+
+void RigidBody::addForce(const Vec2f& force)
+{
+	forces_.push_back(force);
 }

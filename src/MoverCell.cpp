@@ -4,16 +4,20 @@
 #include "Engine/Physics.h"
 #include "Engine/Time.h"
 #include "OrganismManager.h"
+#include "CorpseCell.h"
 
-MoverCell::MoverCell(Organism* org, CircleCollider* collider) :
-	Cell(org, collider, "cell_mover"),
-	ttl_(Random::longRange(8000, 9000))
+MoverCell::MoverCell() :
+	Cell("cell_mover"),
+	target_(Vec2f(0.0f, 0.0f))
 {
 }
 
 void MoverCell::init()
 {
 	findNewTarget();
+	organism_->setMover(true);
+	long ttl = organism_->getSize() * 2500;
+	ttl_ = Random::floatRange(ttl, ttl + 1000);
 }
 
 void MoverCell::tick()
@@ -22,46 +26,31 @@ void MoverCell::tick()
 		organism_->markForDeath();
 
 	auto* rigidBody = organism_->getRigidBody();
-	Vec2f forward = b2Rot(rigidBody->rotation).GetYAxis();
-	rigidBody->impulses.push_back(forward * 5000.0f);
+	Vec2f forward = b2Rot(rigidBody->getRotation()).GetYAxis();
+	rigidBody->addImpulse(forward * 5000.0f);
 
-	if (rigidBody->velocity.magnitude() > speedMove_)
-		rigidBody->velocity = rigidBody->velocity.normalized() * speedMove_;
+	if (rigidBody->getVelocity().magnitude() > speedMove_)
+		rigidBody->setVelocity(rigidBody->getVelocity().normalized() * speedMove_);
 
-	Vec2f vec1 = b2Rot(rigidBody->rotation).GetXAxis();
-	Vec2f vec2 = (target_ - rigidBody->position).normalized();
+	Vec2f vec1 = b2Rot(rigidBody->getRotation()).GetXAxis();
+	Vec2f vec2 = (target_ - rigidBody->getPosition()).normalized();
 	float dot = -b2Dot(vec1, vec2);
-	rigidBody->accelerationAngular = dot * speedTurn_;
+	//rigidBody->addTorque(dot * speedTurn_);
 
 	float distance = (target_ - organism_->getAABB()->bounds.center()).magnitude();
 	if (distance <= 100.0f)
 		findNewTarget();
 }
 
-void MoverCell::onCollision(Cell* other)
-{	
-	if (other->organism_->isLeaf())
-	{
-		other->organism_->markForDeletion();
-		energy_ += 34.0f;
-	}
-	else if (other->organism_->isCorpse())
-	{
-		other->organism_->markForDeletion();
-		energy_ += 50.0f;
-	}
-
-	if (energy_ >= 100.0f)
-	{
-		organism_->setReproductionCount(1);
-		energy_ = 0.0f;
-	}
+CorpseCell* MoverCell::createCorpse() const
+{
+	return new CorpseCell(34.0f, localPos_);
 }
 
 void MoverCell::findNewTarget()
 {
-	float radius = Random::floatRange(500.0f, 1000.0f);
-	auto min = organism_->getRigidBody()->position - radius;
-	auto max = organism_->getRigidBody()->position + radius;
+	float radius = Random::floatRange(500.0f, 1500.0f);
+	auto min = organism_->getRigidBody()->getPosition() - radius;
+	auto max = organism_->getRigidBody()->getPosition() + radius;
 	target_ = Random::vec2Range(min, max);
 }

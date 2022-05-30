@@ -8,5 +8,5 @@ struct CircleCollider;
 class FruitCell final : public Cell
 {
 public:
-	FruitCell(Organism*, CircleCollider*);
+	FruitCell();
 };

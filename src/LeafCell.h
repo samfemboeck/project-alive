@@ -8,10 +8,14 @@ struct CircleCollider;
 class LeafCell final : public Cell
 {
 public:
-	LeafCell(Organism*, CircleCollider*);
+	LeafCell();
 	void tick() override;
-	void onCollision(Cell*) override;
+	float getNutritionValue() const;
+	CorpseCell* createCorpse() const override;
+	long getTtl();
+
 private:
 	float elapsed_ = 0;
 	long ttl_;
+	bool isLifetimeExpired_ = false;
 };

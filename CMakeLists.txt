@@ -60,6 +60,8 @@ add_executable(alive
 	src/FruitCell.cpp
 	src/CorpseCell.h
 	src/CorpseCell.cpp
+	src/MouthCell.h
+	src/MouthCell.cpp
 
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c

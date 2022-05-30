@@ -20,23 +20,20 @@ void OrganismManager::update()
 		Organism* org = *it;
 		org->tick();
 
-		if (org->wantsToBeDeleted())
+		if (org->wantsToDie() || !PhysicsManager::getInstance().getGrid().contains(org->getAABB()->bounds))
 		{
 			it = organisms_.erase(it);
-			delete org;
-		}
-		else if (org->wantsToDie())
-		{
-			it = organisms_.erase(it);
-			corpsesToSpawn.push_back(org->createCorpse());
-			delete org;
-		}
-		else if (org->getReproductionCount() > 0)
-		{
-			for (unsigned i = 0; i < org->getReproductionCount(); i++)
-				parentsToClone.push_back(org);
 
-			org->setReproductionCount(0);
+			Organism* corpse = org->createCorpse();
+			if (corpse)
+				corpsesToSpawn.push_back(corpse);
+
+			delete org;
+		}
+		else if (org->getReproductionUrge() > 0)
+		{
+			for (unsigned i = 0; i < org->getReproductionUrge(); i++)
+				parentsToClone.push_back(org);
 			++it;
 		}
 		else
@@ -47,7 +44,10 @@ void OrganismManager::update()
 		add(corpse);
 
 	for (Organism* parent : parentsToClone)
-		tryClone(parent);
+	{
+		if (tryClone(parent))
+			parent->setReproductionUrge(parent->getReproductionUrge() - 1);
+	}
 
 	corpsesToSpawn.clear();
 	parentsToClone.clear();
@@ -74,18 +74,24 @@ bool OrganismManager::add(Organism* org)
 	return false;
 }
 
-void OrganismManager::tryClone(Organism* org)
+bool OrganismManager::tryClone(Organism* org)
 {
 	Vec2f spawnPos;
 
 	if (org->isMover())
 	{
 		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 2, spawnPos))
+		{
 			add(org->clone(spawnPos));
+			return true;
+		}
 	}
 	else
 	{
 		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 0, spawnPos))
+		{
 			add(org->clone(spawnPos));
+			return true;
+		}
 	}
 }

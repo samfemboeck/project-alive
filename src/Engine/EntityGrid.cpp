@@ -16,7 +16,8 @@ EntityGrid::EntityGrid() :
 
 bool EntityGrid::add(AABB* aabb)
 {
-	Bounds& bounds = aabb->bounds;
+	Bounds& bounds = aabb->bounds;	
+	
 	int startX = (bounds.min.x - pos_.x) / SquareSize;
 	int startY = (bounds.min.y - pos_.y) / SquareSize;
 	int endX = (bounds.max.x - pos_.x) / SquareSize;
@@ -49,6 +50,27 @@ bool EntityGrid::add(AABB* aabb)
 					throw std::exception("Square Overflow");
 			}
 		}
+	}
+
+	return true;
+}
+
+bool EntityGrid::contains(Bounds& bounds)
+{
+	int startX = (bounds.min.x - pos_.x) / SquareSize;
+	int startY = (bounds.min.y - pos_.y) / SquareSize;
+	int endX = (bounds.max.x - pos_.x) / SquareSize;
+	int endY = (bounds.max.y - pos_.y) / SquareSize;
+
+	if 
+	(
+		startX < 0 ||
+		startY < 0 ||
+		endX >= GridWidth ||
+		endY >= GridHeight
+	)
+	{
+		return false;
 	}
 
 	return true;

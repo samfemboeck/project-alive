@@ -2,11 +2,19 @@
 #include "CorpseCell.h"
 #include "Organism.h"
 
-CorpseCell::CorpseCell(Organism* org, CircleCollider* collider) :
-	Cell(org, collider, "cell_food")
+CorpseCell::CorpseCell(float nutritionValue, Vec2f localPos) :
+	Cell("cell_food"),
+	nutritionValue_(nutritionValue)
 {
+	localPos_ = localPos;
 }
 
-void CorpseCell::tick()
+float CorpseCell::getNutritionValue() const
 {
+	return nutritionValue_;
+}
+
+void CorpseCell::init()
+{
+	collider_->isSensor = true;
 }

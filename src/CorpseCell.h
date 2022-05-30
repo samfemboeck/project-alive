@@ -2,12 +2,13 @@
 
 #include "Cell.h"
 
-class Organism;
-struct CircleCollider;
-
 class CorpseCell final : public Cell
 {
 public:
-	CorpseCell(Organism*, CircleCollider*);
-	void tick() override;
+	CorpseCell(float nutritionValue, Vec2f localPos);
+	float getNutritionValue() const;
+	void init() override;
+
+private:
+	float nutritionValue_ = 50.0f;
 };

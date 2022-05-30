@@ -9,7 +9,7 @@ public:
 	void update();
 	void draw();
 	bool add(Organism* org);
-	void tryClone(Organism* org);
+	bool tryClone(Organism* org);
 
 public:
 #ifdef _DEBUG

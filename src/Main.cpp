@@ -58,6 +58,8 @@ private:
 		TextureManager::add("cell_fruit_filled.png");
 		TextureManager::add("cell_food.png");
 		TextureManager::add("cell_food_filled.png");
+		TextureManager::add("cell_mouth.png");
+		TextureManager::add("cell_mouth_filled.png");
 		TextureManager::add("collider.png");
 		TextureManager::add("light_circle.png");
 		TextureManager::add("light_warm.png");
@@ -99,9 +101,9 @@ public:
 	{
 		OrthoCamController::getInstance().pressKey(key);
 
-		if (key >= GLFW_KEY_1 && key < GLFW_KEY_1 + Organism::DefaultDNAs.size())
+		if (key >= GLFW_KEY_1 && key < GLFW_KEY_1 + dnas_.size())
 		{
-			Organism::DNAIndex = (key - GLFW_KEY_1);
+			dnaIndex_ = (key - GLFW_KEY_1);
 		}
 
 		static const float scroll_speed_ttl = 250;
@@ -148,27 +150,19 @@ public:
 		{
 			bool show_demo = false;
 			//ImGui::ShowDemoWindow(&show_demo);
-			ImGui::Begin("Organism");
-			ImGui::InputInt("Max Instances", &OrganismManager::MaxInstances, 100);
-			ImGui::Text(std::format("Selected DNA: {}", Organism::DefaultDNAs[Organism::DNAIndex]).c_str());
-			ImGui::Text(std::format("Time To Live: {}", Organism::MaxTTL).c_str());
+			ImGui::Begin("Map");
 			ImGui::Text(std::format("Active Organisms: {}", Organism::Instances).c_str());
 			ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
 			ImGui::End();
-			ImGui::Begin("Physics");
-			ImGui::InputFloat("Linear Friction", &RigidBody::LinearFriction);
+			ImGui::Begin("Organism");
+			ImGui::InputInt("Max Instances", &OrganismManager::MaxInstances, 100);
+			ImGui::Text(std::format("Selected DNA: {}", dnas_[dnaIndex_]).c_str());
 			ImGui::End();
 			ImGui::Begin("Performance");
 
 			for (const auto& profile : data)
 				ImGui::Text(profile.c_str());
 
-			ImGui::End();
-			ImGui::Begin("Water");
-			ImGui::ColorEdit3("Water Color", &Renderer2DStorage::WaterColor.x);
-			ImGui::InputInt("Tile Level", &Renderer2DStorage::TileLevel);
-			ImGui::InputFloat3("Light Attenuation", &Renderer2DStorage::LightAttenuation.x);
-			ImGui::InputFloat3("Ambient Light", &Renderer2DStorage::AmbientLight.x);
 			ImGui::End();
 		}
 
@@ -180,7 +174,8 @@ public:
 		if (button == GLFW_MOUSE_BUTTON_1)
 		{
 			auto mouse_pos_world = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection());
-			OrganismManager::getInstance().add(new Organism(Organism::DefaultDNAs[Organism::DNAIndex], mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
+			std::vector<Cell*> cells = Organism::getCellsForDNA(dnas_[dnaIndex_]);
+			OrganismManager::getInstance().add(new Organism(dnas_[dnaIndex_], cells, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
 		}
 		else if (button == GLFW_MOUSE_BUTTON_2)
 		{
@@ -201,6 +196,14 @@ private:
 	Vec2f mousePosDown_;
 	Vec2f camPos_;
 	bool isRightMouseDown_ = false;
+	std::vector<std::string> dnas_ = {
+		"L(0)",
+		"M(0)O(0)",
+		"M(0)O(0)T(0)", 
+		"M(0)O(0)T(0)",
+		"L(0)T(0)"
+	};
+	unsigned dnaIndex_ = 0;
 };
 
 int main()

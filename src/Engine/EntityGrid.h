@@ -5,18 +5,20 @@
 #include "../Cell.h"
 
 struct AABB;
+struct Bounds;
 
 class EntityGrid
 {
 public:
-	inline static const unsigned GridWidth = 280;
-	inline static const unsigned GridHeight = 280;
+	inline static const unsigned GridWidth = 70;
+	inline static const unsigned GridHeight = 70;
 	inline static const unsigned MaxEntitiesPerSquare = 50u;
 	inline static const unsigned SquareSize = Cell::Size * 2;
 
 public:
 	EntityGrid();
 	bool add(AABB* aabb);
+	bool contains(Bounds& bounds);
 	void clear();
 	void draw();
 	Vec2i getLocalCoord(Vec2f worldPos);
