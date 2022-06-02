@@ -14,6 +14,9 @@ ThornCell::ThornCell() :
 
 void ThornCell::onCollision(Cell* other)
 {	
+	if (other->wantsToBeDeleted())
+		return;
+
 	MoverCell* moverCell = dynamic_cast<MoverCell*>(other);
 	if (moverCell)
 	{
@@ -52,13 +55,8 @@ CorpseCell* ThornCell::createCorpse() const
 
 void ThornCell::init()
 {
-	LeafCell* leafCell = organism_->getCell<LeafCell>();
-	if (leafCell)
-		ttl_ = leafCell->getTtl();
 }
 
 void ThornCell::tick()
 {	
-	if (organism_->getAgeMs() > ttl_)
-		organism_->markForDeath();
 }

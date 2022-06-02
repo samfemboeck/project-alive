@@ -15,7 +15,7 @@ public:
 #ifdef _DEBUG
 	inline static int MaxInstances = 200;
 #else
-	inline static int MaxInstances = 8000;
+	inline static int MaxInstances = 1000;
 #endif
 
 private:

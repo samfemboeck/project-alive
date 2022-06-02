@@ -12,6 +12,8 @@ MouthCell::MouthCell() :
 
 void MouthCell::onCollision(Cell* other)
 {
+	return;
+
 	if (other->wantsToBeDeleted())
 		return;
 
@@ -20,7 +22,7 @@ void MouthCell::onCollision(Cell* other)
 	LeafCell* leafCell = dynamic_cast<LeafCell*>(other);
 	if (leafCell)
 	{
-		energy_ += leafCell->getNutritionValue();
+		organism_->addEnergy(leafCell->getNutritionValue());
 		org->removeCell(leafCell);
 	}
 	else
@@ -28,16 +30,9 @@ void MouthCell::onCollision(Cell* other)
 		CorpseCell* corpseCell = dynamic_cast<CorpseCell*>(other);
 		if (corpseCell)
 		{
-			energy_ += corpseCell->getNutritionValue();
+			organism_->addEnergy(corpseCell->getNutritionValue());
 			org->removeCell(corpseCell);
 		}
-	}
-
-
-	if (energy_ >= hunger_)
-	{
-		organism_->setReproductionUrge(organism_->getReproductionUrge() + 1);
-		energy_ = 0.0f;
 	}
 }
 
@@ -48,5 +43,4 @@ CorpseCell* MouthCell::createCorpse() const
 
 void MouthCell::init()
 {
-	hunger_ = organism_->getSize() * 34.0f + 34.0f;
 }

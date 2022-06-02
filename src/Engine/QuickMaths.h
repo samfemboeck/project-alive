@@ -116,6 +116,7 @@ struct Random
 	static float floatRange(float min, float max);
 	static long longRange(long min, long max);
 	static int intRange(int min, int max);
+	static unsigned unsignedRange(unsigned min, unsigned max);
 	static Vec2f vec2Range(const Vec2f& min, const Vec2f& max);
 	static Vec2f unitVector();
 	static Vec2f vec2FromAngle(float rad);

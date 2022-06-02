@@ -11,6 +11,7 @@
 #include "Engine/Renderer2D.h"
 #include "Cell.h"
 #include "OrganismManager.h"
+#include "Mutation.h"
 
 static std::string get_random_DNA(unsigned max_length)
 {
@@ -99,6 +100,10 @@ public:
 
 	void onKeyPressed(int key)
 	{
+		auto& io = ImGui::GetIO();
+		if (io.WantCaptureKeyboard)
+			return;
+
 		OrthoCamController::getInstance().pressKey(key);
 
 		if (key >= GLFW_KEY_1 && key < GLFW_KEY_1 + dnas_.size())
@@ -120,6 +125,10 @@ public:
 
 	void onKeyReleased(int key)
 	{
+		auto& io = ImGui::GetIO();
+		if (io.WantCaptureKeyboard)
+			return;
+
 		OrthoCamController::getInstance().releaseKey(key);
 
 		if (key == GLFW_KEY_TAB)
@@ -130,6 +139,10 @@ public:
 
 	void onMouseScrolled(double offsetX, double offsetY)
 	{
+		auto& io = ImGui::GetIO();
+		if (io.WantCaptureMouse)
+			return;
+
 		OrthoCamController::getInstance().scrollMouse(offsetY);
 		//
 	}
@@ -153,10 +166,16 @@ public:
 			ImGui::Begin("Map");
 			ImGui::Text(std::format("Active Organisms: {}", Organism::Instances).c_str());
 			ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
+			ImGui::InputFloat("Time Scale", &Time::Scale, 0.1f, 0.1f);
 			ImGui::End();
 			ImGui::Begin("Organism");
 			ImGui::InputInt("Max Instances", &OrganismManager::MaxInstances, 100);
-			ImGui::Text(std::format("Selected DNA: {}", dnas_[dnaIndex_]).c_str());
+			ImGui::InputText("DNA", dna_, 1000);
+			if (ImGui::Button("Mutate"))
+			{
+				std::string dna = Production::mutate(Production::produce(dna_));
+				strcpy(dna_, dna.c_str());
+			}
 			ImGui::End();
 			ImGui::Begin("Performance");
 
@@ -171,11 +190,15 @@ public:
 
 	void onMousePressed(int button) override
 	{
+		auto& io = ImGui::GetIO();
+		if (io.WantCaptureMouse)
+			return;
+
 		if (button == GLFW_MOUSE_BUTTON_1)
 		{
 			auto mouse_pos_world = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection());
-			std::vector<Cell*> cells = Organism::getCellsForDNA(dnas_[dnaIndex_]);
-			OrganismManager::getInstance().add(new Organism(dnas_[dnaIndex_], cells, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
+			std::vector<Cell*> cells = Organism::getCellsForDNA(dna_);
+			OrganismManager::getInstance().add(new Organism(dna_, cells, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
 		}
 		else if (button == GLFW_MOUSE_BUTTON_2)
 		{
@@ -196,11 +219,12 @@ private:
 	Vec2f mousePosDown_;
 	Vec2f camPos_;
 	bool isRightMouseDown_ = false;
+	char dna_[1000];
 	std::vector<std::string> dnas_ = {
 		"L(0)",
 		"M(0)O(0)",
 		"M(0)O(0)T(0)", 
-		"M(0)O(0)T(0)",
+		"M(0)O(1)T(1)T(1)O(0)",
 		"L(0)T(0)"
 	};
 	unsigned dnaIndex_ = 0;

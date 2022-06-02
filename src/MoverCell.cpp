@@ -15,16 +15,10 @@ MoverCell::MoverCell() :
 void MoverCell::init()
 {
 	findNewTarget();
-	organism_->setMover(true);
-	long ttl = organism_->getSize() * 2500;
-	ttl_ = Random::floatRange(ttl, ttl + 1000);
 }
 
 void MoverCell::tick()
 {
-	if (organism_->getAgeMs() >= ttl_)
-		organism_->markForDeath();
-
 	auto* rigidBody = organism_->getRigidBody();
 	Vec2f forward = b2Rot(rigidBody->getRotation()).GetYAxis();
 	rigidBody->addImpulse(forward * 5000.0f);
@@ -35,7 +29,7 @@ void MoverCell::tick()
 	Vec2f vec1 = b2Rot(rigidBody->getRotation()).GetXAxis();
 	Vec2f vec2 = (target_ - rigidBody->getPosition()).normalized();
 	float dot = -b2Dot(vec1, vec2);
-	//rigidBody->addTorque(dot * speedTurn_);
+	rigidBody->addTorque(Random::floatRange(-50.0f, 50.0f));
 
 	float distance = (target_ - organism_->getAABB()->bounds.center()).magnitude();
 	if (distance <= 100.0f)

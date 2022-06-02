@@ -12,6 +12,7 @@
 #include "Engine/Renderer2D.h"
 #include "Engine/Util.h"
 #include "OrganismManager.h"
+#include "Mutation.h"
 
 Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f position, float angle) :
 	dna_(dna),
@@ -34,6 +35,12 @@ Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f posit
 
 	for (Cell* cell : cells_)
 	{
+		if (dynamic_cast<MoverCell*>(cell))
+			isMover_ = true;
+		
+		if (dynamic_cast<CorpseCell*>(cell))
+			isCorpse_ = true;
+
 		cell->setOrganism(this);
 		aabb_->colliders.push_back(cell->getCollider());
 
@@ -47,7 +54,19 @@ Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f posit
 		if (localPos.y > bounds.max.y)
 			bounds.max.y = localPos.y + cellRadius;
 	}	
-	
+
+	if (isMover_)
+	{
+		long ttl = getSize() * 2500;
+		ttl_ = Random::floatRange(ttl, ttl + 1000);
+	}
+	else
+	{
+		ttl_ = Random::floatRange(10000, 30000);
+	}
+
+	hunger_ = cells_.size() * 34.0f + 68.0f;
+
 	rigidBody_->setMass(cells_.size());
 	rigidBody_->setPosition(position + (rigidBody_->getPosition() - bounds.center()));
 
@@ -77,16 +96,22 @@ Organism::~Organism()
 
 void Organism::tick()
 {
-	for (Cell* cell : cells_)
+	if (!isCorpse_ && getAgeMs() >= ttl_)
+		markForDeath();
+
+	for (auto it = cells_.begin(); it != cells_.end();)
 	{
+		Cell* cell = *it;
 		if (cell->wantsToBeDeleted())
 		{
 			CircleCollider* collider = cell->getCollider();
 			std::erase(aabb_->colliders, collider);
 			delete collider;
-			std::erase(cells_, cell);
+			it = cells_.erase(it);
 			delete cell;
 		}
+		else
+			it++;
 	}
 
 	if (cells_.size() == 0)
@@ -101,7 +126,8 @@ void Organism::tick()
 
 Organism* Organism::clone(Vec2f pos)
 {
-	return new Organism(dna_, getCellsForDNA(dna_), pos, Random::floatRange(0, 2 * std::numbers::pi));
+	std::string dna = Production::produce(dna_);
+	return new Organism(dna, getCellsForDNA(dna), pos, Random::floatRange(0, 2 * std::numbers::pi));
 }
 
 Organism* Organism::createCorpse()
@@ -161,14 +187,19 @@ bool Organism::isMover() const
 	return isMover_;
 }
 
-void Organism::setMover(bool isMover)
-{
-	isMover_ = isMover;
-}
-
 unsigned Organism::getSize()
 {
 	return cells_.size();
+}
+
+void Organism::addEnergy(float energy)
+{
+	energy_ += energy;
+	if (energy_ >= hunger_)
+	{
+		reproductionCount_ += 1;
+		energy_ = 0.0f;
+	}
 }
 
 RigidBody* Organism::getRigidBody()
@@ -193,14 +224,12 @@ Cell* Organism::getCellForSymbol(char symbol)
 {
 	switch (symbol)
 	{
-	case 'L':
+	case 'P':
 		return new LeafCell();
 	case 'T':
 		return new ThornCell();
 	case 'M':
 		return new MoverCell();
-	case 'R':
-		return new FruitCell();
 	case 'O':
 		return new MouthCell();
 	default:
@@ -229,22 +258,80 @@ std::vector<Cell*> Organism::getCellsForDNA(std::string dna)
 {
 	std::vector<Cell*> ret;
 
+	std::vector<Vec2f> savedPositions;
+	std::vector<float> savedRotations;
+	int stackIdx = -1;
 	Vec2f curPos = { 0, 0 };
-	Vec2f offset = { 0, 0 };
-	constexpr float maxF = std::numeric_limits<float>::max();
-	Vec2f min = { maxF, maxF };
-	constexpr float minF = std::numeric_limits<float>::lowest();
-	Vec2f max = { minF, minF };
+	float curRot = 0;
+	std::string cells = "PTMO";
+	char activeCell;
 
-	for (size_t index = 0; index < dna.size(); index += 4)
+	activeCell = dna[0];
+	Cell* cell = getCellForSymbol(activeCell);
+	cell->setLocalPos({0, 0});
+	ret.push_back(cell);
+
+	for (size_t index = 4; index < dna.size();)
 	{
-		const char symbol = dna[index];
-		Cell* cell = getCellForSymbol(symbol);
-		ret.push_back(cell);
-		curPos += offset;
-		cell->setLocalPos(curPos);
-		unsigned param = dna[index + 2] - '0';
-		offset = getOffsetForParam(param);
+		const char instruction = dna[index];
+
+		if (cells.find(instruction) != std::string::npos)
+		{
+			activeCell = instruction;
+			index += 4;
+		}
+		else if (instruction == 'F')
+		{
+			Vec2f offset = { sin(curRot), cos(curRot) };
+			unsigned param = dna[index + 2] - '0';
+
+			for (unsigned i = 0; i < param; i++)
+			{
+				curPos += offset * Cell::Size;
+				bool found = false;
+
+				for (Cell* cell : ret)
+					if (cell->getLocalPos() == curPos)
+						found = true;
+
+				if (!found)
+				{
+					Cell* cell = getCellForSymbol(activeCell);
+					cell->setLocalPos(curPos);
+					ret.push_back(cell);
+				}
+			}
+
+			index += 6;
+		}
+		else if (instruction == 'L')
+		{
+			unsigned param = dna[index + 2] - '0';
+			curRot -= param * 0.5f * std::numbers::pi;
+			index += 6;
+		}
+		else if (instruction == 'R')
+		{
+			unsigned param = dna[index + 2] - '0';
+			curRot += param * 0.5f * std::numbers::pi;
+			index += 6;
+		}
+		else if (instruction == '[')
+		{
+			savedPositions.push_back(curPos);
+			savedRotations.push_back(curRot);
+			stackIdx++;
+			index += 1;
+		}
+		else if (instruction == ']')
+		{
+			curPos = savedPositions[stackIdx];
+			curRot = savedRotations[stackIdx];
+			savedPositions.pop_back();
+			savedRotations.pop_back();
+			stackIdx--;
+			index += 1;
+		}
 	}
 
 	return ret;

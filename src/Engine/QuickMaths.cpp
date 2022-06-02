@@ -16,6 +16,12 @@ Vec2f Random::vec2FromAngle(float rad)
 	return { sin(rad), cos(rad) };
 }
 
+unsigned Random::unsignedRange(unsigned min, unsigned max)
+{
+	std::uniform_int_distribution<unsigned> d(min, max);
+	return d(gen);
+}
+
 float Random::floatRange(float min, float max)
 {
 	std::uniform_real_distribution<float> d(min, max); // define the range

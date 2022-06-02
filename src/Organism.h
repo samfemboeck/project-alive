@@ -36,8 +36,8 @@ public:
 	float getMass();
 	void removeCell(Cell* cell);
 	bool isMover() const;
-	void setMover(bool isMover);
 	unsigned getSize();
+	void addEnergy(float energy);
 	RigidBody* getRigidBody();
 
 	template<typename T>
@@ -62,5 +62,9 @@ private:
 	bool wantsToDie_ = false;
 	unsigned reproductionCount_ = 0;
 	bool isMover_ = false;
+	bool isCorpse_ = false;
 	std::vector<Cell*> toRemove_;
+	long ttl_;	
+	float energy_ = 0.0f;
+	float hunger_;
 };
