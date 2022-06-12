@@ -50,7 +50,7 @@ void ThornCell::onCollision(Cell* other)
 
 CorpseCell* ThornCell::createCorpse() const
 {
-	return nullptr; //new CorpseCell(34.0f, localPos_);
+	return new CorpseCell(0.5f, localPos_);
 }
 
 void ThornCell::init()

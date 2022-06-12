@@ -2,137 +2,195 @@
 #include "Mutation.h"
 #include "Engine/QuickMaths.h"
 
-std::string Production::mutate(std::string production)
+std::vector<std::string> Production::mover(unsigned arg)
 {
-	std::vector<char> cellTypes = { 'P', 'O', 'M', 'T' };
-	std::random_device rd;
-    std::mt19937 gen{rd()};
-	std::ranges::shuffle(cellTypes, gen);
-	unsigned cellIdx = 0;
-	size_t idx = production.find(cellTypes[cellIdx]);
-	while (idx == std::string::npos)
-		idx = production.find(cellTypes[++cellIdx]);
+	std::string vocabulary = "MLRTO";
+	std::vector<std::string> ret;
+	unsigned numInstructions = rand() % 3 + 1;
 
-	unsigned param = production[idx + 2] - '0';
-	unsigned newParam = param;
-	while (newParam == param)
-		newParam = Random::unsignedRange(0, 5);
+	for (unsigned i = 0; i < numInstructions; i++)
+	{
+		unsigned idx = rand() % vocabulary.size();
+		std::string str;
+		str += vocabulary[idx];
+		str += "(0)";
+		ret.push_back(str);
+	}
 
-	production[idx + 2] = '0' + newParam;
-	return production;
+	return ret;
 }
 
-std::string Production::produce(std::string predecessor)
-{
-	std::vector<char> cellTypes = { 'P', 'O', 'M', 'T' };
-	std::random_device rd;
-    std::mt19937 gen{rd()};
-	std::ranges::shuffle(cellTypes, gen);
-	unsigned cellIdx = 0;
-	size_t idx = predecessor.find(cellTypes[cellIdx]);
-	while (idx == std::string::npos)
-		idx = predecessor.find(cellTypes[++cellIdx]);
+std::vector<std::string> Production::plant(unsigned arg)
+{	
+	std::string vocabulary = "PLR";
+	std::vector<std::string> ret;
+	unsigned numInstructions = rand() % 3 + 1;
 
-	std::function<std::string(unsigned)> prod;	
-	
-	switch (predecessor[idx])
+	for (unsigned i = 0; i < numInstructions; i++)
+	{
+		unsigned idx = rand() % vocabulary.size();
+		std::string str;
+		str += vocabulary[idx];
+		str += "(0)";
+		ret.push_back(str);
+	}
+
+	return ret;
+}
+
+std::vector<std::string> Production::mouth(unsigned arg)
+{	
+	std::string vocabulary = "OLRTM";
+	std::vector<std::string> ret;
+	unsigned numInstructions = rand() % 3 + 1;
+
+	for (unsigned i = 0; i < numInstructions; i++)
+	{
+		unsigned idx = rand() % vocabulary.size();
+		std::string str;
+		str += vocabulary[idx];
+		str += "(0)";
+		ret.push_back(str);
+	}
+
+	return ret;
+}
+
+std::vector<std::string> Production::thorn(unsigned arg)
+{	
+	std::string vocabulary = "OLRTM";
+	std::vector<std::string> ret;
+	unsigned numInstructions = rand() % 3 + 1;
+
+	for (unsigned i = 0; i < numInstructions; i++)
+	{
+		unsigned idx = rand() % vocabulary.size();
+		std::string str;
+		str += vocabulary[idx];
+		str += "(0)";
+		ret.push_back(str);
+	}
+
+	return ret;
+}
+
+DNA::DNA(std::vector<std::string> elems) :
+	elems_(elems)
+{
+	for (auto& elem : elems)
+		if (elem[0] == 'M')
+			isMover_ = true;
+}
+
+DNA::DNA(std::string dna)
+{
+	setString(dna);
+}
+
+void DNA::pushBack(std::string elem)
+{
+	elems_.push_back(elem);
+}
+
+void DNA::insertRandom(std::string elem)
+{
+	elems_.insert(elems_.begin() + (rand() % elems_.size()), elem);
+}
+
+void DNA::eraseRandom()
+{
+	elems_.erase(elems_.begin() + getRandomCellIdx());
+}
+
+std::string DNA::get()
+{
+	std::string ret;
+
+	for (const std::string& elem : elems_)
+		ret += elem;
+
+	return ret;
+}
+
+void DNA::mutateArg()
+{
+	unsigned idx = getRandomCellIdx();
+	elems_[idx][2] = (rand() % 6) + '0';
+}
+
+void DNA::mutate()
+{	
+	unsigned idx = getRandomCellIdx();
+	unsigned arg = elems_[idx][2] - '0';
+	char cellType = elems_[idx][0];
+	std::vector<std::string> productionV;
+
+	switch (cellType)
 	{
 	case 'P':
-		prod = Production::plant;
+		productionV = Production::plant(arg);
 		break;
 	case 'O':
-		prod = Production::mouth;
+		productionV = Production::mouth(arg);
 		break;
 	case 'M':
-		prod = Production::mover;
+		productionV = Production::mover(arg);
 		break;
 	case 'T':
-		prod = Production::thorn;
+		productionV = Production::thorn(arg);
+		break;
 	}
 
-	while (idx != std::string::npos)
-	{
-		unsigned arg = predecessor[idx + 2] - '0';
-		std::string production = prod(arg);
-		predecessor = predecessor.substr(0, idx) + production + predecessor.substr(idx + 4);
-		idx = predecessor.find(cellTypes, idx);
-	}
+	elems_.erase(elems_.begin() + idx);
 
-	return predecessor;
+	DNA production(productionV);
+
+	for (int i = production.size() - 1; i >= 0; i--)
+		elems_.insert(elems_.begin() + idx, production.get(i));
 }
 
-std::string Production::mover(unsigned arg)
+void DNA::setString(const std::string& str)
 {
-	switch (arg)
-	{
-	case 0:
-		return "M(0)[T(0)F(1,0)]";
-	case 1:
-		return "M(1)[T(0)L(1,1)F(1,1)]";
-	case 2:
-		return "M(2)[O(2)F(1,2)]";
-	case 3:
-		return "M(3)[T(3)F(1,3)]";
-	case 4:
-		return "M(4)[O(4)F(1,4)]";
-	case 5:
-		return "M(5)[P(5)F(1,5)]";
-	}
-}
+	isMover_ = false;
+	elems_.clear();
 
-std::string Production::plant(unsigned arg)
-{
-	switch (arg)
+	for (unsigned i = 0; i < str.size();)
 	{
-	case 0:
-		return "P(0)[L(1,0)F(1,0)]";
-	case 1:
-		return "P(1)[R(1,1)F(1,1)]";
-	case 2:
-		return "P(2)[F(1,2)]";
-	case 3:
-		return "T(3)";
-	case 4:
-		return "P(4)[T(4)R(1,4)F(1,4)]";
-	case 5:
-		return "P(5)[T(4)L(1,5)F(1,5)]";
+		if (isalpha(str[i]))
+		{
+			if (str[i] == 'M')
+				isMover_ = true;
+
+			elems_.push_back(str.substr(i, 4));
+			i += 4;
+		}
+		else
+		{
+			elems_.push_back("" + str[i]);
+			i += 1;
+		}
 	}
 }
 
-std::string Production::mouth(unsigned arg)
+bool DNA::isMover()
 {
-	switch (arg)
-	{
-	case 0:
-		return "O(0)[L(1,0)F(1,0)]";
-	case 1:
-		return "O(1)[R(1,1)F(1,1)]";
-	case 2:
-		return "T(2)[O(2)F(1,2)]";
-	case 3:
-		return "T(2)[O(2)R(1,1)F(1,2)]";
-	case 4:
-		return "P(4)";
-	case 5:
-		return "M(5)";
-	}
+	return isMover_;
 }
 
-std::string Production::thorn(unsigned arg)
+unsigned DNA::size()
 {
-	switch (arg)
-	{
-	case 0:
-		return "T(0)[L(1,0)F(1,0)]";
-	case 1:
-		return "T(1)[R(1,1)F(1,1)]";
-	case 2:
-		return "O(2)[T(2)F(1,2)]";
-	case 3:
-		return "O(2)[T(2)R(1,1)F(1,2)]";
-	case 4:
-		return "O(2)[T(2)L(1,1)F(1,2)]";
-	case 5:
-		return "P(5)";
-	}
+	return elems_.size();
+}
+
+std::string DNA::get(unsigned idx)
+{
+	return elems_[idx];
+}
+
+unsigned DNA::getRandomCellIdx()
+{
+	unsigned idx = rand() % elems_.size();
+	while (elems_[idx][0] != 'M' && elems_[idx][0] != 'T' && elems_[idx][0] != 'O' && elems_[idx][0] != 'P')
+		idx = rand() % elems_.size();
+	return idx;
 }

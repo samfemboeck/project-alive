@@ -300,6 +300,11 @@ EntityGrid& PhysicsManager::getGrid()
 	return entityGrid_;
 }
 
+size_t PhysicsManager::getAABBCount()
+{
+	return aabbs_.size();
+}
+
 PhysicsManager::PhysicsManager()
 {
 

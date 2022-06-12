@@ -12,8 +12,6 @@ MouthCell::MouthCell() :
 
 void MouthCell::onCollision(Cell* other)
 {
-	return;
-
 	if (other->wantsToBeDeleted())
 		return;
 
@@ -38,7 +36,7 @@ void MouthCell::onCollision(Cell* other)
 
 CorpseCell* MouthCell::createCorpse() const
 {
-	return new CorpseCell(34.0f, localPos_);
+	return new CorpseCell(0.5f, localPos_);
 }
 
 void MouthCell::init()

@@ -67,6 +67,7 @@ public:
 	void map(AABB* aabb);
 	bool hasValidPos(AABB* aabb);
 	EntityGrid& getGrid();
+	size_t getAABBCount();
 
 private:
 	PhysicsManager();

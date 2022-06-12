@@ -13,20 +13,29 @@ LeafCell::LeafCell() :
 
 void LeafCell::tick()
 {
+	if (organism_->wantsToDie())
+		isLifetimeExpired_ = true;
+
 	elapsed_ += Time::DeltaSeconds;
 	if (elapsed_ >= 2)
 	{
-		organism_->setReproductionUrge(0);
+		organism_->setReproductionUrge(1);
 		elapsed_ = 0.0f;
 	}
 }
 
 float LeafCell::getNutritionValue() const
 {
-	return 34.0f;
+	return 1.0f;
 }
 
 CorpseCell* LeafCell::createCorpse() const
 {
-	return isLifetimeExpired_ ? nullptr : new CorpseCell(getNutritionValue(), localPos_);
+	return isLifetimeExpired_ ?  new CorpseCell(1.0f, localPos_) : nullptr ;
+}
+
+
+float LeafCell::getMass() const
+{
+	return 0.01f;
 }

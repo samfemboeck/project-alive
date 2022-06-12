@@ -26,6 +26,7 @@ public:
 	virtual CorpseCell* createCorpse() const;
 	void markForDeletion();
 	bool wantsToBeDeleted();
+	virtual float getMass() const;
 
 protected:
 	Organism* organism_ = nullptr;

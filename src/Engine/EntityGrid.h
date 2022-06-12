@@ -10,8 +10,8 @@ struct Bounds;
 class EntityGrid
 {
 public:
-	inline static const unsigned GridWidth = 70;
-	inline static const unsigned GridHeight = 70;
+	inline static const unsigned GridWidth = 100;
+	inline static const unsigned GridHeight = 100;
 	inline static const unsigned MaxEntitiesPerSquare = 50u;
 	inline static const unsigned SquareSize = Cell::Size * 2;
 

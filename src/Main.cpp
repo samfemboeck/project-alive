@@ -38,7 +38,8 @@ static std::string get_random_DNA(unsigned max_length)
 class AliveApp : public App
 {
 private:
-	AliveApp()	
+	AliveApp() :
+		dna_(dnaStr_)
 	{
 		srand(time(NULL));
 
@@ -66,6 +67,10 @@ private:
 		TextureManager::add("light_warm.png");
 		TextureManager::add("background.png");
 		TextureManager::add("aabb.png");
+
+		std::string dna = "L(0)L(0)P(0)";
+		auto cells = Organism::getCellsForDNA(dna);
+		OrganismManager::getInstance().add(new Organism(dna, Organism::getCellsForDNA(dna), {0, 0}, Random::floatRange(0, 2 * std::numbers::pi)));
 	}
 
 public:
@@ -162,25 +167,50 @@ public:
 		if (m_is_tab_pressed)
 		{
 			bool show_demo = false;
-			//ImGui::ShowDemoWindow(&show_demo);
-			ImGui::Begin("Map");
-			ImGui::Text(std::format("Active Organisms: {}", Organism::Instances).c_str());
-			ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
-			ImGui::InputFloat("Time Scale", &Time::Scale, 0.1f, 0.1f);
-			ImGui::End();
-			ImGui::Begin("Organism");
-			ImGui::InputInt("Max Instances", &OrganismManager::MaxInstances, 100);
-			ImGui::InputText("DNA", dna_, 1000);
-			if (ImGui::Button("Mutate"))
-			{
-				std::string dna = Production::mutate(Production::produce(dna_));
-				strcpy(dna_, dna.c_str());
-			}
-			ImGui::End();
-			ImGui::Begin("Performance");
+			ImGuiWindowFlags windowFlags = 0;
+			windowFlags  |= ImGuiWindowFlags_NoTitleBar;
+			//windowFlags  |= ImGuiWindowFlags_MenuBar;
+			//window_flags |= ImGuiWindowFlags_NoScrollbar;
+			//windowFlags  |= ImGuiWindowFlags_NoMove;
+			windowFlags  |= ImGuiWindowFlags_NoResize;
+			windowFlags  |= ImGuiWindowFlags_NoCollapse;
+			windowFlags  |= ImGuiWindowFlags_NoNav;
+			windowFlags  |= ImGuiWindowFlags_NoBackground;
+			//if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+			windowFlags |= ImGuiWindowFlags_NoDocking;
+			//if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
+			bool* open = nullptr; // Don't pass our bool* to Begin
 
-			for (const auto& profile : data)
-				ImGui::Text(profile.c_str());
+			ImGui::Begin("Map", open, windowFlags);
+				ImGui::Text(std::format("Active Organisms: {}", Organism::Instances).c_str());
+				ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
+				ImGui::InputFloat("Time Scale", &Time::Scale, 0.1f, 0.1f);
+				ImGui::InputInt("Max Plants", &OrganismManager::MaxPlants, 100);
+				ImGui::InputInt("Max Movers", &OrganismManager::MaxMovers, 100);
+				ImGui::InputInt("One in N mutates", &Organism::OneInNMutates);
+				ImGui::InputFloat("TorqueFactor", &Organism::TorqueFactor);
+				ImGui::Text(std::format("AABB count: {}", PhysicsManager::getInstance().getAABBCount()).c_str());
+			ImGui::End();
+
+			ImGui::Begin("DNA", open, windowFlags);
+				ImGui::InputText("DNA", dnaStr_, 1000);
+				dna_.setString(dnaStr_);
+
+				if (ImGui::Button("Mutate"))
+				{
+					dna_.mutate();
+					strcpy(dnaStr_, dna_.get().c_str());
+				}
+			ImGui::End();
+
+			ImGui::Begin("Performance", open, windowFlags);
+
+				for (const auto& profile : data)
+					ImGui::Text(profile.c_str());
+
+				float FPS = 1.0f / Time::DeltaSeconds;
+				ImGui::Text(("FPS " + std::to_string(FPS)).c_str());
+				ImGui::Text(("Simulation Time " + std::to_string(Time::ElapsedSeconds)).c_str());
 
 			ImGui::End();
 		}
@@ -197,7 +227,7 @@ public:
 		if (button == GLFW_MOUSE_BUTTON_1)
 		{
 			auto mouse_pos_world = Camera::screenToWorldPoint(windowData_.mousePos, OrthoCamController::getInstance().getViewProjection());
-			std::vector<Cell*> cells = Organism::getCellsForDNA(dna_);
+			std::vector<Cell*> cells = Organism::getCellsForDNA(dna_.get());
 			OrganismManager::getInstance().add(new Organism(dna_, cells, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
 		}
 		else if (button == GLFW_MOUSE_BUTTON_2)
@@ -219,7 +249,8 @@ private:
 	Vec2f mousePosDown_;
 	Vec2f camPos_;
 	bool isRightMouseDown_ = false;
-	char dna_[1000];
+	char dnaStr_[1000] = "M(0)O(0)";
+	DNA dna_;
 	std::vector<std::string> dnas_ = {
 		"L(0)",
 		"M(0)O(0)",

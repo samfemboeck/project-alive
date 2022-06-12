@@ -14,7 +14,7 @@
 #include "OrganismManager.h"
 #include "Mutation.h"
 
-Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f position, float angle) :
+Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, float angle) :
 	dna_(dna),
 	cells_(cells)
 {
@@ -32,7 +32,6 @@ Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f posit
 	bounds.min = { maxF, maxF };
 	bounds.max = { minF, minF };
 	const float cellRadius = Cell::Size * 0.5f;
-
 	for (Cell* cell : cells_)
 	{
 		if (dynamic_cast<MoverCell*>(cell))
@@ -40,9 +39,6 @@ Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f posit
 		
 		if (dynamic_cast<CorpseCell*>(cell))
 			isCorpse_ = true;
-
-		cell->setOrganism(this);
-		aabb_->colliders.push_back(cell->getCollider());
 
 		Vec2f localPos = cell->getLocalPos();
 		if (localPos.x < bounds.min.x)
@@ -55,9 +51,39 @@ Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f posit
 			bounds.max.y = localPos.y + cellRadius;
 	}	
 
+	Vec2f center = bounds.center();
+	Cell* minCell = nullptr;
+	float minDistance = maxF;
+	for (Cell* cell : cells_)
+	{
+		float magS = (center - cell->getLocalPos()).magnitude_squared();
+		if (magS < minDistance)
+		{
+			minDistance = magS;
+			minCell = cell;
+		}
+	}
+
+	if (minCell)
+	{
+		for (Cell* cell : cells_)
+		{
+			if (cell == minCell)
+				continue;
+
+			cell->setLocalPos(cell->getLocalPos() - minCell->getLocalPos());
+			cell->setOrganism(this);
+			aabb_->colliders.push_back(cell->getCollider());
+		}
+	}
+
+	minCell->setLocalPos({ 0, 0 });
+	minCell->setOrganism(this);
+	aabb_->colliders.push_back(minCell->getCollider());
+
 	if (isMover_)
 	{
-		long ttl = getSize() * 2500;
+		long ttl = getSize() * 1500;
 		ttl_ = Random::floatRange(ttl, ttl + 1000);
 	}
 	else
@@ -65,17 +91,19 @@ Organism::Organism(std::string dna, const std::vector<Cell*>& cells, Vec2f posit
 		ttl_ = Random::floatRange(10000, 30000);
 	}
 
-	hunger_ = cells_.size() * 34.0f + 68.0f;
+	hunger_ = cells_.size() + 1.0f;
 
-	rigidBody_->setMass(cells_.size());
-	rigidBody_->setPosition(position + (rigidBody_->getPosition() - bounds.center()));
+	for (const Cell* cell : cells_)
+		rigidBody_->setMass(rigidBody_->getMass() + cell->getMass());
+
+	rigidBody_->setPosition(position);
 
 	for (auto* cell : cells_)
 		cell->init();
 }
 
-Organism::Organism(std::string dna, Vec2f position, float angle) :
-	Organism(dna, getCellsForDNA(dna), position, angle)
+Organism::Organism(DNA dna, Vec2f position, float angle) :
+	Organism(dna, getCellsForDNA(dna.get()), position, angle)
 {
 }
 
@@ -120,14 +148,46 @@ void Organism::tick()
 		aabb_->wantsToBeDeleted = true;
 	}
 
+	if (isCorpse_)
+		return;
+
 	for (Cell* cell : cells_)
-		cell->tick();
+		cell->tick();	
+
+	if (isMover_)
+	{
+		speedMove_ = numMovers_ * 200.0f / cells_.size();
+		rigidBody_->addTorque(Random::floatRange(-1.0f * TorqueFactor, TorqueFactor));
+		Vec2f forward = b2Rot(rigidBody_->getRotation()).GetYAxis();
+		rigidBody_->addImpulse(forward * 5000.0f);
+
+		if (rigidBody_->getVelocity().magnitude() > speedMove_)
+			rigidBody_->setVelocity(rigidBody_->getVelocity().normalized() * speedMove_);
+	}
 }
 
 Organism* Organism::clone(Vec2f pos)
 {
-	std::string dna = Production::produce(dna_);
-	return new Organism(dna, getCellsForDNA(dna), pos, Random::floatRange(0, 2 * std::numbers::pi));
+	DNA successor = DNA(dna_.get());
+
+	if (isMover_)
+	{
+		if (rand() % (OneInNMutates) == 0)
+			successor.mutate();
+	}
+	else
+	{
+		if (rand() % (OneInNMutates * 16) == 0)
+			successor.setString("M(0)O(0)");
+		if (cells_.size() < 3 && rand() % OneInNMutates == 0)
+			successor.mutate();
+	}
+
+	auto cells = getCellsForDNA(successor.get());
+	if (cells.size() > 0)
+		return new Organism(successor, cells, pos, Random::floatRange(0, 2 * std::numbers::pi));
+	else
+		return nullptr;
 }
 
 Organism* Organism::createCorpse()
@@ -143,7 +203,10 @@ Organism* Organism::createCorpse()
 	if (corpseCells.size() == 0)
 		return nullptr;
 
-	return new Organism(dna_, corpseCells, rigidBody_->getPosition(), rigidBody_->getRotation());
+	Organism* ret = new Organism(dna_, corpseCells, rigidBody_->getPosition(), rigidBody_->getRotation());
+	ret->isCorpse_ = true;
+	ret->isMover_ = isMover_;
+	return ret;
 }
 
 AABB* Organism::getAABB()
@@ -178,7 +241,7 @@ float Organism::getMass()
 }
 
 void Organism::removeCell(Cell* cell)
-{	
+{
 	cell->markForDeletion();
 }
 
@@ -205,6 +268,26 @@ void Organism::addEnergy(float energy)
 RigidBody* Organism::getRigidBody()
 {
 	return rigidBody_;
+}
+
+void Organism::addMover()
+{
+	numMovers_++;
+}
+
+void Organism::removeMover()
+{
+	numMovers_--;
+}
+
+DNA& Organism::getDNA()
+{
+	return dna_;
+}
+
+bool Organism::isCorpse()
+{
+	return isCorpse_;
 }
 
 bool Organism::wantsToDie()
@@ -264,57 +347,39 @@ std::vector<Cell*> Organism::getCellsForDNA(std::string dna)
 	Vec2f curPos = { 0, 0 };
 	float curRot = 0;
 	std::string cells = "PTMO";
-	char activeCell;
 
-	activeCell = dna[0];
-	Cell* cell = getCellForSymbol(activeCell);
-	cell->setLocalPos({0, 0});
-	ret.push_back(cell);
-
-	for (size_t index = 4; index < dna.size();)
+	for (size_t index = 0; index < dna.size();)
 	{
 		const char instruction = dna[index];
 
 		if (cells.find(instruction) != std::string::npos)
 		{
-			activeCell = instruction;
-			index += 4;
-		}
-		else if (instruction == 'F')
-		{
 			Vec2f offset = { sin(curRot), cos(curRot) };
-			unsigned param = dna[index + 2] - '0';
+			curPos += offset * Cell::Size;
+			bool found = false;
 
-			for (unsigned i = 0; i < param; i++)
+			for (Cell* cell : ret)
+				if ((cell->getLocalPos() - curPos).magnitude() < Cell::Size * 0.5f)
+					found = true;
+
+			if (!found)
 			{
-				curPos += offset * Cell::Size;
-				bool found = false;
-
-				for (Cell* cell : ret)
-					if (cell->getLocalPos() == curPos)
-						found = true;
-
-				if (!found)
-				{
-					Cell* cell = getCellForSymbol(activeCell);
-					cell->setLocalPos(curPos);
-					ret.push_back(cell);
-				}
+				Cell* cell = getCellForSymbol(instruction);
+				cell->setLocalPos(curPos);
+				ret.push_back(cell);
 			}
 
-			index += 6;
+			index += 4;
 		}
 		else if (instruction == 'L')
 		{
-			unsigned param = dna[index + 2] - '0';
-			curRot -= param * 0.5f * std::numbers::pi;
-			index += 6;
+			curRot -= 0.5f * std::numbers::pi;
+			index += 4;
 		}
 		else if (instruction == 'R')
 		{
-			unsigned param = dna[index + 2] - '0';
-			curRot += param * 0.5f * std::numbers::pi;
-			index += 6;
+			curRot += 0.5f * std::numbers::pi;
+			index += 4;
 		}
 		else if (instruction == '[')
 		{

@@ -27,7 +27,7 @@ App::App()
 	windowData_.width = 1600;
 	windowData_.height = 800;
 
-	window_ = glfwCreateWindow(windowData_.width, windowData_.height, "Project Alive", 0, nullptr);
+	window_ = glfwCreateWindow(windowData_.width, windowData_.height, "Project Alive", nullptr, nullptr);
 	if (window_ == NULL)
 	{
 		LOG("Failed to create GLFW window!");

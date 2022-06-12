@@ -71,3 +71,8 @@ bool Cell::wantsToBeDeleted()
 {
 	return wantsToBeDeleted_;
 }
+
+float Cell::getMass() const
+{
+	return 1.0f;
+}
