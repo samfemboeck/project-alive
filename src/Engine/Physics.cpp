@@ -217,7 +217,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 					if (!entity)
 						break;
 
-					if (entity->wantsToBeDeleted)
+					if (entity->wantsToBeDeleted || (entity->isCorpse && aabb->isMover))
 						continue;
 
 					numEntities++;
@@ -332,7 +332,8 @@ float RigidBody::getRotation()
 
 void RigidBody::tick(float dt)
 {	
-	
+	velocity_ = velocity_ * linearFriction_;
+
 	acceleration_ = {0, 0};
 
 	for (const auto& f : forces_)
@@ -347,7 +348,6 @@ void RigidBody::tick(float dt)
 	velocity_ += acceleration_ * dt;
 	position_ += velocity_ * dt + correction_;
 	correction_ = { 0, 0 };
-	velocity_ *= linearFriction_;
 	centerOfMassWorld_ = position_ + centerOfMassLocal_;
 
 	accelerationAngular_ = 0;
@@ -375,6 +375,11 @@ void RigidBody::setVelocity(Vec2f velocity)
 void RigidBody::setRotation(float rad)
 {
 	rotation_ = rad;
+}
+
+void RigidBody::setLinearFriction(float friction)
+{
+	linearFriction_ = friction;
 }
 
 Vec2f RigidBody::getCenterOfMass()

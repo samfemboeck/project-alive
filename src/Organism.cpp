@@ -35,7 +35,10 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	for (Cell* cell : cells_)
 	{
 		if (dynamic_cast<MoverCell*>(cell))
-			isMover_ = true;
+		{
+			setMover(true);
+			rigidBody_->setLinearFriction(1.0f);
+		}
 		
 		if (dynamic_cast<CorpseCell*>(cell))
 			isCorpse_ = true;
@@ -83,12 +86,12 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 
 	if (isMover_)
 	{
-		long ttl = getSize() * 1500;
+		long ttl = getSize() * 2000;
 		ttl_ = Random::floatRange(ttl, ttl + 1000);
 	}
 	else
 	{
-		ttl_ = Random::floatRange(10000, 30000);
+		ttl_ = Random::floatRange(5000, 10000);
 	}
 
 	hunger_ = cells_.size() + 1.0f;
@@ -156,7 +159,7 @@ void Organism::tick()
 
 	if (isMover_)
 	{
-		speedMove_ = numMovers_ * 200.0f / cells_.size();
+		speedMove_ = numMovers_ * 300.0f / cells_.size();
 		rigidBody_->addTorque(Random::floatRange(-1.0f * TorqueFactor, TorqueFactor));
 		Vec2f forward = b2Rot(rigidBody_->getRotation()).GetYAxis();
 		rigidBody_->addImpulse(forward * 5000.0f);
@@ -172,14 +175,14 @@ Organism* Organism::clone(Vec2f pos)
 
 	if (isMover_)
 	{
-		if (rand() % (OneInNMutates) == 0)
+		if (Random::unsignedRange(0, OneInNMutates) == 0)
 			successor.mutate();
 	}
 	else
 	{
-		if (rand() % (OneInNMutates * 16) == 0)
-			successor.setString("M(0)O(0)");
-		if (cells_.size() < 3 && rand() % OneInNMutates == 0)
+		//if (rand() % (OneInNMutates * 16) == 0)
+			//successor.setString("MO");
+		if (cells_.size() < 5 && Random::unsignedRange(0, OneInNMutates) == 0)
 			successor.mutate();
 	}
 
@@ -204,8 +207,8 @@ Organism* Organism::createCorpse()
 		return nullptr;
 
 	Organism* ret = new Organism(dna_, corpseCells, rigidBody_->getPosition(), rigidBody_->getRotation());
-	ret->isCorpse_ = true;
-	ret->isMover_ = isMover_;
+	ret->setCorpse(true);
+	ret->setMover(isMover_);
 	return ret;
 }
 
@@ -290,6 +293,18 @@ bool Organism::isCorpse()
 	return isCorpse_;
 }
 
+void Organism::setCorpse(bool corpse)
+{
+	isCorpse_ = corpse;
+	aabb_->isCorpse = true;
+}
+
+void Organism::setMover(bool mover)
+{
+	isMover_ = mover;
+	aabb_->isMover = mover;
+}
+
 bool Organism::wantsToDie()
 {
 	return wantsToDie_;
@@ -348,7 +363,7 @@ std::vector<Cell*> Organism::getCellsForDNA(std::string dna)
 	float curRot = 0;
 	std::string cells = "PTMO";
 
-	for (size_t index = 0; index < dna.size();)
+	for (size_t index = 0; index < dna.size(); index++)
 	{
 		const char instruction = dna[index];
 
@@ -368,25 +383,20 @@ std::vector<Cell*> Organism::getCellsForDNA(std::string dna)
 				cell->setLocalPos(curPos);
 				ret.push_back(cell);
 			}
-
-			index += 4;
 		}
 		else if (instruction == 'L')
 		{
 			curRot -= 0.5f * std::numbers::pi;
-			index += 4;
 		}
 		else if (instruction == 'R')
 		{
 			curRot += 0.5f * std::numbers::pi;
-			index += 4;
 		}
 		else if (instruction == '[')
 		{
 			savedPositions.push_back(curPos);
 			savedRotations.push_back(curRot);
 			stackIdx++;
-			index += 1;
 		}
 		else if (instruction == ']')
 		{
@@ -395,7 +405,6 @@ std::vector<Cell*> Organism::getCellsForDNA(std::string dna)
 			savedPositions.pop_back();
 			savedRotations.pop_back();
 			stackIdx--;
-			index += 1;
 		}
 	}
 

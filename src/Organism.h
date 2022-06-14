@@ -46,6 +46,8 @@ public:
 	void removeMover();
 	DNA& getDNA();
 	bool isCorpse();
+	void setCorpse(bool corpse);
+	void setMover(bool mover);
 
 	template<typename T>
 	T* getCell()

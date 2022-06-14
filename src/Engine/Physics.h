@@ -48,6 +48,8 @@ struct AABB
 	RigidBody* rigidBody;
 	std::vector<CircleCollider*> colliders;
 	bool wantsToBeDeleted = false;
+	bool isCorpse = false;
+	bool isMover = false;
 };
 
 class PhysicsManager
@@ -95,10 +97,11 @@ public:
 	Vec2f getVelocity();
 	void setVelocity(Vec2f);
 	void setRotation(float rad);
+	void setLinearFriction(float friction);
 	Vec2f getCenterOfMass();
 
 private:
-	float linearFriction_ = 0.9f;
+	float linearFriction_ = 0.995f;
 	Vec2f position_ = Vec2f(0, 0);
 	Vec2f centerOfMassLocal_ = Vec2f(0, 0);
 	Vec2f centerOfMassWorld_ = Vec2f(0, 0);

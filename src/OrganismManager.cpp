@@ -18,6 +18,11 @@ void OrganismManager::update()
 	update(movers_);
 }
 
+bool compareReproductionUrge(Organism* org1, Organism* org2)
+{
+    return (org1->getReproductionUrge() < org2->getReproductionUrge());
+}
+
 void OrganismManager::update(std::vector<Organism*>& vec)
 {	
 	static std::vector<Organism*> corpsesToSpawn;
@@ -49,7 +54,10 @@ void OrganismManager::update(std::vector<Organism*>& vec)
 	}
 
 	for (Organism* corpse : corpsesToSpawn)
-		add(corpse);
+		if (!add(corpse))
+			delete corpse;
+
+	std::sort(parentsToClone.begin(), parentsToClone.end(), compareReproductionUrge);
 
 	for (Organism* parent : parentsToClone)
 	{
@@ -82,10 +90,10 @@ void OrganismManager::updateCorpses(std::vector<Organism*>& vec)
 
 void OrganismManager::draw()
 {
-	for (Organism* org : corpsesMovers_)
-		org->draw();
-	
 	for (Organism* org : corpsesPlants_)
+		org->draw();
+
+	for (Organism* org : corpsesMovers_)
 		org->draw();
 
 	for (Organism* org : plants_)
@@ -99,9 +107,9 @@ bool OrganismManager::add(Organism* org)
 {
 	PhysicsManager::getInstance().update(org->getAABB());
 
-	if (org->isMover())
+	if (org->isMover() && !org->isCorpse())
 	{
-		if (movers_.size() + corpsesMovers_.size() < MaxMovers && PhysicsManager::getInstance().hasValidPos(org->getAABB()))
+		if (movers_.size() < MaxMovers && PhysicsManager::getInstance().hasValidPos(org->getAABB()))
 		{
 			movers_.push_back(org);
 			PhysicsManager::getInstance().add(org->getAABB());
@@ -110,12 +118,14 @@ bool OrganismManager::add(Organism* org)
 
 		return false;
 	}
-	else if (org->isCorpse() && PhysicsManager::getInstance().hasValidPos(org->getAABB())) // always force corpses to spawn
+	else if (org->isCorpse() && PhysicsManager::getInstance().hasValidPos(org->getAABB()))	
 	{
-		if (org->isMover())
+		if (org->isMover() && corpsesMovers_.size() < MaxMovers)
 			corpsesMovers_.push_back(org);
-		else
+		else if (corpsesPlants_.size() + plants_.size() < MaxPlants)
 			corpsesPlants_.push_back(org);
+		else 
+			return false;
 
 		PhysicsManager::getInstance().add(org->getAABB());
 		return true;
@@ -139,7 +149,7 @@ bool OrganismManager::tryClone(Organism* org)
 
 	if (org->isMover())
 	{
-		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), org->getSize(), spawnPos))
+		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), org->getSize() + 1, spawnPos))
 		{
 			Organism* clone = org->clone(spawnPos);
 

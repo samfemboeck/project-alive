@@ -13,28 +13,6 @@
 #include "OrganismManager.h"
 #include "Mutation.h"
 
-static std::string get_random_DNA(unsigned max_length)
-{
-	auto vocabulary = "LTM";
-	auto params = "0123";
-	std::stringstream dna;
-	unsigned length = rand() % max_length + 1;
-
-	for (unsigned i = 0; i < length; i++)
-	{
-		if (dna.str().find('M') == std::string::npos)
-			dna << vocabulary[rand() % 3];
-		else
-			dna << vocabulary[rand() % 2];
-
-		dna << "(";
-		dna << rand() % 4;
-		dna << ")";
-	}
-
-	return dna.str();
-}
-
 class AliveApp : public App
 {
 private:
@@ -68,9 +46,17 @@ private:
 		TextureManager::add("background.png");
 		TextureManager::add("aabb.png");
 
-		std::string dna = "L(0)L(0)P(0)";
+		DNA dna("PP[MO]LRP");
+		dna.mutate();
+		dna.mutate();
+		dna.mutate();
+		dna.mutate();
+		dna.mutate();
+		/*
+		std::string dna = "M(0)";
 		auto cells = Organism::getCellsForDNA(dna);
 		OrganismManager::getInstance().add(new Organism(dna, Organism::getCellsForDNA(dna), {0, 0}, Random::floatRange(0, 2 * std::numbers::pi)));
+		*/
 	}
 
 public:
@@ -183,6 +169,10 @@ public:
 
 			ImGui::Begin("Map", open, windowFlags);
 				ImGui::Text(std::format("Active Organisms: {}", Organism::Instances).c_str());
+				ImGui::Text(std::format("OrganismManager::plants: {}", OrganismManager::getInstance().plants_.size()).c_str());
+				ImGui::Text(std::format("OrganismManager::movers: {}", OrganismManager::getInstance().movers_.size()).c_str());
+				ImGui::Text(std::format("OrganismManager::corpsesPlants: {}", OrganismManager::getInstance().corpsesPlants_.size()).c_str());
+				ImGui::Text(std::format("OrganismManager::corpsesMovers: {}", OrganismManager::getInstance().corpsesMovers_.size()).c_str());
 				ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
 				ImGui::InputFloat("Time Scale", &Time::Scale, 0.1f, 0.1f);
 				ImGui::InputInt("Max Plants", &OrganismManager::MaxPlants, 100);

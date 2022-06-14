@@ -12,7 +12,6 @@ public:
 	void insertRandom(std::string elem);
 	void eraseRandom();
 	std::string get();
-	void mutateArg();
 	void mutate();
 	void setString(const std::string& str);
 	bool isMover();
@@ -28,8 +27,8 @@ private:
 class Production
 {
 public:
-	static std::vector<std::string> mover(unsigned arg);
-	static std::vector<std::string> plant(unsigned arg);
-	static std::vector<std::string> mouth(unsigned arg);
-	static std::vector<std::string> thorn(unsigned arg);
+	static std::vector<std::string> mover();
+	static std::vector<std::string> plant();
+	static std::vector<std::string> mouth();
+	static std::vector<std::string> thorn();
 };
