@@ -4,7 +4,7 @@
 
 std::vector<std::string> Production::mover()
 {
-	std::vector<std::string> vocabulary = { "M", "LM", "RM", "[LM]","[LM]","[RM]","[RM]","M", "LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "O", "LO", "RO", "[LO]", "[RO]"};
+	std::vector<std::string> vocabulary = { "M", "LM", "RM", "[LM]","[LM]","[RM]","[RM]","[LM]","[LM]","[RM]","[RM]", "M", "LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "O", "LO", "RO", "[LO]", "[RO]"};
 	std::vector<std::string> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -34,7 +34,7 @@ std::vector<std::string> Production::plant()
 
 std::vector<std::string> Production::mouth()
 {	
-	std::vector<std::string> vocabulary = { "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]","O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]", "M", "LM", "RM", "[LM]", "[RM]"};
+	std::vector<std::string> vocabulary = { "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]","[LO]", "[RO]", "[LO]", "[RO]", "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]", "M", "LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]"};
 	std::vector<std::string> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -49,20 +49,14 @@ std::vector<std::string> Production::mouth()
 
 std::vector<std::string> Production::thorn()
 {	
-	std::string vocabulary = "OLRTM";
+	std::vector<std::string> vocabulary = { "T", "LT", "RT", "[LT]", "[RT]", "[LT]", "[RT]"};
 	std::vector<std::string> ret;
-	unsigned numInstructions = Random::unsignedRange(1, 3);
+	unsigned numInstructions = Random::unsignedRange(1, 1);
 
 	for (unsigned i = 0; i < numInstructions; i++)
 	{
 		unsigned idx = Random::unsignedRange(0, vocabulary.size() - 1);
-		ret.push_back(std::string(1, vocabulary[idx]));
-	}
-
-	if (Random::unsignedRange(0, 3) == 0)
-	{
-		ret.insert(ret.begin(), "[");
-		ret.push_back("]");
+		ret.push_back(vocabulary[idx]);
 	}
 
 	return ret;
@@ -107,8 +101,8 @@ std::string DNA::get()
 }
 
 void DNA::mutate()
-{	
-	if (isMover_ && Random::unsignedRange(0, 5) == 0)
+{		
+	if (!isMover() && Random::unsignedRange(0, 50) == 0)
 	{
 		elems_.clear();
 		elems_.push_back("O");
@@ -150,6 +144,7 @@ void DNA::setString(const std::string& str)
 	{
 		if (str[i] == 'M')
 			isMover_ = true;
+
 		elems_.push_back(std::string(1, str[i]));
 	}
 }
@@ -169,10 +164,26 @@ std::string DNA::get(unsigned idx)
 	return elems_[idx];
 }
 
+bool DNA::isCell(unsigned idx)
+{
+	return elems_[idx][0] == 'M' || elems_[idx][0] == 'T' || elems_[idx][0] == 'O' || elems_[idx][0] == 'P';
+}
+
+bool DNA::hasCell()
+{
+	for (unsigned i = 0; i < elems_.size(); i++)
+		if (isCell(i))
+			return true;
+
+	return false;
+}
+
 unsigned DNA::getRandomCellIdx()
 {
 	unsigned idx = Random::unsignedRange(0, elems_.size() - 1);
-	while (elems_[idx][0] != 'M' && elems_[idx][0] != 'T' && elems_[idx][0] != 'O' && elems_[idx][0] != 'P')
+
+	while (!isCell(idx))
 		idx = Random::unsignedRange(0, elems_.size() - 1);
+
 	return idx;
 }

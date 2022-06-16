@@ -217,14 +217,9 @@ AABB* Organism::getAABB()
 	return aabb_;
 }
 
-unsigned Organism::getReproductionUrge()
+float Organism::getReproductionUrge()
 {
-	return reproductionCount_;
-}
-
-void Organism::setReproductionUrge(unsigned count)
-{
-	reproductionCount_ = count;
+	return energy_ / hunger_;
 }
 
 long Organism::getAgeMs()
@@ -258,14 +253,19 @@ unsigned Organism::getSize()
 	return cells_.size();
 }
 
-void Organism::addEnergy(float energy)
+void Organism::setEnergy(float energy)
 {
-	energy_ += energy;
-	if (energy_ >= hunger_)
-	{
-		reproductionCount_ += 1;
-		energy_ = 0.0f;
-	}
+	energy_ = energy;
+}
+
+float Organism::getEnergy()
+{
+	return energy_;
+}
+
+float Organism::getHunger()
+{
+	return hunger_;
 }
 
 RigidBody* Organism::getRigidBody()

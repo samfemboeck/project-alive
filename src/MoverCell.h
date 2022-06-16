@@ -10,6 +10,7 @@ public:
 	void init() override;
 	void tick() override;
 	CorpseCell* createCorpse() const override;
+	float getMass() const override;
 
 private:
 	float speedTurn_ = 10.0f;

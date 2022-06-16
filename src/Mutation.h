@@ -5,6 +5,9 @@
 class DNA
 {
 public:
+	inline static bool AllowThorns = false;
+
+public:
 	DNA() = default;
 	DNA(std::vector<std::string> elems);
 	DNA(std::string dna);
@@ -17,6 +20,8 @@ public:
 	bool isMover();
 	unsigned size();
 	std::string get(unsigned idx);
+	bool isCell(unsigned idx);
+	bool hasCell();
 
 private:
 	bool isMover_ = false;

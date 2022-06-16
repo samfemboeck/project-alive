@@ -5,5 +5,5 @@ struct Time
 	inline static float ElapsedSeconds = 0;
 	inline static float DeltaSeconds = 0;
 	inline static float DeltaMillis = 0;
-	inline static float Scale = 1;
+	inline static float Scale = 4;
 };

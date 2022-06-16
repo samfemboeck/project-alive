@@ -20,10 +20,7 @@ Cell::~Cell()
 
 void Cell::draw()
 {
-	if (OrthoCamController::getInstance().getZoomLevel() <= 2.0f)
-		Renderer2D::pushQuad(collider_->transform, TextureManager::get(textureName_), glm::vec4(1.0f), false);
-	else
-		Renderer2D::pushQuad(collider_->transform, TextureManager::get(textureNameFilled_), glm::vec4(1.0f), false);
+	Renderer2D::pushQuad(collider_->transform, TextureManager::get(textureNameFilled_), glm::vec4(1.0f), false);
 }
 
 void Cell::setOrganism(Organism* org)
@@ -75,4 +72,9 @@ bool Cell::wantsToBeDeleted()
 float Cell::getMass() const
 {
 	return 1.0f;
+}
+
+Type Cell::getType()
+{
+	return type_;
 }

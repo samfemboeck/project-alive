@@ -11,7 +11,16 @@ EntityGrid::EntityGrid() :
 {
 	int x = GridWidth * SquareSize * 0.5f;
 	int y = GridHeight * SquareSize * 0.5f;
-	pos_ = Vec2f(-x, -y);
+	pos_ = Vec2f(-x, -y);	
+	bounds_ = new Bounds();
+	bounds_->min = pos_;
+	bounds_->max = { pos_.x + GridWidth * SquareSize, pos_.y + GridHeight * SquareSize };
+}
+
+EntityGrid& EntityGrid::getInstance()
+{
+	static EntityGrid entityGrid;
+	return entityGrid;
 }
 
 bool EntityGrid::add(AABB* aabb)
@@ -118,4 +127,9 @@ std::array<AABB*, EntityGrid::MaxEntitiesPerSquare>& EntityGrid::get(unsigned x,
 Vec2f EntityGrid::getPos()
 {
 	return pos_;
+}
+
+Bounds& EntityGrid::getBounds()
+{
+	return *bounds_;
 }

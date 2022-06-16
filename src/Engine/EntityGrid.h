@@ -16,7 +16,7 @@ public:
 	inline static const unsigned SquareSize = Cell::Size * 2;
 
 public:
-	EntityGrid();
+	static EntityGrid& getInstance();
 	bool add(AABB* aabb);
 	bool contains(Bounds& bounds);
 	void clear();
@@ -25,8 +25,11 @@ public:
 	Vec2f getWorldPos(Vec2i localCoord);
 	std::array<AABB*, MaxEntitiesPerSquare>& get(unsigned x, unsigned y);
 	Vec2f getPos();
+	Bounds& getBounds();
 
 private:
+	EntityGrid();
 	Vec2f pos_ = Vec2f(0, 0);
+	Bounds* bounds_;
 	std::array<std::array<std::array<AABB*, MaxEntitiesPerSquare>, GridWidth>, GridHeight> grid_;
 };

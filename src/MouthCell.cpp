@@ -8,6 +8,7 @@
 MouthCell::MouthCell() :
 	Cell("cell_mouth")
 {
+	type_ = Type::Mouth;
 }
 
 void MouthCell::onCollision(Cell* other)
@@ -20,7 +21,7 @@ void MouthCell::onCollision(Cell* other)
 	LeafCell* leafCell = dynamic_cast<LeafCell*>(other);
 	if (leafCell)
 	{
-		organism_->addEnergy(leafCell->getNutritionValue());
+		organism_->setEnergy(organism_->getEnergy() + leafCell->getNutritionValue());
 		org->removeCell(leafCell);
 	}
 	else
@@ -28,7 +29,7 @@ void MouthCell::onCollision(Cell* other)
 		CorpseCell* corpseCell = dynamic_cast<CorpseCell*>(other);
 		if (corpseCell)
 		{
-			organism_->addEnergy(corpseCell->getNutritionValue());
+			organism_->setEnergy(organism_->getEnergy() + corpseCell->getNutritionValue());
 			org->removeCell(corpseCell);
 		}
 	}
@@ -41,4 +42,9 @@ CorpseCell* MouthCell::createCorpse() const
 
 void MouthCell::init()
 {
+}
+
+float MouthCell::getMass() const
+{
+	return 1.0f;
 }

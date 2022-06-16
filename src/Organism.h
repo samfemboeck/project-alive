@@ -32,15 +32,16 @@ public:
 	Organism* createCorpse();
 	AABB* getAABB();
 	bool wantsToDie();
-	unsigned getReproductionUrge();
-	void setReproductionUrge(unsigned count);
+	float getReproductionUrge();
 	long getAgeMs();
 	void markForDeath();
 	float getMass();
 	void removeCell(Cell* cell);
 	bool isMover() const;
 	unsigned getSize();
-	void addEnergy(float energy);
+	void setEnergy(float energy);
+	float getEnergy();
+	float getHunger();
 	RigidBody* getRigidBody();
 	void addMover();
 	void removeMover();
@@ -69,7 +70,6 @@ private:
 	RigidBody* rigidBody_;
 	AABB* aabb_;
 	bool wantsToDie_ = false;
-	unsigned reproductionCount_ = 0;
 	bool isMover_ = false;
 	bool isCorpse_ = false;
 	std::vector<Cell*> toRemove_;

@@ -45,18 +45,6 @@ private:
 		TextureManager::add("light_warm.png");
 		TextureManager::add("background.png");
 		TextureManager::add("aabb.png");
-
-		DNA dna("PP[MO]LRP");
-		dna.mutate();
-		dna.mutate();
-		dna.mutate();
-		dna.mutate();
-		dna.mutate();
-		/*
-		std::string dna = "M(0)";
-		auto cells = Organism::getCellsForDNA(dna);
-		OrganismManager::getInstance().add(new Organism(dna, Organism::getCellsForDNA(dna), {0, 0}, Random::floatRange(0, 2 * std::numbers::pi)));
-		*/
 	}
 
 public:
@@ -83,7 +71,6 @@ public:
 
 		Renderer2D::clear();
 		Renderer2D::beginTextures(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
-		PhysicsManager::getInstance().draw();
 		OrganismManager::getInstance().draw();
 		Renderer2D::endTextures();
 		Renderer2D::setClearColor(BLACK);
@@ -176,9 +163,9 @@ public:
 				ImGui::Text(std::format("Active Cells: {}", Cell::Instances).c_str());
 				ImGui::InputFloat("Time Scale", &Time::Scale, 0.1f, 0.1f);
 				ImGui::InputInt("Max Plants", &OrganismManager::MaxPlants, 100);
-				ImGui::InputInt("Max Movers", &OrganismManager::MaxMovers, 100);
 				ImGui::InputInt("One in N mutates", &Organism::OneInNMutates);
 				ImGui::InputFloat("TorqueFactor", &Organism::TorqueFactor);
+				ImGui::Checkbox("Allow Thorns", &DNA::AllowThorns);
 				ImGui::Text(std::format("AABB count: {}", PhysicsManager::getInstance().getAABBCount()).c_str());
 			ImGui::End();
 

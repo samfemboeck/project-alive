@@ -17,7 +17,6 @@ struct ManifoldResolve
 	float Penetration;
 };
 
-
 struct CircleCollider
 {
 	~CircleCollider();
@@ -39,6 +38,16 @@ struct Bounds
 	Vec2f center()
 	{
 		return min + ((max - min) * 0.5f);
+	}
+
+	float width()
+	{
+		return max.x - min.x;
+	}
+
+	float height()
+	{
+		return max.y - min.y;
 	}
 };
 
@@ -63,12 +72,10 @@ public:
 	void testCollision(CircleCollider* collA, CircleCollider* collB);
 	void resolveCollisions();
 	void squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore = nullptr);
-	void draw();
 	bool findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outpos);
 	void update(AABB* aabb);
 	void map(AABB* aabb);
 	bool hasValidPos(AABB* aabb);
-	EntityGrid& getGrid();
 	size_t getAABBCount();
 
 private:
@@ -76,7 +83,6 @@ private:
 private:
 	std::vector<AABB*> aabbs_;
 	std::vector<ManifoldResolve> manifolds_;
-	EntityGrid entityGrid_;
 	float step_ = 1/100.0f;
 };
 
@@ -101,7 +107,7 @@ public:
 	Vec2f getCenterOfMass();
 
 private:
-	float linearFriction_ = 0.995f;
+	float linearFriction_ = 0.9991f;
 	Vec2f position_ = Vec2f(0, 0);
 	Vec2f centerOfMassLocal_ = Vec2f(0, 0);
 	Vec2f centerOfMassWorld_ = Vec2f(0, 0);

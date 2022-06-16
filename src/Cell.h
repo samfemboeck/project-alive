@@ -5,6 +5,14 @@ class Organism;
 struct CircleCollider;
 class CorpseCell;
 
+enum class Type
+{
+	None,
+	Mouth,
+	Mover,
+	Plant
+};
+
 class Cell
 {
 public:
@@ -27,6 +35,7 @@ public:
 	void markForDeletion();
 	bool wantsToBeDeleted();
 	virtual float getMass() const;
+	Type getType();
 
 protected:
 	Organism* organism_ = nullptr;
@@ -35,4 +44,5 @@ protected:
 	std::string textureNameFilled_;
 	Vec2f localPos_;
 	bool wantsToBeDeleted_ = false;
+	Type type_ = Type::None;
 };

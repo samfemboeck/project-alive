@@ -32,7 +32,7 @@ void PhysicsManager::update()
 
 void PhysicsManager::fixedUpdate()
 {
-	entityGrid_.clear();
+	EntityGrid::getInstance().clear();
 
 	for (auto it = aabbs_.begin(); it != aabbs_.end();)
 	{
@@ -51,11 +51,13 @@ void PhysicsManager::fixedUpdate()
 		map(aabb);
 	}
 
+	auto& entityGrid = EntityGrid::getInstance();
+
 	for (unsigned x = 0; x < EntityGrid::GridWidth; x++)
 	{
 		for (unsigned y = 0; y < EntityGrid::GridHeight; y++)
 		{
-			auto& entitiesInSquare = entityGrid_.get(x, y);
+			auto& entitiesInSquare = entityGrid.get(x, y);
 
 			for (unsigned i = 0; entitiesInSquare[i] && i < EntityGrid::MaxEntitiesPerSquare - 1; i++)
 			{
@@ -98,8 +100,12 @@ void PhysicsManager::testCollision(CircleCollider* col1, CircleCollider* col2)
 		if (col2->collisionCallback)
 			col2->collisionCallback(col1->cell);
 
-		if (col1->isSensor || col2->isSensor)
-			return;
+		if
+		(
+			col1->isSensor ||
+			col2->isSensor
+		)
+		return;
 
 		ManifoldResolve manifold;
 		manifold.Penetration = (sumRadii - dir.magnitude()) * 0.5f;
@@ -165,8 +171,9 @@ void PhysicsManager::resolveCollisions()
 
 void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out, RigidBody* ignore)
 {
-	Vec2i startGrid = entityGrid_.getLocalCoord(start);
-	Vec2i endGrid = entityGrid_.getLocalCoord(end);
+	auto& entityGrid = EntityGrid::getInstance();
+	Vec2i startGrid = entityGrid.getLocalCoord(start);
+	Vec2i endGrid = entityGrid.getLocalCoord(end);
 
 	if (startGrid.x < 0 || startGrid.y < 0 || endGrid.x >= EntityGrid::GridWidth || endGrid.y > EntityGrid::GridHeight)
 		return;
@@ -175,7 +182,7 @@ void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out,
 	{
 		for (unsigned y = startGrid.y; y <= endGrid.y; y++)
 		{
-			auto& entitiesInSquare = entityGrid_.get(x, y);
+			auto& entitiesInSquare = entityGrid.get(x, y);
 			for (auto* entity : entitiesInSquare)
 			{
 				if (!entity)
@@ -190,18 +197,14 @@ void PhysicsManager::squareCast(Vec2f start, Vec2f end, std::vector<AABB*>& out,
 	}
 }
 
-void PhysicsManager::draw()
-{
-	//spatialHash_.draw();
-}
-
 static std::random_device rd; // obtain a random number from hardware
 static std::mt19937 gen(rd()); // seed the generator
 
 bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, Vec2f& outPos)
 {
-	Vec2i gridMin = entityGrid_.getLocalCoord(aabb->bounds.min);
-	Vec2i gridMax = entityGrid_.getLocalCoord(aabb->bounds.max);
+	auto& entityGrid = EntityGrid::getInstance();
+	Vec2i gridMin = entityGrid.getLocalCoord(aabb->bounds.min);
+	Vec2i gridMax = entityGrid.getLocalCoord(aabb->bounds.max);
 
 	for (int x = gridMin.x - 1; x <= gridMax.x + 1; x++)
 	{
@@ -210,7 +213,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 			if ((x < gridMin.x || x > gridMax.x || y < gridMin.y || y > gridMax.y) && x >= 0 && x < EntityGrid::GridWidth && y >= 0 && y < EntityGrid::GridHeight)
 			{
 				unsigned numEntities = 0;
-				auto& entitiesInSquare = entityGrid_.get(x, y);
+				auto& entitiesInSquare = entityGrid.get(x, y);
 
 				for (auto* entity : entitiesInSquare)
 				{
@@ -226,7 +229,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 				if (numEntities <= maxNearbyEntities)
 				{
 					float range = EntityGrid::SquareSize * 0.5f;
-					outPos = entityGrid_.getWorldPos({ x, y }) + Random::floatRange(-range, range);
+					outPos = entityGrid.getWorldPos({ x, y }) + Random::floatRange(-range, range);
 					return true;
 				}
 			}
@@ -237,7 +240,7 @@ bool PhysicsManager::findSpawnPosition(AABB* aabb, unsigned maxNearbyEntities, V
 }
 
 void PhysicsManager::update(AABB* aabb)
-{
+{	
 	auto* rigidBody = aabb->rigidBody;
 	rigidBody->tick(step_);
 
@@ -280,24 +283,30 @@ void PhysicsManager::update(AABB* aabb)
 
 	aabb->bounds.min = min;
 	aabb->bounds.max = max;
+
+	Bounds gridBounds = EntityGrid::getInstance().getBounds();
+	Vec2f rbPos = rigidBody->getPosition();
+	if (aabb->bounds.max.x < gridBounds.min.x)
+		rigidBody->setPosition({ rbPos.x + EntityGrid::GridWidth * EntityGrid::SquareSize, rbPos.y });
+	if (aabb->bounds.max.y < gridBounds.min.y)
+		rigidBody->setPosition({ rbPos.x, rbPos.y + EntityGrid::GridHeight * EntityGrid::SquareSize });
+	if (aabb->bounds.min.x > gridBounds.max.x)
+		rigidBody->setPosition({ rbPos.x - EntityGrid::GridWidth * EntityGrid::SquareSize, rbPos.y });
+	if (aabb->bounds.min.y > gridBounds.max.y)
+		rigidBody->setPosition({ rbPos.x, rbPos.y - EntityGrid::GridHeight * EntityGrid::SquareSize });
 }
 
 void PhysicsManager::map(AABB* aabb)
 {
-	entityGrid_.add(aabb);
+	EntityGrid::getInstance().add(aabb);
 }
 
 bool PhysicsManager::hasValidPos(AABB* aabb)
 {
 	auto min = aabb->bounds.min;
 	auto max = aabb->bounds.max;
-	auto pos = entityGrid_.getPos();
+	auto pos = EntityGrid::getInstance().getPos();
 	return min.x > pos.x && min.y > pos.y && max.x < pos.x + EntityGrid::GridWidth * EntityGrid::SquareSize && max.y < pos.y + EntityGrid::GridHeight * EntityGrid::SquareSize;
-}
-
-EntityGrid& PhysicsManager::getGrid()
-{
-	return entityGrid_;
 }
 
 size_t PhysicsManager::getAABBCount()

@@ -14,16 +14,30 @@ void OrganismManager::update()
 {	
 	updateCorpses(corpsesPlants_);
 	updateCorpses(corpsesMovers_);
-	update(plants_);
-	update(movers_);
+	update(plants_, false);
+	update(movers_, true);
+
+	float avgSize = 2;
+
+	if (movers_.size() > 0)
+	{
+		float sumSize = 0;
+
+		for (Organism* mover : movers_)
+			sumSize += mover->getSize();
+
+		avgSize = sumSize / movers_.size();
+	}
+
+	maxMovers_ = 300.0f / avgSize;
 }
 
 bool compareReproductionUrge(Organism* org1, Organism* org2)
 {
-    return (org1->getReproductionUrge() < org2->getReproductionUrge());
+    return (org1->getReproductionUrge() > org2->getReproductionUrge());
 }
 
-void OrganismManager::update(std::vector<Organism*>& vec)
+void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
 {	
 	static std::vector<Organism*> corpsesToSpawn;
 	static std::vector<Organism*> parentsToClone;
@@ -33,7 +47,7 @@ void OrganismManager::update(std::vector<Organism*>& vec)
 		Organism* org = *it;
 		org->tick();
 
-		if (org->wantsToDie() || !PhysicsManager::getInstance().getGrid().contains(org->getAABB()->bounds))
+		if (org->wantsToDie())
 		{
 			it = vec.erase(it);
 
@@ -43,26 +57,28 @@ void OrganismManager::update(std::vector<Organism*>& vec)
 
 			delete org;
 		}
-		else if (org->getReproductionUrge() > 0)
-		{
-			for (unsigned i = 0; i < org->getReproductionUrge(); i++)
-				parentsToClone.push_back(org);
-			++it;
-		}
 		else
-			++it;
+		{		
+			unsigned numOffspring = static_cast<unsigned>(org->getReproductionUrge());
+
+			for (unsigned i = 0; i < numOffspring; i++)
+				parentsToClone.push_back(org);
+
+			it++;
+		}
 	}
 
 	for (Organism* corpse : corpsesToSpawn)
 		if (!add(corpse))
 			delete corpse;
 
-	std::sort(parentsToClone.begin(), parentsToClone.end(), compareReproductionUrge);
+	if (sort)
+		std::sort(parentsToClone.begin(), parentsToClone.end(), compareReproductionUrge);
 
 	for (Organism* parent : parentsToClone)
 	{
 		if (tryClone(parent))
-			parent->setReproductionUrge(parent->getReproductionUrge() - 1);
+			parent->setEnergy(parent->getEnergy() - parent->getHunger());
 	}
 
 	corpsesToSpawn.clear();
@@ -109,7 +125,7 @@ bool OrganismManager::add(Organism* org)
 
 	if (org->isMover() && !org->isCorpse())
 	{
-		if (movers_.size() < MaxMovers && PhysicsManager::getInstance().hasValidPos(org->getAABB()))
+		if (movers_.size() < maxMovers_ && PhysicsManager::getInstance().hasValidPos(org->getAABB()))
 		{
 			movers_.push_back(org);
 			PhysicsManager::getInstance().add(org->getAABB());
@@ -120,7 +136,7 @@ bool OrganismManager::add(Organism* org)
 	}
 	else if (org->isCorpse() && PhysicsManager::getInstance().hasValidPos(org->getAABB()))	
 	{
-		if (org->isMover() && corpsesMovers_.size() < MaxMovers)
+		if (org->isMover() && corpsesMovers_.size() < maxMovers_)
 			corpsesMovers_.push_back(org);
 		else if (corpsesPlants_.size() + plants_.size() < MaxPlants)
 			corpsesPlants_.push_back(org);
