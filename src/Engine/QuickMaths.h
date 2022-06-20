@@ -64,6 +64,11 @@ struct Vec2
 		return Vec2<T>(x * rhs, y * rhs);
 	}
 
+	Vec2<T> operator/(Vec2<T> other)
+	{
+		return Vec2<T>(x / other.x, y / other.y);
+	}
+
 	Vec2<T> operator-(const Vec2<T>& rhs) const
 	{
 		return Vec2<T>(x - rhs.x, y - rhs.y);
