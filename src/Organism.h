@@ -14,7 +14,7 @@ class Organism
 public:
 	inline static long MaxTTL = 10000;
 	inline static long Instances = 0;
-	inline static int OneInNMutates = 40;
+	inline static int OneInNMutates = 20;
 	
 public:
 	static Cell* getCellForSymbol(char symbol);
