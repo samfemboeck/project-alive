@@ -19,6 +19,7 @@
 #include <random>
 #include <numbers>
 #include <algorithm>
+#include <iterator>
 
 #include <../../external/imgui/imgui.h>
 #include "../../external/imgui/backends/imgui_impl_glfw.h"

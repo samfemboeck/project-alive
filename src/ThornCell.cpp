@@ -10,47 +10,63 @@
 ThornCell::ThornCell() :
 	Cell("cell_thorn")
 {
+	type_ = Type::Thorn;
 }
 
 void ThornCell::onCollision(Cell* other)
 {	
-	if (other->wantsToBeDeleted())
+	if (other->wantsToBeDeleted() || (other->getOrganism()->isPlant() && !other->getOrganism()->isCorpse()))
 		return;
 
-	MoverCell* moverCell = dynamic_cast<MoverCell*>(other);
-	if (moverCell)
+	if (other->getOrganism()->isCorpse())
+	{
+		if (other->getOrganism()->isPredator()) // no cannibalism
+			return;
+
+		CorpseCell* corpse = dynamic_cast<CorpseCell*>(other);
+
+		if (corpse)
+		{
+			other->getOrganism()->removeCell(corpse);
+			float nutritionValue = other->getOrganism()->isMouth() ? corpse->getNutritionValue() * 1.5f : corpse->getNutritionValue();
+			organism_->setEnergy(organism_->getEnergy() + nutritionValue);
+		}
+	}
+	else if (other->getOrganism()->getSize() > organism_->getSize())
+	{
+		if (organism_->isMover() && other->getOrganism()->isMover())
+		{
+			return;
+		}
+		else
+		{
+			organism_->markForDeath();
+			return;
+		}
+	}
+	else if (other->getType() == Type::Thorn)
+	{
+		if (other->getOrganism()->getSize() == organism_->getSize())
+			return;
+
+		if (other->getOrganism()->getSize() < organism_->getSize())
+		{
+			other->getOrganism()->markForDeath();
+		}
+		else
+		{
+			organism_->markForDeath();
+		}
+	}
+	else if (!(other->getOrganism()->getDNA() == organism_->getDNA()))
 	{
 		other->getOrganism()->markForDeath();
-	}
-	else
-	{
-		MouthCell* mouthCell = dynamic_cast<MouthCell*>(other);
-		{
-			if (mouthCell)
-			{
-				other->getOrganism()->markForDeath();
-			}
-			else
-			{
-				ThornCell* thornCell = dynamic_cast<ThornCell*>(other);
-				if (thornCell)
-				{
-					if (other->getOrganism()->getMass() == organism_->getMass())
-						return;
-
-					if (other->getOrganism()->getMass() < organism_->getMass())
-						other->getOrganism()->removeCell(other);
-					else
-						getOrganism()->removeCell(this);
-				}
-			}
-		}
 	}
 }
 
 CorpseCell* ThornCell::createCorpse() const
 {
-	return new CorpseCell(0.5f, localPos_);
+	return new CorpseCell(1.0f, localPos_);
 }
 
 void ThornCell::init()
@@ -58,5 +74,5 @@ void ThornCell::init()
 }
 
 void ThornCell::tick()
-{	
+{
 }

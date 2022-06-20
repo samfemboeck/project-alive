@@ -28,7 +28,7 @@ void MoverCell::tick()
 
 CorpseCell* MoverCell::createCorpse() const
 {
-	return new CorpseCell(0.5f, localPos_);
+	return new CorpseCell(1.0f, localPos_);
 }
 
 float MoverCell::getMass() const

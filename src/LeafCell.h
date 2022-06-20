@@ -16,5 +16,5 @@ public:
 
 private:
 	float elapsed_ = 0;
-	bool isLifetimeExpired_ = false;
+	unsigned lifetimeFlag_ = 0;
 };

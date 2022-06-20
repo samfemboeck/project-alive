@@ -9,31 +9,31 @@ public:
 
 public:
 	DNA() = default;
-	DNA(std::vector<std::string> elems);
+	DNA(const std::vector<char>& elems);
 	DNA(std::string dna);
-	void pushBack(std::string elem);
-	void insertRandom(std::string elem);
-	void eraseRandom();
-	std::string get();
 	void mutate();
 	void setString(const std::string& str);
 	bool isMover();
 	unsigned size();
-	std::string get(unsigned idx);
+	char get(unsigned idx);
+	std::string str();
 	bool isCell(unsigned idx);
 	bool hasCell();
+	std::string get() const;
+	bool operator==(const DNA& other);
 
 private:
 	bool isMover_ = false;
 	unsigned getRandomCellIdx();
-	std::vector<std::string> elems_;
+	std::vector<char> elems_;
+	std::string str_;
 };
 
 class Production
 {
 public:
-	static std::vector<std::string> mover();
-	static std::vector<std::string> plant();
-	static std::vector<std::string> mouth();
-	static std::vector<std::string> thorn();
+	static std::vector<char> mover();
+	static std::vector<char> plant();
+	static std::vector<char> mouth();
+	static std::vector<char> thorn();
 };

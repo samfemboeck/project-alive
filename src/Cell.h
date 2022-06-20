@@ -10,7 +10,9 @@ enum class Type
 	None,
 	Mouth,
 	Mover,
-	Plant
+	Plant,
+	Thorn,
+	Corpse
 };
 
 class Cell

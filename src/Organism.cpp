@@ -32,17 +32,29 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	bounds.min = { maxF, maxF };
 	bounds.max = { minF, minF };
 	const float cellRadius = Cell::Size * 0.5f;
+
 	for (Cell* cell : cells_)
 	{
-		if (dynamic_cast<MoverCell*>(cell))
+		switch (cell->getType())
 		{
-			setMover(true);
-			rigidBody_->setLinearFriction(1.0f);
+			case Type::Mover:
+				setMover(true);
+				rigidBody_->setLinearFriction(1.0f);
+				break;
+			case Type::Mouth:
+				isMouth_ = true;
+				break;
+			case Type::Plant:
+				isPlant_ = true;
+				break;
+			case Type::Thorn:
+				isPredator_ = true;
+				break;
+			case Type::Corpse:
+				isCorpse_ = true;
+				break;
 		}
-		
-		if (dynamic_cast<CorpseCell*>(cell))
-			isCorpse_ = true;
-
+	
 		Vec2f localPos = cell->getLocalPos();
 		if (localPos.x < bounds.min.x)
 			bounds.min.x = localPos.x - cellRadius;
@@ -57,6 +69,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	Vec2f center = bounds.center();
 	Cell* minCell = nullptr;
 	float minDistance = maxF;
+
 	for (Cell* cell : cells_)
 	{
 		float magS = (center - cell->getLocalPos()).magnitude_squared();
@@ -85,16 +98,11 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	aabb_->colliders.push_back(minCell->getCollider());
 
 	if (isMover_)
-	{
-		long ttl = getSize() * 2000;
-		ttl_ = Random::floatRange(ttl, ttl + 1000);
-	}
+		ttl_ = Random::floatRange(12.0f, 15.0f);
 	else
-	{
-		ttl_ = Random::floatRange(5000, 10000);
-	}
+		ttl_ = Random::floatRange(48.0f, 51.0f);
 
-	hunger_ = cells_.size() + 1.0f;
+	hunger_ = cells_.size() + 2.0f;
 
 	for (const Cell* cell : cells_)
 		rigidBody_->setMass(rigidBody_->getMass() + cell->getMass());
@@ -102,7 +110,10 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	rigidBody_->setPosition(position);
 
 	for (auto* cell : cells_)
-		cell->init();
+		cell->init();	
+
+	if (isMover_)
+		speedMove_ = (numMovers_ * 75.0f + (numMovers_ - 1) * 80.0f) / cells_.size();
 }
 
 Organism::Organism(DNA dna, Vec2f position, float angle) :
@@ -127,7 +138,9 @@ Organism::~Organism()
 
 void Organism::tick()
 {
-	if (!isCorpse_ && getAgeMs() >= ttl_)
+	age_ += Time::DeltaSeconds;
+
+	if (!isCorpse_ && age_ >= ttl_)
 		markForDeath();
 
 	for (auto it = cells_.begin(); it != cells_.end();)
@@ -140,6 +153,9 @@ void Organism::tick()
 			delete collider;
 			it = cells_.erase(it);
 			delete cell;
+
+			if (cells_.size() == 1 && cells_[0]->getType() == Type::Thorn)
+				markForDeath();
 		}
 		else
 			it++;
@@ -159,8 +175,7 @@ void Organism::tick()
 
 	if (isMover_)
 	{
-		speedMove_ = numMovers_ * 300.0f / cells_.size();
-		rigidBody_->addTorque(Random::floatRange(-1.0f * TorqueFactor, TorqueFactor));
+		rigidBody_->addTorque(Random::floatRange(-torqueFactor_, torqueFactor_));
 		Vec2f forward = b2Rot(rigidBody_->getRotation()).GetYAxis();
 		rigidBody_->addImpulse(forward * 5000.0f);
 
@@ -173,24 +188,11 @@ Organism* Organism::clone(Vec2f pos)
 {
 	DNA successor = DNA(dna_.get());
 
-	if (isMover_)
-	{
-		if (Random::unsignedRange(0, OneInNMutates) == 0)
-			successor.mutate();
-	}
-	else
-	{
-		//if (rand() % (OneInNMutates * 16) == 0)
-			//successor.setString("MO");
-		if (cells_.size() < 5 && Random::unsignedRange(0, OneInNMutates) == 0)
-			successor.mutate();
-	}
+	if (Random::unsignedRange(0, OneInNMutates) == 0)
+		successor.mutate();
 
 	auto cells = getCellsForDNA(successor.get());
-	if (cells.size() > 0)
-		return new Organism(successor, cells, pos, Random::floatRange(0, 2 * std::numbers::pi));
-	else
-		return nullptr;
+	return cells.size() > 0 ? new Organism(successor, cells, pos, Random::floatRange(0, 2 * std::numbers::pi)) : nullptr;
 }
 
 Organism* Organism::createCorpse()
@@ -209,6 +211,9 @@ Organism* Organism::createCorpse()
 	Organism* ret = new Organism(dna_, corpseCells, rigidBody_->getPosition(), rigidBody_->getRotation());
 	ret->setCorpse(true);
 	ret->setMover(isMover_);
+	ret->isPlant_ = isPlant_;
+	ret->isPredator_ = isPredator_;
+	ret->isMouth_ = isMouth_;
 	return ret;
 }
 
@@ -222,10 +227,9 @@ float Organism::getReproductionUrge()
 	return energy_ / hunger_;
 }
 
-long Organism::getAgeMs()
+float Organism::getAge()
 {
-	auto now = std::chrono::high_resolution_clock::now();
-	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start_).count();
+	return age_;
 }
 
 void Organism::markForDeath()
@@ -246,6 +250,21 @@ void Organism::removeCell(Cell* cell)
 bool Organism::isMover() const
 {
 	return isMover_;
+}
+
+bool Organism::isMouth() const
+{
+	return isMouth_;
+}
+
+bool Organism::isPlant() const
+{
+	return isPlant_;
+}
+
+bool Organism::isPredator() const
+{
+	return isPredator_;
 }
 
 unsigned Organism::getSize()
@@ -303,6 +322,11 @@ void Organism::setMover(bool mover)
 {
 	isMover_ = mover;
 	aabb_->isMover = mover;
+}
+
+long Organism::getTTL()
+{
+	return ttl_;
 }
 
 bool Organism::wantsToDie()

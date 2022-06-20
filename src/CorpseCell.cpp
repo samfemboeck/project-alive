@@ -6,6 +6,7 @@ CorpseCell::CorpseCell(float nutritionValue, Vec2f localPos) :
 	Cell("cell_food"),
 	nutritionValue_(nutritionValue)
 {
+	type_ = Type::Corpse;
 	localPos_ = localPos;
 }
 

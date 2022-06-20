@@ -164,7 +164,6 @@ public:
 				ImGui::InputFloat("Time Scale", &Time::Scale, 0.1f, 0.1f);
 				ImGui::InputInt("Max Plants", &OrganismManager::MaxPlants, 100);
 				ImGui::InputInt("One in N mutates", &Organism::OneInNMutates);
-				ImGui::InputFloat("TorqueFactor", &Organism::TorqueFactor);
 				ImGui::Checkbox("Allow Thorns", &DNA::AllowThorns);
 				ImGui::Text(std::format("AABB count: {}", PhysicsManager::getInstance().getAABBCount()).c_str());
 			ImGui::End();

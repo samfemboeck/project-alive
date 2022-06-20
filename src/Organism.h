@@ -15,7 +15,6 @@ public:
 	inline static long MaxTTL = 10000;
 	inline static long Instances = 0;
 	inline static int OneInNMutates = 40;
-	inline static float TorqueFactor = 100.0f;
 	
 public:
 	static Cell* getCellForSymbol(char symbol);
@@ -33,11 +32,14 @@ public:
 	AABB* getAABB();
 	bool wantsToDie();
 	float getReproductionUrge();
-	long getAgeMs();
+	float getAge();
 	void markForDeath();
 	float getMass();
 	void removeCell(Cell* cell);
 	bool isMover() const;
+	bool isMouth() const;
+	bool isPlant() const;
+	bool isPredator() const;
 	unsigned getSize();
 	void setEnergy(float energy);
 	float getEnergy();
@@ -49,6 +51,7 @@ public:
 	bool isCorpse();
 	void setCorpse(bool corpse);
 	void setMover(bool mover);
+	long getTTL();
 
 	template<typename T>
 	T* getCell()
@@ -67,15 +70,21 @@ private:
 	DNA dna_;
 	std::vector<Cell*> cells_;
 	std::chrono::high_resolution_clock::time_point start_;
-	RigidBody* rigidBody_;
-	AABB* aabb_;
+	RigidBody* rigidBody_ = nullptr;
+	AABB* aabb_ = nullptr;
 	bool wantsToDie_ = false;
 	bool isMover_ = false;
 	bool isCorpse_ = false;
+	bool isPlant_ = false;
+	bool isPredator_ = false;
+	bool isMouth_ = false;
 	std::vector<Cell*> toRemove_;
-	long ttl_;	
 	float energy_ = 0.0f;
-	float hunger_;
 	unsigned numMovers_ = 0;
-	float speedMove_ = 0.0f;
+	float torqueFactor_ = 100.0f;
+	float age_ = 0.0f;
+
+	float ttl_;	
+	float speedMove_;
+	float hunger_;
 };

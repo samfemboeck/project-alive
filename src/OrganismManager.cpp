@@ -29,7 +29,7 @@ void OrganismManager::update()
 		avgSize = sumSize / movers_.size();
 	}
 
-	maxMovers_ = 300.0f / avgSize;
+	maxMovers_ = 10000;//300.0f / avgSize;
 }
 
 bool compareReproductionUrge(Organism* org1, Organism* org2)
