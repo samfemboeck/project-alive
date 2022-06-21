@@ -100,7 +100,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	if (isMover_)
 		ttl_ = Random::floatRange(12.0f, 15.0f);
 	else
-		ttl_ = Random::floatRange(48.0f, 51.0f);
+		ttl_ = Random::floatRange(70.0f, 73.0f);
 
 	hunger_ = cells_.size() + 2.0f;
 

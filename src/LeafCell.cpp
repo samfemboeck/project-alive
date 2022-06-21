@@ -48,5 +48,5 @@ CorpseCell* LeafCell::createCorpse() const
 
 float LeafCell::getMass() const
 {
-	return 0.000001f;
+	return 100.0f;
 }

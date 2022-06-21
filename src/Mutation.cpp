@@ -145,6 +145,7 @@ void DNA::mutate()
 
 void DNA::setString(const std::string& str)
 {
+	str_ = str;
 	isMover_ = false;
 	elems_.clear();
 

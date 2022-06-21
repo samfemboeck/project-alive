@@ -12,6 +12,7 @@ public:
 	void bind(uint32_t slot = 0) const;
 	std::string getFilePath() { return path_; }
 	void loadFromPath(const std::string& path, bool);
+	float getAspect() const { return width_ / (float)height_; }
 
 	bool operator==(const Texture2D& other) const { return id_ == other.id_; }
 private:

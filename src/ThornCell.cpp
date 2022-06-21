@@ -20,9 +20,6 @@ void ThornCell::onCollision(Cell* other)
 
 	if (other->getOrganism()->isCorpse())
 	{
-		if (other->getOrganism()->isPredator()) // no cannibalism
-			return;
-
 		CorpseCell* corpse = dynamic_cast<CorpseCell*>(other);
 
 		if (corpse)
