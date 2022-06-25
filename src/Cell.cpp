@@ -7,8 +7,7 @@
 #include "CorpseCell.h"
 
 Cell::Cell(std::string textureName) :
-	textureName_(textureName + ".png"),
-	textureNameFilled_(textureName + "_filled.png")
+	textureName_(textureName)
 {
 	Instances++;
 }
@@ -20,7 +19,7 @@ Cell::~Cell()
 
 void Cell::draw()
 {
-	Renderer2D::pushQuad(collider_->transform, TextureManager::get(textureNameFilled_), glm::vec4(1.0f), false);
+	Renderer2D::pushQuad(collider_->transform, TextureManager::get(textureName_), glm::vec4(1.0f), false);
 }
 
 void Cell::setOrganism(Organism* org)

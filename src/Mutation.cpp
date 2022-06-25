@@ -5,7 +5,8 @@
 std::vector<char> Production::mover()
 {
 	//std::vector<std::string> vocabulary = { "LM", "RM", "[LM]","[LM]","[RM]","[RM]","[LM]","[LM]","[RM]","[RM]","LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "O", "LO", "RO", "[LO]", "[RO]", "T", "LT", "RT", "[T]", "[LT]", "[RT]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
-	std::vector<std::string> vocabulary = { "M", "LM", "RM", "[M]", "[LM]","[RM]","O", "LO", "RO", "[O]", "[LO]", "[RO]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
+	std::vector<std::string> vocabulary = { "M", "LM", "RM", "[M]", "[LM]","[RM]","O", "LO", "RO", "[O]", "[LO]", "[RO]", "C", "LC", "RC", "[C]", "[LC]", "[RC]"};
+	//std::vector<std::string> vocabulary = { "M", "LM", "RM", "[M]", "[LM]","[RM]","O", "LO", "RO", "[O]", "[LO]", "[RO]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -23,7 +24,7 @@ std::vector<char> Production::mover()
 std::vector<char> Production::plant()
 {
 	std::vector<std::string> vocabulary = { "P", "LP", "RP", "[P]", "[LP]", "[RP]","P", "LP", "RP", "[P]", "[LP]", "[RP]","[LP]", "[RP]", "T", "LT", "RT", "[T]", "[LT]", "[RT]" };
-	//std::vector<std::string> vocabulary = { "P", "LP", "RP", "[LP]", "[RP]","[LP]", "[RP]","P", "LP", "RP", "[LP]", "[RP]","[LP]", "[RP]"};
+	//std::vector<std::string> vocabulary = { "P", "LP", "RP", "[P]", "[LP]", "[RP]","[LP]", "[RP]" };
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -41,7 +42,8 @@ std::vector<char> Production::plant()
 std::vector<char> Production::mouth()
 {	
 	//std::vector<std::string> vocabulary = { "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]","[LO]", "[RO]", "[LO]", "[RO]", "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]", "M", "LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "T", "LT", "RT", "[T]", "[LT]", "[RT]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
-	std::vector<std::string> vocabulary = { "O", "LO", "RO", "[O]", "[LO]", "[RO]", "M", "LM", "RM", "[M]", "[LM]", "[RM]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
+	std::vector<std::string> vocabulary = { "O", "O", "LO", "RO", "[O]", "[O]", "[LO]", "[RO]", "M", "M", "LM", "RM", "[M]", "[M]", "[LM]", "[RM]", "C", "C", "LC", "RC", "[C]", "[C]", "[LC]", "[RC]"};
+	//std::vector<std::string> vocabulary = { "O", "LO", "RO", "[O]", "[LO]", "[RO]", "M", "LM", "RM", "[M]", "[LM]", "[RM]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -59,6 +61,23 @@ std::vector<char> Production::mouth()
 std::vector<char> Production::thorn()
 {	
 	std::vector<std::string> vocabulary = { "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
+	std::vector<char> ret;
+	unsigned numInstructions = Random::unsignedRange(1, 1);
+
+	for (unsigned i = 0; i < numInstructions; i++)
+	{
+		unsigned idx = Random::unsignedRange(0, vocabulary.size() - 1);
+		std::string& str = vocabulary[idx];
+		for (char c : str)
+			ret.push_back(c);
+	}
+
+	return ret;
+}
+
+std::vector<char> Production::carnivore()
+{
+	std::vector<std::string> vocabulary = { "C", "LC", "RC", "[C]", "[LC]", "[RC]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -96,9 +115,16 @@ DNA::DNA(std::string dna)
 
 void DNA::mutate()
 {		
-	if (Random::unsignedRange(0, 1) == 0)
+	if (!isMover_ && Random::unsignedRange(0, 20) == 0)
 	{
-		unsigned idx = Random::unsignedRange(0, elems_.size() - 1);
+		elems_.clear();
+		elems_.push_back('O');
+		return;
+	}
+
+	if (elems_.size() > 1 && Random::unsignedRange(0, 1) == 0)
+	{
+		unsigned idx = Random::unsignedRange(1, elems_.size() - 1);
 
 		if (isCell(idx))
 			elems_.erase(elems_.begin() + idx);
@@ -124,6 +150,8 @@ void DNA::mutate()
 	case 'T':
 		productionV = Production::thorn();
 		break;
+	case 'C':
+		productionV = Production::carnivore();
 	}
 
 	DNA production(productionV);
@@ -131,15 +159,23 @@ void DNA::mutate()
 	for (int i = production.size() - 1; i >= 0; i--)
 		elems_.insert(elems_.begin() + idx + 1, production.get(i));
 
-	bool isPredator = std::ranges::find(elems_, 'T') != std::end(elems_);
-	bool isMover = std::ranges::find(elems_, 'M') != std::end(elems_);
+	bool isCarnivore = std::ranges::find(elems_, 'C') != std::end(elems_);
 	bool isHerbivore = std::ranges::find(elems_, 'O') != std::end(elems_);
 
-	if (isPredator && isMover && isHerbivore)
+	if (isCarnivore && isHerbivore)
 	{
-		for (auto& elem : elems_)
-			if (elem == 'O')
-				elem = 'T';
+		if (Random::unsignedRange(0, 1) == 0)
+		{
+			for (auto& elem : elems_)
+				if (elem == 'O')
+					elem = 'C';
+		}
+		else
+		{
+			for (auto& elem : elems_)
+				if (elem == 'C')
+					elem = 'O';
+		}
 	}
 }
 

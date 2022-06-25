@@ -3,7 +3,7 @@
 #include "Organism.h"
 
 CorpseCell::CorpseCell(float nutritionValue, Vec2f localPos) :
-	Cell("cell_food"),
+	Cell("cell_corpse.png"),
 	nutritionValue_(nutritionValue)
 {
 	type_ = Type::Corpse;
@@ -18,4 +18,9 @@ float CorpseCell::getNutritionValue() const
 void CorpseCell::init()
 {
 	collider_->isSensor = true;
+}
+
+char CorpseCell::getSymbol()
+{
+	return 'X';
 }

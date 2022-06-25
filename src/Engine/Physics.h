@@ -49,6 +49,11 @@ struct Bounds
 	{
 		return max.y - min.y;
 	}
+
+	bool contains(Vec2f pos)
+	{
+		return pos.x >= min.x && pos.x <= max.x && pos.y >= min.y && pos.y <= max.y;
+	}
 };
 
 struct AABB
@@ -59,6 +64,7 @@ struct AABB
 	bool wantsToBeDeleted = false;
 	bool isCorpse = false;
 	bool isMover = false;
+	Organism* organism;
 };
 
 class PhysicsManager
@@ -107,7 +113,7 @@ public:
 	Vec2f getCenterOfMass();
 
 private:
-	float linearFriction_ = 0.99999f;
+	float linearFriction_ = 0.9999f;
 	Vec2f position_ = Vec2f(0, 0);
 	Vec2f centerOfMassLocal_ = Vec2f(0, 0);
 	Vec2f centerOfMassWorld_ = Vec2f(0, 0);

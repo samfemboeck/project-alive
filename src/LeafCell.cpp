@@ -7,7 +7,7 @@
 #include "CorpseCell.h"
 
 LeafCell::LeafCell() : 
-	Cell("cell_leaf")
+	Cell("cell_plant.png")
 {
 	type_ = Type::Plant;
 }
@@ -48,5 +48,10 @@ CorpseCell* LeafCell::createCorpse() const
 
 float LeafCell::getMass() const
 {
-	return 100.0f;
+	return 3.0f;
+}
+
+char LeafCell::getSymbol()
+{
+	return 'P';
 }

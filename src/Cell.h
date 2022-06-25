@@ -8,10 +8,12 @@ class CorpseCell;
 enum class Type
 {
 	None,
-	Mouth,
+	Herbivore,
+	Carnivore,
 	Mover,
 	Plant,
 	Thorn,
+	Armor,
 	Corpse
 };
 
@@ -38,12 +40,12 @@ public:
 	bool wantsToBeDeleted();
 	virtual float getMass() const;
 	Type getType();
+	virtual char getSymbol() = 0;
 
 protected:
 	Organism* organism_ = nullptr;
 	CircleCollider* collider_ = nullptr;
 	std::string textureName_;
-	std::string textureNameFilled_;
 	Vec2f localPos_;
 	bool wantsToBeDeleted_ = false;
 	Type type_ = Type::None;

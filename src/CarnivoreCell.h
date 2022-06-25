@@ -2,10 +2,10 @@
 
 #include "Cell.h"
 
-class ThornCell final : public Cell
+class CarnivoreCell final : public Cell
 {
 public:
-	ThornCell();
+	CarnivoreCell();
 	void onCollision(Cell* other);
 	CorpseCell* createCorpse() const override;
 	char getSymbol() override;

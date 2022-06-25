@@ -14,6 +14,13 @@
 #include "Mutation.h"
 #include "Engine/FrameBuffer.h"
 
+struct Slot
+{
+	bool isLocked = true;
+	DNA DNA;
+	Texture2D* texture;
+};
+
 class AliveApp : public App
 {
 private:
@@ -28,14 +35,13 @@ private:
 		Renderer2D::init();
 		Renderer2D::setClearColor({ 0, 0, 0, 1 });
 
-		TextureManager::add("cell_leaf_filled.png");
-		TextureManager::add("cell_thorn_filled.png");
-		TextureManager::add("cell_mover_filled.png");
-		TextureManager::add("cell_light_filled.png");
-		TextureManager::add("cell_fruit_filled.png");
-		TextureManager::add("cell_food.png");
-		TextureManager::add("cell_food_filled.png");
-		TextureManager::add("cell_mouth_filled.png");
+		TextureManager::add("cell_plant.png");
+		TextureManager::add("cell_thorn.png");
+		TextureManager::add("cell_carnivore.png");
+		TextureManager::add("cell_herbivore.png");
+		TextureManager::add("cell_mover.png");
+		TextureManager::add("cell_corpse.png");
+		TextureManager::add("cell_armor.png");
 		TextureManager::add("aabb.png");
 		TextureManager::add("organism_worm_1.png");
 		TextureManager::add("organism_worm_2.png");
@@ -43,13 +49,37 @@ private:
 		TextureManager::add("organism_predator_2.png");
 		TextureManager::add("organism_plant_1.png");
 		TextureManager::add("organism_plant_2.png");
+		TextureManager::add("organism_parasite.png");
+		TextureManager::add("lock.png");
 
-		dnaSlots_[0] = DNA("MO");
-		dnaSlots_[1] = DNA("MT");
-		dnaSlots_[2] = DNA("P");
-		dnaSlots_[3] = DNA("MMO");
-		dnaSlots_[4] = DNA("MTRTRM");
-		dnaSlots_[5] = DNA("P[P][RP][RRP][LP]");
+		Slot slot1;
+		slot1.DNA = DNA("P[P]");
+		slot1.isLocked = false;
+		slot1.texture = TextureManager::get("organism_plant_2.png");
+		dnaSlots_[0] = slot1;
+
+		Slot slot2;
+		slot2.DNA = DNA("MO");
+		slot2.isLocked = false;
+		slot2.texture = TextureManager::get("organism_worm_1.png");
+		dnaSlots_[1] = slot2;
+
+		Slot slot3;
+		slot3.DNA = DNA("MT");
+		slot3.isLocked = true;
+		slot3.texture = TextureManager::get("organism_predator_1.png");
+		dnaSlots_[2] = slot3;
+
+		Slot slot4;
+		slot4.DNA = DNA("O");
+		slot4.isLocked = true;
+		slot4.texture = TextureManager::get("organism_parasite.png");
+		dnaSlots_[3] = slot4;
+
+		GLFWimage images[1]; 
+		images[0].pixels = stbi_load("Textures/appicon.png", &images[0].width, &images[0].height, 0, 4); //rgba channels 
+		glfwSetWindowIcon(window_, 1, images);
+		stbi_image_free(images[0].pixels);
 	}
 
 public:
@@ -61,6 +91,9 @@ public:
 
 	void onUpdate()
 	{
+		if (!isRunning_)
+			return;
+
 		if (isRightMouseDown_)
 		{
 			auto offset = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection()) - Camera::screenToWorldPoint(mousePosDown_, OrthoCamController::getInstance().getViewProjection());
@@ -81,6 +114,16 @@ public:
 		OrganismManager::getInstance().draw();
 		Renderer2D::endTextures();
 		frameBuffer_.unbind();
+
+		if (!isDiscoveredDecomposers_ && !wantsToDiscoverDecomposers_ && OrganismManager::getInstance().plants_.size() > 0)
+			wantsToDiscoverDecomposers_ = true;
+
+		if (wantsToDiscoverDecomposers_ && OrganismManager::getInstance().corpsesPlants_.size() > 10)
+		{
+			isDiscoveredDecomposers_ = true;
+			wantsToDiscoverDecomposers_ = false;
+			dnaSlots_[1].isLocked = false;
+		}
 	}
 
 	void onKeyPressed(int key)
@@ -90,11 +133,6 @@ public:
 			return;
 
 		OrthoCamController::getInstance().pressKey(key);
-
-		if (key >= GLFW_KEY_1 && key < GLFW_KEY_1 + dnas_.size())
-		{
-			dnaIndex_ = (key - GLFW_KEY_1);
-		}
 
 		static const float scroll_speed_ttl = 250;
 
@@ -140,55 +178,7 @@ public:
 		}
 
 		embraceTheDarkness();
-		static bool dockspaceOpen = true;
-		static bool opt_fullscreen_persistant = true;
-		bool opt_fullscreen = opt_fullscreen_persistant;
-		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-
-		// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-		// because it would be confusing to have two docking targets within each others.
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-		if (opt_fullscreen)
-		{
-			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->Pos);
-			ImGui::SetNextWindowSize(viewport->Size);
-			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-		}
-
-		// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
-		if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-			window_flags |= ImGuiWindowFlags_NoBackground;
-
-		// Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-		// This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-		// all active windows docked into it will lose their parent and become undocked.
-		// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-		// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
-		ImGui::PopStyleVar();
-
-		if (opt_fullscreen)
-			ImGui::PopStyleVar(2);
-
-		// DockSpace
-		ImGuiIO& io = ImGui::GetIO();
-		ImGuiStyle& style = ImGui::GetStyle();
-		float minWinSizeX = style.WindowMinSize.x;
-		style.WindowMinSize.x = 200.0f;
-		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-		{
-			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-		}
-
-		style.WindowMinSize.x = minWinSizeX;
-		ImGui::End();
+		initDockspace();
 
 		bool showDemo = false;
 		ImGui::ShowDemoWindow(&showDemo);
@@ -196,19 +186,27 @@ public:
 		ImGuiWindowFlags windowFlags = 0;
 		windowFlags |= ImGuiWindowFlags_NoTitleBar;
 		//windowFlags  |= ImGuiWindowFlags_MenuBar;
-		window_flags |= ImGuiWindowFlags_NoScrollbar;
-		windowFlags |= ImGuiWindowFlags_NoMove;
-		windowFlags |= ImGuiWindowFlags_NoResize;
+		windowFlags |= ImGuiWindowFlags_NoScrollbar;
+		//windowFlags |= ImGuiWindowFlags_NoMove;
+		//windowFlags |= ImGuiWindowFlags_NoResize;
 		windowFlags |= ImGuiWindowFlags_NoCollapse;
 		windowFlags |= ImGuiWindowFlags_NoNav;
 		windowFlags |= ImGuiWindowFlags_NoBackground;
+		windowFlags |= ImGuiWindowFlags_NoScrollWithMouse;
 		//if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 		//windowFlags |= ImGuiWindowFlags_NoDocking;
 		//if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
 		bool* open = nullptr; // Don't pass our bool* to Begin
 
 		ImGui::Begin("Settings", open);
-		ImGui::SliderFloat("Sim Speed", &Time::Scale, 0.5f, 20.0f, "%.0f");
+
+		if (isRunning_ && ImGui::Button("Pause"))
+			isRunning_ = false;
+
+		if (!isRunning_ && ImGui::Button("Continue"))
+			isRunning_ = true;
+
+		ImGui::SliderFloat("Simulation Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("Speed of simulation time.");
 
@@ -219,7 +217,7 @@ public:
 		ImGui::End();
 
 		{
-			ImGui::Begin("World", open);
+			ImGui::Begin("World", open, windowFlags);
 
 			bool isWindowFocused = ImGui::IsWindowFocused();
 			isHoveringSimWindow_ = ImGui::IsWindowHovered();
@@ -245,50 +243,43 @@ public:
 
 		{
 			ImGui::Begin("Organisms");
-			auto imgWidth = ImGui::GetContentRegionAvail().x / 3.0f;
+			unsigned orgsPerCell = 2;
+			auto& style = ImGui::GetStyle();
+			float imgWidth = (ImGui::GetContentRegionAvail().x - ((orgsPerCell - 1) * style.FramePadding.x)) / (float)orgsPerCell;			
 
-			Texture2D* texture1 = TextureManager::get("organism_worm_1.png");
-			Texture2D* texture2 = TextureManager::get("organism_predator_1.png");
-			Texture2D* texture3 = TextureManager::get("organism_plant_1.png");
-			Texture2D* texture4 = TextureManager::get("organism_worm_2.png");
-			Texture2D* texture5 = TextureManager::get("organism_predator_2.png");
-			Texture2D* texture6 = TextureManager::get("organism_plant_2.png");
-
-			float aspect = texture1->getAspect();
-			int framePadding = 0;
+			float aspect = dnaSlots_[0].texture->getAspect();
 			ImVec4 bgColorSelected = { 0, 0, 1, 0.1f };
 			ImVec4 bgColorDefault = { 0, 0, 0, 0 };
 
-			if (ImGui::ImageButton((void*)texture1->getId(), { imgWidth, imgWidth / aspect }, { 0, 0 }, { 1, 1 }, framePadding, slotIdx_ == 0 ? bgColorSelected : bgColorDefault))
-				slotIdx_ = 0;
+			Texture2D* textureLock = TextureManager::get("lock.png");
 
-			ImGui::SameLine();
+			for (unsigned i = 0, count = 0; i < dnaSlots_.size(); i++)
+			{
+				if (dnaSlots_[i].isLocked)
+				{
+					ImGui::ImageButton((void*)textureLock->getId(), {imgWidth, imgWidth / aspect}, {0, 1}, {1, 0}, 0, bgColorDefault);
+				}
+				else
+				{
+					if (ImGui::ImageButton((void*)dnaSlots_[i].texture->getId(), { imgWidth, imgWidth / aspect }, { 0, 1 }, { 1, 0 }, 0, slotIdx_ == i ? bgColorSelected : bgColorDefault))
+						slotIdx_ = i;
+				}
 
-			if (ImGui::ImageButton((void*)texture2->getId(), { imgWidth, imgWidth / aspect }, { 0, 0 }, { 1, 1 }, framePadding, slotIdx_ == 1 ? bgColorSelected : bgColorDefault))
-				slotIdx_ = 1;
-
-			ImGui::SameLine();
-
-			if (ImGui::ImageButton((void*)texture3->getId(), { imgWidth, imgWidth / aspect }, { 0, 0 }, { 1, 1 }, framePadding, slotIdx_ == 2 ? bgColorSelected : bgColorDefault))
-				slotIdx_ = 2;
-
-			if (ImGui::ImageButton((void*)texture4->getId(), { imgWidth, imgWidth / aspect }, { 0, 0 }, { 1, 1 }, framePadding, slotIdx_ == 3 ? bgColorSelected : bgColorDefault))
-				slotIdx_ = 3;
-
-			ImGui::SameLine();
-
-			if (ImGui::ImageButton((void*)texture5->getId(), { imgWidth, imgWidth / aspect }, { 0, 0 }, { 1, 1 }, framePadding, slotIdx_ == 4 ? bgColorSelected : bgColorDefault))
-				slotIdx_ = 4;
-
-			ImGui::SameLine();
-
-			if (ImGui::ImageButton((void*)texture6->getId(), { imgWidth, imgWidth / aspect }, { 0, 0 }, { 1, 1 }, framePadding, slotIdx_ == 5 ? bgColorSelected : bgColorDefault))
-				slotIdx_ = 5;
+				if (count == orgsPerCell - 1)
+				{
+					count = 0;
+				}
+				else
+				{
+					ImGui::SameLine();
+					count++;
+				}
+			}
 
 			ImGui::End();
 		}
-	
-		if (false)
+
+		if (true)
 		{
 			ImGui::Begin("Performance", open);
 
@@ -302,6 +293,32 @@ public:
 			ImGui::End();
 		}
 
+		static bool wasPopupDisplayed = false;
+		if (isDiscoveredDecomposers_ && !wasPopupDisplayed)
+		{
+			ImGui::OpenPopup("Decomposers");
+			wasPopupDisplayed = true;
+			isRunning_ = false;
+		}
+
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+		if (ImGui::BeginPopupModal("Decomposers", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("Decomposers are necessary to recycle nutrients and let new plants grow!");
+			ImGui::Separator();
+
+			if (ImGui::Button("OK", ImVec2(120, 0))) 
+			{ 
+				ImGui::CloseCurrentPopup(); 
+				isRunning_ = true;
+			}
+
+			ImGui::SetItemDefaultFocus();
+			ImGui::EndPopup();
+		}
+
 		ScopeTimer::Data.clear();
 	}
 
@@ -313,9 +330,27 @@ public:
 
 		if (button == GLFW_MOUSE_BUTTON_1 && isHoveringSimWindow_)
 		{
-			auto mouse_pos_world = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection());
-			std::vector<Cell*> cells = Organism::getCellsForDNA(dnaSlots_[slotIdx_].get());
-			OrganismManager::getInstance().add(new Organism(dnaSlots_[slotIdx_], cells, mouse_pos_world, Random::floatRange(0, 2 * std::numbers::pi)));
+			if (isRunning_)
+			{
+				auto mousePosWorld = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection());
+				std::vector<Cell*> cells = Organism::getCellsForDNA(dnaSlots_[slotIdx_].DNA.get());
+				OrganismManager::getInstance().add(new Organism(dnaSlots_[slotIdx_].DNA, cells, mousePosWorld, Random::floatRange(0, 2 * std::numbers::pi)));
+			}
+			else
+			{
+				auto mousePosWorld = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection());
+				EntityGrid& grid = EntityGrid::getInstance();
+				auto localPos = grid.getLocalCoord(mousePosWorld);
+				auto& entitiesInSquare = grid.get(localPos.x, localPos.y);
+
+				for (auto entity : entitiesInSquare)
+				{
+					if (entity && entity->bounds.contains(mousePosWorld))
+					{
+						LOG("DNA: {}", entity->organism->getDNA().str());
+					}
+				}
+			}
 		}
 		else if (button == GLFW_MOUSE_BUTTON_2 && isHoveringSimWindow_)
 		{
@@ -389,7 +424,7 @@ public:
 		colors[ImGuiCol_NavHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
 		colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 0.70f);
 		colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
-		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.35f);
+		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.5);
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.WindowPadding = ImVec2(8.00f, 8.00f);
@@ -416,9 +451,65 @@ public:
 		style.TabRounding = 4;
 	}
 
+	void initDockspace()
+	{
+		static bool dockspaceOpen = true;
+		static bool opt_fullscreen_persistant = true;
+		bool opt_fullscreen = opt_fullscreen_persistant;
+		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None; //ImGuiDockNodeFlags_NoResize;
+
+		// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+		// because it would be confusing to have two docking targets within each others.
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		if (opt_fullscreen)
+		{
+			ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->Pos);
+			ImGui::SetNextWindowSize(viewport->Size);
+			ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+		}
+
+		// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+		if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+			window_flags |= ImGuiWindowFlags_NoBackground;
+
+		// Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+		// This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+		// all active windows docked into it will lose their parent and become undocked.
+		// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+		// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
+		ImGui::PopStyleVar();
+
+		if (opt_fullscreen)
+			ImGui::PopStyleVar(2);
+
+		// DockSpace
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
+		float minWinSizeX = style.WindowMinSize.x;
+		style.WindowMinSize.x = 200.0f;
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		}
+
+		style.WindowMinSize.x = minWinSizeX;
+		ImGui::End();
+	}
+
 private:
-	std::array<DNA, 6> dnaSlots_;
-	unsigned slotIdx_ = 0;
+	bool isRunning_ = true;
+	bool isDiscoveredDecomposers_ = false;
+	bool wantsToDiscoverDecomposers_ = false;
+	std::array<Slot, 4> dnaSlots_;
+	unsigned slotIdx_ = 5;
 	Vec2f size_ = { 16.0f, 9.0f };
 	Vec2f mousePos_;
 	bool isHoveringSimWindow_ = false;
@@ -428,13 +519,6 @@ private:
 	bool isRightMouseDown_ = false;
 	char dnaStr_[1000] = "M(0)O(0)";
 	DNA dna_;
-	std::vector<std::string> dnas_ = {
-		"L(0)",
-		"M(0)O(0)",
-		"M(0)O(0)T(0)",
-		"M(0)O(1)T(1)T(1)O(0)",
-		"L(0)T(0)"
-	};
 	unsigned dnaIndex_ = 0;
 };
 

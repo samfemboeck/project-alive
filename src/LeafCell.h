@@ -13,6 +13,7 @@ public:
 	float getNutritionValue() const;
 	CorpseCell* createCorpse() const override;
 	float getMass() const override;
+	char getSymbol() override;
 
 private:
 	float elapsed_ = 0;

@@ -3,9 +3,10 @@
 #include "LeafCell.h"
 #include "ThornCell.h"
 #include "MoverCell.h"
-#include "FruitCell.h"
 #include "CorpseCell.h"
-#include "MouthCell.h"
+#include "ArmorCell.h"
+#include "HerbivoreCell.h"
+#include "CarnivoreCell.h"
 #include "Engine/Physics.h"
 #include "Engine/Time.h"
 #include "Engine/Timer.h"
@@ -24,6 +25,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	rigidBody_ = new RigidBody();
 	rigidBody_->setRotation(angle);
 	aabb_ = new AABB();
+	aabb_->organism = this;
 	aabb_->rigidBody = rigidBody_;
 
 	Bounds bounds;
@@ -41,7 +43,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 				setMover(true);
 				rigidBody_->setLinearFriction(1.0f);
 				break;
-			case Type::Mouth:
+			case Type::Herbivore:
 				isMouth_ = true;
 				break;
 			case Type::Plant:
@@ -100,7 +102,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	if (isMover_)
 		ttl_ = Random::floatRange(12.0f, 15.0f);
 	else
-		ttl_ = Random::floatRange(70.0f, 73.0f);
+		ttl_ = Random::floatRange(48.0f, 51.0f);
 
 	hunger_ = cells_.size() + 2.0f;
 
@@ -189,7 +191,10 @@ Organism* Organism::clone(Vec2f pos)
 	DNA successor = DNA(dna_.get());
 
 	if (Random::unsignedRange(0, OneInNMutates) == 0)
-		successor.mutate();
+	{
+		if (!(isPlant_ && getSize() > 4))
+			successor.mutate();
+	}
 
 	auto cells = getCellsForDNA(successor.get());
 	return cells.size() > 0 ? new Organism(successor, cells, pos, Random::floatRange(0, 2 * std::numbers::pi)) : nullptr;
@@ -353,7 +358,11 @@ Cell* Organism::getCellForSymbol(char symbol)
 	case 'M':
 		return new MoverCell();
 	case 'O':
-		return new MouthCell();
+		return new HerbivoreCell();
+	case 'C':
+		return new CarnivoreCell();
+	case 'A':
+		return new ArmorCell();
 	default:
 		throw std::exception(std::format("Invalid DNA symbol: {}", symbol).c_str());
 	}
@@ -385,7 +394,7 @@ std::vector<Cell*> Organism::getCellsForDNA(std::string dna)
 	int stackIdx = -1;
 	Vec2f curPos = { 0, 0 };
 	float curRot = 0;
-	std::string cells = "PTMO";
+	std::string cells = "PTMOCA";
 
 	for (size_t index = 0; index < dna.size(); index++)
 	{

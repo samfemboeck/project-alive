@@ -1,17 +1,17 @@
-#include "MouthCell.h"
+#include "HerbivoreCell.h"
 #include "CorpseCell.h"
 #include "Organism.h"
 #include "LeafCell.h"
 #include "ThornCell.h"
 #include "pch.h"
 
-MouthCell::MouthCell() :
-	Cell("cell_mouth")
+HerbivoreCell::HerbivoreCell() :
+	Cell("cell_herbivore.png")
 {
-	type_ = Type::Mouth;
+	type_ = Type::Herbivore;
 }
 
-void MouthCell::onCollision(Cell* other)
+void HerbivoreCell::onCollision(Cell* other)
 {
 	if (other->wantsToBeDeleted())
 		return;
@@ -33,16 +33,21 @@ void MouthCell::onCollision(Cell* other)
 	}
 }
 
-CorpseCell* MouthCell::createCorpse() const
+CorpseCell* HerbivoreCell::createCorpse() const
 {
 	return new CorpseCell(1.0f, localPos_);
 }
 
-void MouthCell::init()
+void HerbivoreCell::init()
 {
 }
 
-float MouthCell::getMass() const
+float HerbivoreCell::getMass() const
 {
-	return 1.0f;
+	return 0.10f;
+}
+
+char HerbivoreCell::getSymbol()
+{
+	return 'O';
 }

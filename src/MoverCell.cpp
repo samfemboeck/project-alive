@@ -7,7 +7,7 @@
 #include "CorpseCell.h"
 
 MoverCell::MoverCell() :
-	Cell("cell_mover")
+	Cell("cell_mover.png")
 {
 	type_ = Type::Mover;
 }
@@ -22,10 +22,6 @@ void MoverCell::init()
 	organism_->addMover();
 }
 
-void MoverCell::tick()
-{
-}
-
 CorpseCell* MoverCell::createCorpse() const
 {
 	return new CorpseCell(1.0f, localPos_);
@@ -34,4 +30,9 @@ CorpseCell* MoverCell::createCorpse() const
 float MoverCell::getMass() const
 {
 	return 1.0f;
+}
+
+char MoverCell::getSymbol()
+{
+	return 'M';
 }

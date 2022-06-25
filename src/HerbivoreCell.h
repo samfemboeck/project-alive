@@ -1,15 +1,12 @@
 #include "Cell.h"
 
-class MouthCell : public Cell
+class HerbivoreCell : public Cell
 {
 public:
-	MouthCell();
+	HerbivoreCell();
 	void onCollision(Cell* other) override;
 	CorpseCell* createCorpse() const override;
 	void init() override;
 	float getMass() const override;
-
-private:
-	float energy_ = 0.0f;
-	float hunger_;
+	char getSymbol() override;
 };
