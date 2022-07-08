@@ -62,6 +62,7 @@ void Renderer2D::init()
 	channels[0] = 0;
 	channels[1] = 1;
 
+
 	s_data.waterShader = new Shader("Shaders/water.glsl");
 	s_data.waterShader->bind();
 	s_data.waterShader->uploadUniformIntArray("uChannels", channels, 2);
@@ -104,6 +105,22 @@ void Renderer2D::beginFlatColor(const glm::mat4& viewProjection)
 	s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
 	s_data.flatColorShader->bind();
 	s_data.flatColorShader->uploadUniformMat4("uViewProjection", viewProjection);
+}
+
+void Renderer2D::beginLines(const glm::mat4& view, const glm::mat4& projection)
+{	
+	s_data.quadVertexArray->bind();
+	s_data.quadIndexCount = 0;
+	s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
+	s_data.flatColorShader->bind();
+	s_data.flatColorShader->uploadUniformMat4("uViewProjection", projection * view);
+}
+
+void Renderer2D::endLines()
+{	
+	uint32_t dataSize = (uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase;
+	s_data.quadVertexBuffer->setData(s_data.quadVertexBufferBase, dataSize);
+	glDrawArrays(GL_LINES, 0, s_data.quadIndexCount);
 }
 
 void Renderer2D::endTextures()
@@ -333,6 +350,19 @@ void Renderer2D::pushQuad(const glm::vec2& min, const glm::vec2& max, const glm:
 	s_data.quadVertexBufferPtr++;
 
 	s_data.quadIndexCount += 6;
+}
+
+void Renderer2D::pushLine(const glm::vec2& a, const glm::vec2& b, const glm::vec4& color)
+{	
+	s_data.quadVertexBufferPtr->position = glm::vec3{ a.x, a.y, 0 };
+	s_data.quadVertexBufferPtr->color = color;
+	s_data.quadVertexBufferPtr++;
+
+	s_data.quadVertexBufferPtr->position = glm::vec3{ b.x, b.y, 0 };
+	s_data.quadVertexBufferPtr->color = color;
+	s_data.quadVertexBufferPtr++;
+
+	s_data.quadIndexCount += 2;
 }
 
 void Renderer2D::nextBatch()

@@ -190,11 +190,18 @@ Organism* Organism::clone(Vec2f pos)
 {
 	DNA successor = DNA(dna_.get());
 
-	if (Random::unsignedRange(0, OneInNMutates) == 0)
+	if (isPlant_)
 	{
-		if (!(isPlant_ && getSize() > 4))
+		if (Random::unsignedRange(0, OneInNMutates / 1.5f) == 0 && getSize() < 6)
+		{
 			successor.mutate();
+		}
 	}
+	else if (Random::unsignedRange(0, OneInNMutates) == 0)
+	{
+		successor.mutate();
+	}
+
 
 	auto cells = getCellsForDNA(successor.get());
 	return cells.size() > 0 ? new Organism(successor, cells, pos, Random::floatRange(0, 2 * std::numbers::pi)) : nullptr;

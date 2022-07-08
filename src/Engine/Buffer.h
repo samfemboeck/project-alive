@@ -115,6 +115,7 @@ public:
 
 	virtual const BufferLayout& getLayout() const { return layout_; }
 	virtual void setLayout(const BufferLayout& layout) { layout_ = layout; }
+
 private:
 	uint32_t id_;
 	BufferLayout layout_;

@@ -25,6 +25,8 @@ public:
 
 	static void beginTextures(const glm::mat4& view, const glm::mat4& projection);
 	static void beginFlatColor(const glm::mat4&);
+	static void beginLines(const glm::mat4& view, const glm::mat4& projection);
+	static void endLines();
 	static void endTextures();
 	static void endFlatColor();
 	static void beginWater(const glm::mat4& view, const glm::mat4& projection);
@@ -34,6 +36,7 @@ public:
 	static void pushQuad(const glm::mat4&, SubTexture2D*, const glm::vec4 & = glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, bool = true);
 	static void pushQuad(const glm::vec2& min, const glm::vec2& max, Texture2D*, const glm::vec4 & = glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
 	static void pushQuad(const glm::vec2& min, const glm::vec2& max, const glm::vec4 & = glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
+	static void pushLine(const glm::vec2& a, const glm::vec2& b, const glm::vec4& color = glm::vec4 {1.0f, 1.0f, 1.0f, 1.0f});
 
 private:
 	static void nextBatch();

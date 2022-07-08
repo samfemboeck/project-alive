@@ -3,6 +3,8 @@
 #include "Engine/Timer.h"
 #include "Organism.h"
 #include "Engine/Physics.h"
+#include "Engine/Renderer2D.h"
+#include "Engine/OrthoCamController.h"
 
 OrganismManager& OrganismManager::getInstance()
 {
@@ -106,6 +108,8 @@ void OrganismManager::updateCorpses(std::vector<Organism*>& vec)
 
 void OrganismManager::draw()
 {
+	Renderer2D::beginTextures(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
+
 	for (Organism* org : corpsesPlants_)
 		org->draw();
 
@@ -117,6 +121,8 @@ void OrganismManager::draw()
 
 	for (Organism* org : movers_)
 		org->draw();
+
+	Renderer2D::endTextures();
 }
 
 bool OrganismManager::add(Organism* org)

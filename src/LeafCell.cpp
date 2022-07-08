@@ -15,23 +15,17 @@ LeafCell::LeafCell() :
 void LeafCell::tick()
 {
 	if (organism_->wantsToDie())
-		lifetimeFlag_ = 4;
+		lifetimeFlag_ = 3;
 
-	if (organism_->getAge() >= organism_->getTTL() * (1.0f/3.0f) && lifetimeFlag_ == 0)
+	if (organism_->getAge() >= organism_->getTTL() * (1.0f / 2.0f) && lifetimeFlag_ == 0)
 	{
 		lifetimeFlag_ = 1;
 		organism_->setEnergy(organism_->getEnergy() + organism_->getHunger());
 	}
 
-	if (organism_->getAge() >= organism_->getTTL() * (2.0f / 3.0f) && lifetimeFlag_ == 1)
+	if (organism_->getAge() >= organism_->getTTL() - 100 && lifetimeFlag_ == 1)
 	{
 		lifetimeFlag_ = 2;
-		organism_->setEnergy(organism_->getEnergy() + organism_->getHunger());
-	}
-
-	if (organism_->getAge() >= organism_->getTTL() - 100 && lifetimeFlag_ == 2)
-	{
-		lifetimeFlag_ = 3;
 		organism_->setEnergy(organism_->getEnergy() + organism_->getHunger());
 	}
 }
@@ -43,12 +37,12 @@ float LeafCell::getNutritionValue() const
 
 CorpseCell* LeafCell::createCorpse() const
 {
-	return lifetimeFlag_ == 4 ?  new CorpseCell(1.0f, localPos_) : nullptr ;
+	return lifetimeFlag_ == 3 ?  new CorpseCell(1.0f, localPos_) : nullptr ;
 }
 
 float LeafCell::getMass() const
 {
-	return 3.0f;
+	return 1.0f;
 }
 
 char LeafCell::getSymbol()

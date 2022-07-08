@@ -4,6 +4,7 @@
 #include "../pch.h"
 #include "../Cell.h"
 #include "Renderer2D.h"
+#include "OrthoCamController.h"
 
 EntityGrid::EntityGrid() :
 	pos_({0, 0}),
@@ -92,7 +93,18 @@ void EntityGrid::clear()
 
 void EntityGrid::draw()
 {
-	for (unsigned x = 0; x < GridWidth; x++)
+	Vec2f posMin = pos_;
+	Vec2f posMax = { pos_.x + GridWidth * SquareSize, pos_.y + GridHeight * SquareSize };
+
+	Renderer2D::beginLines(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
+	Renderer2D::pushLine(posMin, {posMax.x, posMin.y});
+	Renderer2D::pushLine({posMax.x, posMin.y}, posMax);
+	Renderer2D::pushLine(posMax, {posMin.x, posMax.y});
+	Renderer2D::pushLine({posMin.x, posMax.y}, posMin);
+	Renderer2D::endLines();
+
+	/*
+		for (unsigned x = 0; x < GridWidth; x++)
 	{
 		Vec2i posMin = Vec2i(pos_.x + x * SquareSize, pos_.y);
 		Vec2i posMax = Vec2i(posMin.x + SquareSize, posMin.y + GridHeight * SquareSize);
@@ -103,7 +115,7 @@ void EntityGrid::draw()
 		Vec2i posMin = Vec2i(pos_.x, pos_.y + y * SquareSize);
 		Vec2i posMax = Vec2i(posMin.x + GridWidth * SquareSize, posMin.y + SquareSize);
 		Renderer2D::pushQuad(posMin, posMax, TextureManager::get("aabb.png"));
-	}
+	*/
 }
 
 Vec2i EntityGrid::getLocalCoord(Vec2f worldPos)

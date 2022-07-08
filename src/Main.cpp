@@ -14,6 +14,23 @@
 #include "Mutation.h"
 #include "Engine/FrameBuffer.h"
 
+/*
+	--- TODOs ---
+	- "Add 1 Random Cell" als Mutation
+	- Multithreaded Physik
+	- Simulation Tutorial
+	- Achievements
+
+	--- Achievements ---
+	- Game started and all corpses -> Herbivore "Worm"
+	- New Species is dominating species -> Herbivore "Glider"
+	- 5 Predators of same DNA -> Predator "Worm"
+	- Dominating Species has 5 Cells -> Herbivore "Figure 9"
+	- Dominating Species has 10 Cells -> "Invincible Plant" 
+	- Predators are over 50% of mover population -> Predator "Figure 9"
+	- 20 Parasites in World -> "Parasite"
+*/
+
 struct Slot
 {
 	bool isLocked = true;
@@ -110,9 +127,8 @@ public:
 		frameBuffer_.bind();
 		Renderer2D::clear();
 		Renderer2D::setClearColor({ 0.0f, 0.0f, 0.0f, 0.0f });
-		Renderer2D::beginTextures(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
 		OrganismManager::getInstance().draw();
-		Renderer2D::endTextures();
+		EntityGrid::getInstance().draw();
 		frameBuffer_.unbind();
 
 		if (!isDiscoveredDecomposers_ && !wantsToDiscoverDecomposers_ && OrganismManager::getInstance().plants_.size() > 0)
@@ -181,14 +197,14 @@ public:
 		initDockspace();
 
 		bool showDemo = false;
-		ImGui::ShowDemoWindow(&showDemo);
+		//ImGui::ShowDemoWindow(&showDemo);
 
 		ImGuiWindowFlags windowFlags = 0;
-		windowFlags |= ImGuiWindowFlags_NoTitleBar;
+		//windowFlags |= ImGuiWindowFlags_NoTitleBar;
 		//windowFlags  |= ImGuiWindowFlags_MenuBar;
 		windowFlags |= ImGuiWindowFlags_NoScrollbar;
-		//windowFlags |= ImGuiWindowFlags_NoMove;
-		//windowFlags |= ImGuiWindowFlags_NoResize;
+		windowFlags |= ImGuiWindowFlags_NoMove;
+		windowFlags |= ImGuiWindowFlags_NoResize;
 		windowFlags |= ImGuiWindowFlags_NoCollapse;
 		windowFlags |= ImGuiWindowFlags_NoNav;
 		windowFlags |= ImGuiWindowFlags_NoBackground;
@@ -198,51 +214,31 @@ public:
 		//if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
 		bool* open = nullptr; // Don't pass our bool* to Begin
 
-		ImGui::Begin("Settings", open);
+		if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::Button("Pause"))
+			{
+			}
+			if (ImGui::Button("Quit"))
+			{
+				glfwSetWindowShouldClose(window_, true);
+			}
+			ImGui::EndMainMenuBar();
+		}
 
-		if (isRunning_ && ImGui::Button("Pause"))
-			isRunning_ = false;
+		ImGui::Begin("Simulation Speed", open, windowFlags);
 
-		if (!isRunning_ && ImGui::Button("Continue"))
-			isRunning_ = true;
-
-		ImGui::SliderFloat("Simulation Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
+		ImGui::PushItemWidth(-1);
+		ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("Speed of simulation time.");
-
-		ImGui::InputInt("Mutation Rate", &Organism::OneInNMutates);
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("One in x Organisms will mutate.");
+		ImGui::PopItemWidth();
 
 		ImGui::End();
 
+	
 		{
-			ImGui::Begin("World", open, windowFlags);
-
-			bool isWindowFocused = ImGui::IsWindowFocused();
-			isHoveringSimWindow_ = ImGui::IsWindowHovered();
-
-			Vec2f viewportOffset = { ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y };
-			Vec2f mousePosImGui = Vec2f(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
-			Vec2f mousePos = mousePosImGui - viewportOffset;
-			mousePos_ = mousePos / size_;
-
-			float width = ImGui::GetContentRegionAvail().x;
-			float aspect = 9.0f / 16.0f;
-			float height = aspect * width;
-
-			if (size_.x != width || size_.y != height)
-			{
-				frameBuffer_.setSize(width, height);
-				size_ = { width, height };
-			}
-
-			ImGui::Image((void*)frameBuffer_.getColorBufferRendererId(), *(ImVec2*)&size_, { 0, 1 }, { 1, 0 });
-			ImGui::End();
-		}
-
-		{
-			ImGui::Begin("Organisms");
+			ImGui::Begin("Organisms", open, windowFlags);
 			unsigned orgsPerCell = 2;
 			auto& style = ImGui::GetStyle();
 			float imgWidth = (ImGui::GetContentRegionAvail().x - ((orgsPerCell - 1) * style.FramePadding.x)) / (float)orgsPerCell;			
@@ -280,16 +276,52 @@ public:
 		}
 
 		if (true)
-		{
-			ImGui::Begin("Performance", open);
+		{	
+			ImGuiWindowFlags windowFlags = 0;
+			//windowFlags |= ImGuiWindowFlags_NoTitleBar;
+			//windowFlags  |= ImGuiWindowFlags_MenuBar;
+			windowFlags |= ImGuiWindowFlags_NoScrollbar;
+			windowFlags |= ImGuiWindowFlags_NoMove;
+			windowFlags |= ImGuiWindowFlags_NoResize;
+			windowFlags |= ImGuiWindowFlags_NoCollapse;
+			windowFlags |= ImGuiWindowFlags_NoNav;
+			windowFlags |= ImGuiWindowFlags_NoBackground;
+			windowFlags |= ImGuiWindowFlags_NoScrollWithMouse;
 
-			for (const auto& profile : data)
-				ImGui::Text(profile.c_str());
+			ImGui::Begin("FPS", open, windowFlags);
 
 			float FPS = 1.0f / Time::DeltaSeconds;
-			ImGui::Text(("FPS " + std::to_string(FPS)).c_str());
-			ImGui::Text(("Simulation Time " + std::to_string(Time::ElapsedSeconds)).c_str());
+			ImGui::PushItemWidth(-1);
+			ImGui::Text((std::to_string((int)FPS)).c_str());
+			ImGui::PopItemWidth();
+			ImGui::End();
+		}
 
+		{
+			ImGuiWindowClass windowClass;
+			windowClass.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_AutoHideTabBar;
+			ImGui::SetNextWindowClass(&windowClass);
+			ImGui::Begin("World", open, windowFlags);
+
+			bool isWindowFocused = ImGui::IsWindowFocused();
+			isHoveringSimWindow_ = ImGui::IsWindowHovered();
+
+			Vec2f viewportOffset = { ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y };
+			Vec2f mousePosImGui = Vec2f(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+			Vec2f mousePos = mousePosImGui - viewportOffset;
+			mousePos_ = mousePos / size_;
+
+			float width = ImGui::GetContentRegionAvail().x;
+			float aspect = 9.0f / 16.0f;
+			float height = aspect * width;
+
+			if (size_.x != width || size_.y != height)
+			{
+				frameBuffer_.setSize(width, height);
+				size_ = { width, height };
+			}
+
+			ImGui::Image((void*)frameBuffer_.getColorBufferRendererId(), *(ImVec2*)&size_, { 0, 1 }, { 1, 0 });
 			ImGui::End();
 		}
 
@@ -301,17 +333,17 @@ public:
 			isRunning_ = false;
 		}
 
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
 		if (ImGui::BeginPopupModal("Decomposers", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			ImGui::Text("Decomposers are necessary to recycle nutrients and let new plants grow!");
 			ImGui::Separator();
 
-			if (ImGui::Button("OK", ImVec2(120, 0))) 
-			{ 
-				ImGui::CloseCurrentPopup(); 
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
 				isRunning_ = true;
 			}
 
@@ -509,7 +541,7 @@ private:
 	bool isDiscoveredDecomposers_ = false;
 	bool wantsToDiscoverDecomposers_ = false;
 	std::array<Slot, 4> dnaSlots_;
-	unsigned slotIdx_ = 5;
+	unsigned slotIdx_ = 0;
 	Vec2f size_ = { 16.0f, 9.0f };
 	Vec2f mousePos_;
 	bool isHoveringSimWindow_ = false;

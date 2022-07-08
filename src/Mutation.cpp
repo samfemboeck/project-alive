@@ -5,7 +5,7 @@
 std::vector<char> Production::mover()
 {
 	//std::vector<std::string> vocabulary = { "LM", "RM", "[LM]","[LM]","[RM]","[RM]","[LM]","[LM]","[RM]","[RM]","LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "O", "LO", "RO", "[LO]", "[RO]", "T", "LT", "RT", "[T]", "[LT]", "[RT]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
-	std::vector<std::string> vocabulary = { "M", "LM", "RM", "[M]", "[LM]","[RM]","O", "LO", "RO", "[O]", "[LO]", "[RO]", "C", "LC", "RC", "[C]", "[LC]", "[RC]"};
+	std::vector<std::string> vocabulary = { "M", "[M]", "[LM]","[RM]","O", "[O]", "[LO]", "[RO]", "C", "[C]", "[LC]", "[RC]"};
 	//std::vector<std::string> vocabulary = { "M", "LM", "RM", "[M]", "[LM]","[RM]","O", "LO", "RO", "[O]", "[LO]", "[RO]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
@@ -23,7 +23,7 @@ std::vector<char> Production::mover()
 
 std::vector<char> Production::plant()
 {
-	std::vector<std::string> vocabulary = { "P", "LP", "RP", "[P]", "[LP]", "[RP]","P", "LP", "RP", "[P]", "[LP]", "[RP]","[LP]", "[RP]", "T", "LT", "RT", "[T]", "[LT]", "[RT]" };
+	std::vector<std::string> vocabulary = { "P", "[P]", "[LP]", "[RP]","P", "[P]", "[LP]", "[RP]","[LP]", "[RP]", "T", "[T]", "[LT]", "[RT]" };
 	//std::vector<std::string> vocabulary = { "P", "LP", "RP", "[P]", "[LP]", "[RP]","[LP]", "[RP]" };
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
@@ -42,7 +42,7 @@ std::vector<char> Production::plant()
 std::vector<char> Production::mouth()
 {	
 	//std::vector<std::string> vocabulary = { "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]","[LO]", "[RO]", "[LO]", "[RO]", "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]", "M", "LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "T", "LT", "RT", "[T]", "[LT]", "[RT]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
-	std::vector<std::string> vocabulary = { "O", "O", "LO", "RO", "[O]", "[O]", "[LO]", "[RO]", "M", "M", "LM", "RM", "[M]", "[M]", "[LM]", "[RM]", "C", "C", "LC", "RC", "[C]", "[C]", "[LC]", "[RC]"};
+	std::vector<std::string> vocabulary = { "O", "O", "[O]", "[O]", "[LO]", "[RO]", "M", "M", "[M]", "[M]", "[LM]", "[RM]", "C", "C", "[C]", "[C]", "[LC]", "[RC]"};
 	//std::vector<std::string> vocabulary = { "O", "LO", "RO", "[O]", "[LO]", "[RO]", "M", "LM", "RM", "[M]", "[LM]", "[RM]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);

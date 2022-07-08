@@ -33,4 +33,5 @@ protected:
 protected:
 	WindowData windowData_;
 	GLFWwindow* window_;
+	bool isRunning_ = true;
 };
