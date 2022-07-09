@@ -22,6 +22,7 @@ public:
 	static std::vector<Cell*> getCellsForDNA(std::string dna);
 
 public:
+	Organism(Cell* cellGrid[25]);
 	Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, float angle);
 	Organism(DNA dna, Vec2f position, float angle);
 	~Organism();
@@ -67,6 +68,7 @@ public:
 	}
 
 private:
+	Cell* cellGrid_[25];
 	DNA dna_;
 	std::vector<Cell*> cells_;
 	std::chrono::high_resolution_clock::time_point start_;

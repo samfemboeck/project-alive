@@ -25,7 +25,7 @@ void CarnivoreCell::onCollision(Cell* other)
 		if (corpse)
 		{
 			other->getOrganism()->removeCell(corpse);
-			float nutritionValue = other->getOrganism()->isMouth() ? corpse->getNutritionValue() * 1.5f : corpse->getNutritionValue();
+			float nutritionValue = other->getOrganism()->isMouth() ? corpse->getNutritionValue() * 1.4f : corpse->getNutritionValue();
 			organism_->setEnergy(organism_->getEnergy() + nutritionValue);
 		}
 	}
@@ -59,7 +59,7 @@ void CarnivoreCell::onCollision(Cell* other)
 
 CorpseCell* CarnivoreCell::createCorpse() const
 {
-	return new CorpseCell(1.0f, localPos_);
+	return new CorpseCell(1.0f, localPos_, false);
 }
 
 char CarnivoreCell::getSymbol()

@@ -37,12 +37,12 @@ float LeafCell::getNutritionValue() const
 
 CorpseCell* LeafCell::createCorpse() const
 {
-	return lifetimeFlag_ == 3 ?  new CorpseCell(1.0f, localPos_) : nullptr ;
+	return lifetimeFlag_ == 3 ?  new CorpseCell(1.0f, localPos_, true) : nullptr ;
 }
 
 float LeafCell::getMass() const
 {
-	return 1.0f;
+	return 0.1f;
 }
 
 char LeafCell::getSymbol()

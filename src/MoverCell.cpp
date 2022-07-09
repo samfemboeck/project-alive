@@ -24,7 +24,7 @@ void MoverCell::init()
 
 CorpseCell* MoverCell::createCorpse() const
 {
-	return new CorpseCell(1.0f, localPos_);
+	return new CorpseCell(1.0f, localPos_, false);
 }
 
 float MoverCell::getMass() const

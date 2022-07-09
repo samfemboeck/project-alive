@@ -100,7 +100,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	aabb_->colliders.push_back(minCell->getCollider());
 
 	if (isMover_)
-		ttl_ = Random::floatRange(12.0f, 15.0f);
+		ttl_ = Random::floatRange(14.0f, 17.0f);
 	else
 		ttl_ = Random::floatRange(48.0f, 51.0f);
 

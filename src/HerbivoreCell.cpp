@@ -27,7 +27,10 @@ void HerbivoreCell::onCollision(Cell* other)
 		CorpseCell* corpseCell = dynamic_cast<CorpseCell*>(other);
 		if (corpseCell)
 		{
-			organism_->setEnergy(organism_->getEnergy() + corpseCell->getNutritionValue());
+			if (corpseCell->isPlant())
+				organism_->setEnergy(organism_->getEnergy() + corpseCell->getNutritionValue());
+			else
+				organism_->setEnergy(organism_->getEnergy() + (corpseCell->getNutritionValue() * 0.5f));
 			other->getOrganism()->removeCell(corpseCell);
 		}
 	}
@@ -35,7 +38,7 @@ void HerbivoreCell::onCollision(Cell* other)
 
 CorpseCell* HerbivoreCell::createCorpse() const
 {
-	return new CorpseCell(1.0f, localPos_);
+	return new CorpseCell(1.0f, localPos_, false);
 }
 
 void HerbivoreCell::init()

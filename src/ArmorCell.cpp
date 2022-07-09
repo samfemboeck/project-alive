@@ -15,7 +15,7 @@ void ArmorCell::onCollision(Cell* other)
 
 CorpseCell* ArmorCell::createCorpse() const
 {
-    return new CorpseCell(1.0f, localPos_);
+    return new CorpseCell(1.0f, localPos_, false);
 }
 
 char ArmorCell::getSymbol()

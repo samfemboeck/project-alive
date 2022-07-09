@@ -113,7 +113,7 @@ public:
 	Vec2f getCenterOfMass();
 
 private:
-	float linearFriction_ = 0.999f;
+	float linearFriction_ = 0.9995f;
 	Vec2f position_ = Vec2f(0, 0);
 	Vec2f centerOfMassLocal_ = Vec2f(0, 0);
 	Vec2f centerOfMassWorld_ = Vec2f(0, 0);

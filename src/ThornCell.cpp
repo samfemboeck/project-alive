@@ -31,7 +31,7 @@ void ThornCell::onCollision(Cell* other)
 
 CorpseCell* ThornCell::createCorpse() const
 {
-	return new CorpseCell(1.0f, localPos_);
+	return new CorpseCell(1.0f, localPos_, true);
 }
 
 char ThornCell::getSymbol()
