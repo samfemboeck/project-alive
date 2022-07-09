@@ -24,9 +24,11 @@ public:
 
 private:
 	bool isMover_ = false;
+	bool isHerbivore_ = false;
 	unsigned getRandomCellIdx();
 	std::vector<char> elems_;
 	std::string str_;
+	unsigned numCells_ = 0;
 };
 
 class Production

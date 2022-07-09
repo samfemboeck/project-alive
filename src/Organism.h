@@ -14,7 +14,7 @@ class Organism
 public:
 	inline static long MaxTTL = 10000;
 	inline static long Instances = 0;
-	inline static int OneInNMutates = 40;
+	inline static int OneInNMutates = 30;
 	
 public:
 	static Cell* getCellForSymbol(char symbol);
@@ -39,7 +39,7 @@ public:
 	bool isMover() const;
 	bool isMouth() const;
 	bool isPlant() const;
-	bool isPredator() const;
+	bool isThorn() const;
 	unsigned getSize();
 	void setEnergy(float energy);
 	float getEnergy();
@@ -76,7 +76,7 @@ private:
 	bool isMover_ = false;
 	bool isCorpse_ = false;
 	bool isPlant_ = false;
-	bool isPredator_ = false;
+	bool isThorn_ = false;
 	bool isMouth_ = false;
 	std::vector<Cell*> toRemove_;
 	float energy_ = 0.0f;

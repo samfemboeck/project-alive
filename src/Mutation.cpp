@@ -97,17 +97,32 @@ DNA::DNA(const std::vector<char>& elems) :
 	str_(std::string(elems))
 {
 	for (char c : elems)
+	{
+		if (c == 'M' || c == 'O' || c == 'C' || c == 'P' || c == 'T')
+			numCells_++;
+
 		if (c == 'M')
 			isMover_ = true;
+
+		if (c == 'O')
+			isHerbivore_ = true;
+	}
 }
 
 DNA::DNA(std::string dna)
 {
 	for (char c : dna)
 	{
-		elems_.push_back(c);
+		if (c == 'M' || c == 'O' || c == 'C' || c == 'P' || c == 'T')
+			numCells_++;
+
 		if (c == 'M')
 			isMover_ = true;
+
+		if (c == 'O')
+			isHerbivore_ = true;
+
+		elems_.push_back(c);
 	}
 
 	str_ = std::string(elems_);
@@ -115,7 +130,7 @@ DNA::DNA(std::string dna)
 
 void DNA::mutate()
 {		
-	if (!isMover_ && Random::unsignedRange(0, 20) == 0)
+	if (!isMover_ && Random::unsignedRange(0, 15) == 0)
 	{
 		elems_.clear();
 		elems_.push_back('O');
@@ -129,6 +144,15 @@ void DNA::mutate()
 		if (isCell(idx))
 			elems_.erase(elems_.begin() + idx);
 
+		return;
+	}
+
+	if (isMover_ && isHerbivore_ && elems_.size() == 2) // prettify evolution
+	{
+		elems_.clear();
+		elems_.push_back('M');
+		elems_.push_back('M');
+		elems_.push_back('O');
 		return;
 	}
 

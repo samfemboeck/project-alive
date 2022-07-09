@@ -16,13 +16,12 @@
 
 /*
 	--- TODOs ---
-	- "Add 1 Random Cell" als Mutation
-	- Multithreaded Physik
-	- Simulation Tutorial
 	- Achievements
+	- Simulation Tutorial
+	- Multithreaded Physik
 
 	--- Achievements ---
-	- Game started and all corpses -> Herbivore "Worm"
+	- Game started and x corpses -> Herbivore "Worm"
 	- New Species is dominating species -> Herbivore "Glider"
 	- 5 Predators of same DNA -> Predator "Worm"
 	- Dominating Species has 5 Cells -> Herbivore "Figure 9"
@@ -209,6 +208,7 @@ public:
 		windowFlags |= ImGuiWindowFlags_NoNav;
 		windowFlags |= ImGuiWindowFlags_NoBackground;
 		windowFlags |= ImGuiWindowFlags_NoScrollWithMouse;
+
 		//if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 		//windowFlags |= ImGuiWindowFlags_NoDocking;
 		//if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
@@ -226,22 +226,23 @@ public:
 			ImGui::EndMainMenuBar();
 		}
 
-		ImGui::Begin("Simulation Speed", open, windowFlags);
+		{
+			ImGui::Begin("Simulation Speed", open, windowFlags);
 
-		ImGui::PushItemWidth(-1);
-		ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Speed of simulation time.");
-		ImGui::PopItemWidth();
+			ImGui::PushItemWidth(-1);
+			ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("Speed of simulation time.");
+			ImGui::PopItemWidth();
 
-		ImGui::End();
+			ImGui::End();
+		}
 
-	
 		{
 			ImGui::Begin("Organisms", open, windowFlags);
 			unsigned orgsPerCell = 2;
 			auto& style = ImGui::GetStyle();
-			float imgWidth = (ImGui::GetContentRegionAvail().x - ((orgsPerCell - 1) * style.FramePadding.x)) / (float)orgsPerCell;			
+			float imgWidth = (ImGui::GetContentRegionAvail().x - ((orgsPerCell - 1) * style.FramePadding.x)) / (float)orgsPerCell;
 
 			float aspect = dnaSlots_[0].texture->getAspect();
 			ImVec4 bgColorSelected = { 0, 0, 1, 0.1f };
@@ -253,7 +254,7 @@ public:
 			{
 				if (dnaSlots_[i].isLocked)
 				{
-					ImGui::ImageButton((void*)textureLock->getId(), {imgWidth, imgWidth / aspect}, {0, 1}, {1, 0}, 0, bgColorDefault);
+					ImGui::ImageButton((void*)textureLock->getId(), { imgWidth, imgWidth / aspect }, { 0, 1 }, { 1, 0 }, 0, bgColorDefault);
 				}
 				else
 				{
@@ -275,19 +276,7 @@ public:
 			ImGui::End();
 		}
 
-		if (true)
-		{	
-			ImGuiWindowFlags windowFlags = 0;
-			//windowFlags |= ImGuiWindowFlags_NoTitleBar;
-			//windowFlags  |= ImGuiWindowFlags_MenuBar;
-			windowFlags |= ImGuiWindowFlags_NoScrollbar;
-			windowFlags |= ImGuiWindowFlags_NoMove;
-			windowFlags |= ImGuiWindowFlags_NoResize;
-			windowFlags |= ImGuiWindowFlags_NoCollapse;
-			windowFlags |= ImGuiWindowFlags_NoNav;
-			windowFlags |= ImGuiWindowFlags_NoBackground;
-			windowFlags |= ImGuiWindowFlags_NoScrollWithMouse;
-
+		{
 			ImGui::Begin("FPS", open, windowFlags);
 
 			float FPS = 1.0f / Time::DeltaSeconds;
@@ -325,30 +314,48 @@ public:
 			ImGui::End();
 		}
 
-		static bool wasPopupDisplayed = false;
-		if (isDiscoveredDecomposers_ && !wasPopupDisplayed)
 		{
-			ImGui::OpenPopup("Decomposers");
-			wasPopupDisplayed = true;
-			isRunning_ = false;
-		}
+			ImGui::Begin("Registry");
 
-		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-		if (ImGui::BeginPopupModal("Decomposers", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-		{
-			ImGui::Text("Decomposers are necessary to recycle nutrients and let new plants grow!");
-			ImGui::Separator();
-
-			if (ImGui::Button("OK", ImVec2(120, 0)))
+			const auto& registry = OrganismManager::getInstance().getRegistry();
+			for (const auto& pair : registry)
 			{
-				ImGui::CloseCurrentPopup();
-				isRunning_ = true;
+				if (pair.second > 0)
+				{
+					std::string text = pair.first + ": " + std::to_string(pair.second);
+					ImGui::Text(text.c_str());
+				}
 			}
 
-			ImGui::SetItemDefaultFocus();
-			ImGui::EndPopup();
+			ImGui::End();
+		}
+
+		{
+			static bool wasPopupDisplayed = false;
+			if (isDiscoveredDecomposers_ && !wasPopupDisplayed)
+			{
+				ImGui::OpenPopup("Decomposers");
+				wasPopupDisplayed = true;
+				isRunning_ = false;
+			}
+
+			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+			if (ImGui::BeginPopupModal("Decomposers", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				ImGui::Text("Decomposers are necessary to recycle nutrients and let new plants grow!");
+				ImGui::Separator();
+
+				if (ImGui::Button("OK", ImVec2(120, 0)))
+				{
+					ImGui::CloseCurrentPopup();
+					isRunning_ = true;
+				}
+
+				ImGui::SetItemDefaultFocus();
+				ImGui::EndPopup();
+			}
 		}
 
 		ScopeTimer::Data.clear();
@@ -412,7 +419,7 @@ public:
 		colors[ImGuiCol_FrameBg] = ImVec4(0.05f, 0.05f, 0.05f, 0.54f);
 		colors[ImGuiCol_FrameBgHovered] = ImVec4(0.19f, 0.19f, 0.19f, 0.54f);
 		colors[ImGuiCol_FrameBgActive] = ImVec4(0.20f, 0.22f, 0.23f, 1.00f);
-		colors[ImGuiCol_TitleBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+		colors[ImGuiCol_TitleBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
 		colors[ImGuiCol_TitleBgActive] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
 		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
 		colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
@@ -459,7 +466,7 @@ public:
 		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.5);
 
 		ImGuiStyle& style = ImGui::GetStyle();
-		style.WindowPadding = ImVec2(8.00f, 8.00f);
+		style.WindowPadding = ImVec2(0.00f, 0.00f);
 		style.FramePadding = ImVec2(5.00f, 2.00f);
 		style.CellPadding = ImVec2(6.00f, 6.00f);
 		style.ItemSpacing = ImVec2(6.00f, 6.00f);
@@ -468,8 +475,8 @@ public:
 		style.IndentSpacing = 25;
 		style.ScrollbarSize = 15;
 		style.GrabMinSize = 10;
-		style.WindowBorderSize = 1;
-		style.ChildBorderSize = 1;
+		style.WindowBorderSize = 0;
+		style.ChildBorderSize = 0;
 		style.PopupBorderSize = 1;
 		style.FrameBorderSize = 1;
 		style.TabBorderSize = 1;

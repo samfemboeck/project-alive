@@ -12,6 +12,7 @@ public:
 	void draw();
 	bool add(Organism* org);
 	bool tryClone(Organism* org);
+	const std::unordered_map<std::string, unsigned>& getRegistry();
 
 public:
 	std::vector<Organism*> corpsesMovers_;
@@ -23,5 +24,9 @@ public:
 
 private:
 	OrganismManager() = default;
+
+private:
 	float maxMovers_;
+	std::unordered_map<std::string, unsigned> registry_;
+	unsigned numThorns_ = 0;
 };

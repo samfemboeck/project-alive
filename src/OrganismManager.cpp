@@ -57,6 +57,15 @@ void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
 			if (corpse)
 				corpsesToSpawn.push_back(corpse);
 
+			if (org->isThorn())
+			{
+				numThorns_--;
+			}
+			else if (org->isMover())
+			{
+				registry_[org->getDNA().str()] -= 1;
+			}
+
 			delete org;
 		}
 		else
@@ -135,6 +144,7 @@ bool OrganismManager::add(Organism* org)
 		{
 			movers_.push_back(org);
 			PhysicsManager::getInstance().add(org->getAABB());
+			registry_[org->getDNA().str()] += 1;
 			return true;
 		}
 
@@ -143,14 +153,19 @@ bool OrganismManager::add(Organism* org)
 	else if (org->isCorpse() && PhysicsManager::getInstance().hasValidPos(org->getAABB()))	
 	{
 		if (org->isMover() && corpsesMovers_.size() < maxMovers_)
+		{
 			corpsesMovers_.push_back(org);
+			PhysicsManager::getInstance().add(org->getAABB());
+			return true;
+		}
 		else if (corpsesPlants_.size() + plants_.size() < MaxPlants)
+		{
 			corpsesPlants_.push_back(org);
-		else 
-			return false;
+			PhysicsManager::getInstance().add(org->getAABB());
+			return true;
+		}
 
-		PhysicsManager::getInstance().add(org->getAABB());
-		return true;
+		return false;
 	}
 	else
 	{
@@ -158,6 +173,10 @@ bool OrganismManager::add(Organism* org)
 		{
 			plants_.push_back(org);
 			PhysicsManager::getInstance().add(org->getAABB());
+
+			if (org->isThorn())
+				numThorns_++;
+
 			return true;
 		}
 
@@ -201,4 +220,9 @@ bool OrganismManager::tryClone(Organism* org)
 	}
 
 	return false;
+}
+
+const std::unordered_map<std::string, unsigned>& OrganismManager::getRegistry()
+{
+	return registry_;
 }

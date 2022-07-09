@@ -50,7 +50,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 				isPlant_ = true;
 				break;
 			case Type::Thorn:
-				isPredator_ = true;
+				isThorn_ = true;
 				break;
 			case Type::Corpse:
 				isCorpse_ = true;
@@ -192,7 +192,7 @@ Organism* Organism::clone(Vec2f pos)
 
 	if (isPlant_)
 	{
-		if (Random::unsignedRange(0, OneInNMutates / 1.5f) == 0 && getSize() < 6)
+		if (Random::unsignedRange(0, OneInNMutates / 1.5f) == 0)
 		{
 			successor.mutate();
 		}
@@ -224,7 +224,7 @@ Organism* Organism::createCorpse()
 	ret->setCorpse(true);
 	ret->setMover(isMover_);
 	ret->isPlant_ = isPlant_;
-	ret->isPredator_ = isPredator_;
+	ret->isThorn_ = isThorn_;
 	ret->isMouth_ = isMouth_;
 	return ret;
 }
@@ -274,9 +274,9 @@ bool Organism::isPlant() const
 	return isPlant_;
 }
 
-bool Organism::isPredator() const
+bool Organism::isThorn() const
 {
-	return isPredator_;
+	return isThorn_;
 }
 
 unsigned Organism::getSize()
