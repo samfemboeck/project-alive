@@ -18,7 +18,7 @@ void ThornCell::onCollision(Cell* other)
 	if (other->wantsToBeDeleted() || (other->getOrganism()->isPlant() && !other->getOrganism()->isCorpse()))
 		return;
 
-	if (other->getOrganism()->getSize() <= organism_->getSize())
+	if (other->getOrganism()->getSize() <= organism_->getSize() && other->getOrganism()->isMover())
 	{
 		other->getOrganism()->markForDeath();
 		return;

@@ -16,9 +16,13 @@
 
 /*
 	--- TODOs ---
+	- Performance
+		- Multithreaded Physik
+		- Redirections loswerden
+		- Auto simulation scale adjustment
 	- Achievements
 	- Simulation Tutorial
-	- Multithreaded Physik
+	(- Fix Physics)
 
 	--- Achievements ---
 	- Game started and x corpses -> Herbivore "Worm"

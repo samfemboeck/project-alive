@@ -188,9 +188,25 @@ bool OrganismManager::tryClone(Organism* org)
 {
 	Vec2f spawnPos;
 
-	if (org->isMover())
+
+	if (!org->isMover() && org->isMouth())
 	{
-		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), org->getSize() + 1, spawnPos))
+		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 1000, spawnPos))
+		{
+			Organism* clone = org->clone(spawnPos);
+
+			if (clone)
+			{
+				if (!add(clone))
+					delete clone;
+			}
+
+			return true;
+		}
+	}
+	else if (org->isMover())
+	{
+		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), org->getSize(), spawnPos))
 		{
 			Organism* clone = org->clone(spawnPos);
 

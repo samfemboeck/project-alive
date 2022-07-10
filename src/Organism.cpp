@@ -116,6 +116,9 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 
 	if (isMover_)
 		speedMove_ = (numMovers_ * 75.0f + (numMovers_ - 1) * 80.0f) / cells_.size();
+
+	if (isPlant_)
+		rigidBody_->setLinearFriction(0.9f);
 }
 
 Organism::Organism(DNA dna, Vec2f position, float angle) :

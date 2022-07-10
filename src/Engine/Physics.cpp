@@ -153,8 +153,10 @@ void PhysicsManager::resolveCollisions()
 		j /= man.rb1->getInvMass() + man.rb2->getInvMass() + angular_1 + angular_2;
 		Vec2f impulse = j * man.Normal;
 
-		man.rb1->addImpulse(impulse);
-		man.rb2->addImpulse(impulse * -1.0f);
+		float overdrive = 10.0f; // let's add some overdrive so that parasites can spread around the map more easily
+
+		man.rb1->addImpulse(impulse * overdrive);
+		man.rb2->addImpulse(impulse * -overdrive);
 		man.rb1->addTorque(contact_vec_1.cross(impulse));
 		man.rb2->addTorque(-contact_vec_2.cross(impulse));
 
