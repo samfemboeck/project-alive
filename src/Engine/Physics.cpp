@@ -22,7 +22,6 @@ void PhysicsManager::update()
 	static float accumulator = 0;
 	accumulator += Time::DeltaSeconds;
 
-
 	while (accumulator > step_)
 	{
 		fixedUpdate();

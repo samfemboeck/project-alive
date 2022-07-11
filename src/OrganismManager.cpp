@@ -5,6 +5,8 @@
 #include "Engine/Physics.h"
 #include "Engine/Renderer2D.h"
 #include "Engine/OrthoCamController.h"
+#include "Engine/SoundManager.h"
+#include "Main.h"
 
 OrganismManager& OrganismManager::getInstance()
 {
@@ -94,6 +96,19 @@ void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
 
 	corpsesToSpawn.clear();
 	parentsToClone.clear();
+
+	for (const auto& pair : registry_)
+	{
+		if (pair.second > movers_.size() * 0.5f)
+		{
+			dominatingSpecies_ = pair.first;
+		}
+
+		if (!predatorEventTriggered_ && pair.first.contains('C') && pair.second >= 5)
+		{
+			predatorEventTriggered_ = true;
+		}
+	}
 }
 
 void OrganismManager::updateCorpses(std::vector<Organism*>& vec)
@@ -188,7 +203,6 @@ bool OrganismManager::tryClone(Organism* org)
 {
 	Vec2f spawnPos;
 
-
 	if (!org->isMover() && org->isMouth())
 	{
 		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 1000, spawnPos))
@@ -223,6 +237,14 @@ bool OrganismManager::tryClone(Organism* org)
 	{
 		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 0, spawnPos))
 		{
+			static bool firstClone = true;
+
+			if (firstClone)
+			{
+				AliveApp::getInstance().startSound();
+				firstClone = false;
+			}
+
 			Organism* clone = org->clone(spawnPos);
 
 			if (clone)
@@ -241,4 +263,19 @@ bool OrganismManager::tryClone(Organism* org)
 const std::unordered_map<std::string, unsigned>& OrganismManager::getRegistry()
 {
 	return registry_;
+}
+
+unsigned OrganismManager::getNumPlantCorpses()
+{
+	return corpsesPlants_.size();
+}
+
+std::string OrganismManager::getDominatingSpecies()
+{
+	return dominatingSpecies_;
+}
+
+bool OrganismManager::getPredatorEventTriggered()
+{
+	return predatorEventTriggered_;
 }

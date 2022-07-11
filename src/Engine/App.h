@@ -21,6 +21,7 @@ public:
 	App();
 
 protected:
+	virtual void onShutdown();
 	virtual void onUpdate();
 	virtual void onMouseScrolled(double offsetX, double offsetY) {};
 	virtual void onMousePressed(int button) {};

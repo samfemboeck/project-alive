@@ -42,7 +42,11 @@ add_executable(alive
 	src/Engine/EntityGrid.cpp
 	src/Engine/Util.h
 	src/Engine/Util.cpp
+	src/Engine/MiniAudio.h
+	src/Engine/SoundManager.h
+	src/Engine/SoundManager.cpp
 
+	src/Main.h
 	src/Main.cpp
 	src/Organism.h
 	src/Organism.cpp
@@ -113,4 +117,5 @@ target_link_libraries (
 add_custom_command(TARGET alive POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/Shaders ${CMAKE_BINARY_DIR}/Shaders
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/Textures ${CMAKE_BINARY_DIR}/Textures
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/Audio ${CMAKE_BINARY_DIR}/Audio
 	)

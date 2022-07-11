@@ -22,7 +22,7 @@ void CarnivoreCell::onCollision(Cell* other)
 	{
 		CorpseCell* corpse = dynamic_cast<CorpseCell*>(other);
 
-		if (corpse)
+		if (corpse && !corpse->isPlant())
 		{
 			other->getOrganism()->removeCell(corpse);
 			float nutritionValue = other->getOrganism()->isMouth() ? corpse->getNutritionValue() * 1.4f : corpse->getNutritionValue();
@@ -53,8 +53,7 @@ void CarnivoreCell::onCollision(Cell* other)
 	}
 	else if (!(other->getOrganism()->getDNA() == organism_->getDNA()))
 	{
-		if (other->getOrganism()->isMover())
-			other->getOrganism()->markForDeath();
+		other->getOrganism()->markForDeath();
 	}
 }
 

@@ -147,6 +147,7 @@ void DNA::mutate()
 		return;
 	}
 
+	/*
 	if (isMover_ && isHerbivore_ && elems_.size() == 2) // prettify evolution
 	{
 		elems_.clear();
@@ -155,6 +156,7 @@ void DNA::mutate()
 		elems_.push_back('O');
 		return;
 	}
+	*/
 
 	unsigned idx = getRandomCellIdx();
 	char cellType = elems_[idx];

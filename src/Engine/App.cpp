@@ -29,12 +29,13 @@ App::App()
 	glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
 	glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
 	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+	glfwWindowHint(GLFW_MAXIMIZED, true);
  
-	window_ = glfwCreateWindow(mode->width, mode->height, "Tiny Terrarium", glfwGetPrimaryMonitor(), NULL);
+	window_ = glfwCreateWindow(1920, 1080, "Tiny Terrarium", NULL, NULL);
 
 	windowData_.app = this;
-	windowData_.width = 1600;
-	windowData_.height = 800;
+	windowData_.width = 1280;
+	windowData_.height = 720;
 
 	//window_ = glfwCreateWindow(windowData_.width, windowData_.height, "Project Alive", nullptr, nullptr);
 	if (window_ == NULL)
@@ -194,11 +195,17 @@ void App::start()
 
 		glfwSwapBuffers(window_);
 	}
+
+	onShutdown();
 }
 
 WindowData& App::getWindowData()
 {
 	return windowData_;
+}
+
+void App::onShutdown()
+{
 }
 
 void App::onUpdate()
