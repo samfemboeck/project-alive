@@ -45,6 +45,7 @@ add_executable(alive
 	src/Engine/MiniAudio.h
 	src/Engine/SoundManager.h
 	src/Engine/SoundManager.cpp
+	src/Engine/ImGuiMarkdown.h
 
 	src/Main.h
 	src/Main.cpp

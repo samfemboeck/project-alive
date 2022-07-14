@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Mutation.h"
 #include "Engine/QuickMaths.h"
+#include "OrganismManager.h"
 
 std::vector<char> Production::mover()
 {
@@ -126,7 +127,7 @@ DNA::DNA(std::string dna)
 
 void DNA::mutate()
 {		
-	if (!isMover_ && Random::unsignedRange(0, 15) == 0)
+	if (!isMover_ && OrganismManager::getInstance().getHerbivoreDiscovered() && Random::unsignedRange(0, 15) == 0)
 	{
 		elems_.clear();
 		elems_.push_back('O');

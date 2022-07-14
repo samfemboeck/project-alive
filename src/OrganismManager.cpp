@@ -242,6 +242,9 @@ bool OrganismManager::add(Organism* org)
 	{
 		if (plants_.size() + corpsesPlants_.size() < MaxPlants && PhysicsManager::getInstance().hasValidPos(org->getAABB()))
 		{
+			if (!thornCellDiscovered_ && org->isThorn())
+				thornCellDiscovered_ = true;
+
 			plants_.push_back(org);
 			PhysicsManager::getInstance().add(org->getAABB());
 			registryPlants_[org->getDNA().str()] += 1;
@@ -280,7 +283,21 @@ bool OrganismManager::tryClone(Organism* org)
 			if (clone)
 			{
 				if (!add(clone))
+				{
 					delete clone;
+				}
+				else
+				{
+					if (!herbivoreDiscovered_ && org->isHerbivore())
+					{
+						herbivoreDiscovered_ = true;
+					}
+
+					if (!carnivoreDiscovered_ && org->isCarnivore())
+					{
+						carnivoreDiscovered_ = true;
+					}
+				}
 			}
 
 			return true;
@@ -351,4 +368,19 @@ bool OrganismManager::getFiveCellDominationEventTriggered()
 bool OrganismManager::getPredatorDominationEventTriggered()
 {
 	return predatorDominationEventTriggered_;
+}
+
+bool OrganismManager::getThornCellDiscovered()
+{
+	return thornCellDiscovered_;
+}
+
+bool OrganismManager::getHerbivoreDiscovered()
+{
+	return herbivoreDiscovered_;
+}
+
+bool OrganismManager::getCarnivoreDiscovered()
+{
+	return carnivoreDiscovered_;
 }

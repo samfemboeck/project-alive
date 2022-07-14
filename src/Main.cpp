@@ -165,15 +165,22 @@ AliveApp& AliveApp::getInstance()
 }
 
 void AliveApp::onUpdate()
-{
-	if (!isRunning_)
-		return;
+{	
+	frameBuffer_.bind();
+	Renderer2D::clear();
+	Renderer2D::setClearColor({ 0.0f, 0.0f, 0.0f, 0.0f });
+	OrganismManager::getInstance().draw();
+	EntityGrid::getInstance().draw();
+	frameBuffer_.unbind();
 
 	if (isRightMouseDown_)
 	{
 		auto offset = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection()) - Camera::screenToWorldPoint(mousePosDown_, OrthoCamController::getInstance().getViewProjection());
 		OrthoCamController::getInstance().setPosition(camPos_ - offset);
 	}
+
+	if (!isRunning_)
+		return;
 
 	OrganismManager::getInstance().update();
 
@@ -182,12 +189,6 @@ void AliveApp::onUpdate()
 		PhysicsManager::getInstance().update();
 	}
 
-	frameBuffer_.bind();
-	Renderer2D::clear();
-	Renderer2D::setClearColor({ 0.0f, 0.0f, 0.0f, 0.0f });
-	OrganismManager::getInstance().draw();
-	EntityGrid::getInstance().draw();
-	frameBuffer_.unbind();
 
 	static bool triggeredEventDecomposers = false;
 	if (!triggeredEventDecomposers && OrganismManager::getInstance().getNumPlantCorpses() > 800)
@@ -250,6 +251,27 @@ void AliveApp::onUpdate()
 		triggeredFiveCellDominationEvent = true;
 		showFiveCellDominationModal_ = true;
 		dnaSlots_[7].isLocked = false;
+	}
+
+	static bool triggeredThornCellDiscoveredEvent = false;
+	if (!triggeredThornCellDiscoveredEvent && OrganismManager::getInstance().getThornCellDiscovered())
+	{
+		triggeredThornCellDiscoveredEvent = true;
+		showWikiUpdatedModal_ = true;
+	}
+
+	static bool triggeredHerbivoreDiscoveredEvent = false;
+	if (!triggeredHerbivoreDiscoveredEvent && OrganismManager::getInstance().getHerbivoreDiscovered())
+	{
+		triggeredHerbivoreDiscoveredEvent = true;
+		showWikiUpdatedModal_ = true;
+	}
+
+	static bool triggeredCarnivoreDiscoveredEvent = false;
+	if (!triggeredCarnivoreDiscoveredEvent && OrganismManager::getInstance().getCarnivoreDiscovered())
+	{
+		triggeredCarnivoreDiscoveredEvent = true;
+		showWikiUpdatedModal_ = true;
 	}
 
 	if (soundActive_)
@@ -347,13 +369,26 @@ void AliveApp::onDrawImGui()
 
 	if (ImGui::BeginMainMenuBar())
 	{
-		if (ImGui::Button("Pause"))
+		if (isRunning_)
 		{
+			if (ImGui::Button("Pause"))
+			{
+				isRunning_ = false;
+			}
 		}
-		if (ImGui::Button("Quit"))
+		else
 		{
-			glfwSetWindowShouldClose(window_, true);
+			if (ImGui::Button("Resume"))
+			{
+				isRunning_ = true;
+			}
 		}
+
+		if (ImGui::Button("Wiki"))
+		{
+			showHelpModal_ = true;
+		}
+
 		ImGui::EndMainMenuBar();
 	}
 
@@ -361,7 +396,7 @@ void AliveApp::onDrawImGui()
 		ImGui::Begin("Simulation Speed", open, windowFlags);
 
 		ImGui::PushItemWidth(-1);
-		ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 4.0f, "%.1f");
+		ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
 		if (ImGui::IsItemHovered())
 			ImGui::SetTooltip("Speed of simulation time.");
 		ImGui::PopItemWidth();
@@ -381,6 +416,8 @@ void AliveApp::onDrawImGui()
 
 		Texture2D* textureLock = TextureManager::get("questionmark.png");
 
+		static bool allSlotsUnlocked = false;
+		unsigned unlockedCount = 0;
 		for (unsigned i = 0, count = 0; i < dnaSlots_.size(); i++)
 		{
 			if (dnaSlots_[i].isLocked)
@@ -414,6 +451,16 @@ void AliveApp::onDrawImGui()
 			}
 			else
 			{
+				if (!allSlotsUnlocked)
+				{
+					unlockedCount++;
+					if (unlockedCount = dnaSlots_.size())
+					{
+						allSlotsUnlocked = true;
+						ImGui::OpenPopup("You discovered every event!");
+					}
+				}
+
 				if (ImGui::ImageButton((void*)dnaSlots_[i].texture->getId(), { imgWidth, imgWidth / aspect }, { 0, 1 }, { 1, 0 }, 0, slotIdx_ == i ? bgColorSelected : bgColorDefault))
 					slotIdx_ = i;
 
@@ -553,6 +600,15 @@ void AliveApp::onDrawImGui()
 			isRunning_ = false;
 		}
 
+		if (showWikiUpdatedModal_)
+		{
+			showWikiUpdatedModal_ = false;
+			auto& io = ImGui::GetIO();
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::OpenPopup("The wiki has been updated!");
+			isRunning_ = false;
+		}
+
 		if (showThornsModal_)
 		{
 			showThornsModal_ = false;
@@ -586,6 +642,12 @@ void AliveApp::onDrawImGui()
 			auto& io = ImGui::GetIO();
 			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 			ImGui::OpenPopup("Performance issues");
+		}
+
+		if (showHelpModal_)
+		{
+			showHelpModal_ = false;
+			ImGui::OpenPopup("Wiki");
 		}
 
 		if (ImGui::BeginPopupModal("Decomposers"))
@@ -638,7 +700,7 @@ void AliveApp::onDrawImGui()
 
 		if (ImGui::BeginPopupModal("Symbiosis"))
 		{
-			ImGui::Text("Single mouth cells are spreading! They are getting pushed around by other creatures.");
+			ImGui::Text("Organisms with a single pink cell are spreading! They are getting pushed around by other creatures.");
 			ImGui::TextWrapped(
 				"Different species often inhabit the same spaces and share - or compete for - the same resources. They interact in a variety of ways, known collectively as symbiosis."
 				"Different forms of symbiotic relationships exist. This particular form is called commensalism. One species benefits from the other while not harming it."
@@ -648,6 +710,16 @@ void AliveApp::onDrawImGui()
 			{
 				ImGui::CloseCurrentPopup();
 				showUnlockNewOrgModal_ = true;
+			}
+		}
+
+		if (ImGui::BeginPopupModal("The wiki has been updated!"))
+		{
+			ImGui::TextWrapped("Access the wiki by pressing the 'Wiki' button at the top left of the application. The simulation has been paused. Resume by pressing the 'Resume' button at the top left of the application.");
+
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
 			}
 		}
 
@@ -697,12 +769,11 @@ void AliveApp::onDrawImGui()
 
 		if (ImGui::BeginPopupModal("New organism unlocked!"))
 		{
-			ImGui::TextWrapped("Check your 'Organisms' window for new species. Also, check the wiki for updates.");
+			ImGui::TextWrapped("Check your 'Organisms' window for new species. The simulation has been paused. Resume by pressing the 'Resume' button at the top left of the application.");
 
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
-				isRunning_ = true;
 			}
 
 			ImGui::SetItemDefaultFocus();
@@ -711,13 +782,91 @@ void AliveApp::onDrawImGui()
 
 		if (ImGui::BeginPopupModal("Performance issues"))
 		{
-			ImGui::TextWrapped("The simulation speed was reduced due to bad performance. Please adjust accordingly.");
+			ImGui::TextWrapped("The simulation speed was reduced due to bad performance.");
 
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
 			}
 
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::BeginPopupModal("You discovered every event!"))
+		{
+			ImGui::Text("Congratulations! Thanks for playing.");
+			ImGui::EndPopup();
+		}
+
+		bool unusedOpen = true;
+		if (ImGui::BeginPopupModal("Wiki", &unusedOpen))
+		{
+			if (ImGui::BeginTabBar("MyTabBar"))
+			{
+				if (ImGui::BeginTabItem("About"))
+				{	
+					ImGui::TextWrapped(
+						"This is the wiki window. It has multiple tabs and can be reopened by clicking on the 'Wiki' button on the top left of the application. " 
+						"Please note: This wiki will be updated with new tabs as the simulation progresses! Please come back here after you get notified."
+					);
+
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Organisms"))
+				{
+					ImGui::TextWrapped(
+						"Every entity in this simulation is an organism. Organisms are made up of one or more cells of a specific type and color. "
+						"They can reproduce once a specific criteria is met and enough space is available around them. "
+						"After a certain amount of time, every organism will die and every cell will be replaced with a gray corpse cell."
+					);
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Green Cell"))
+				{
+					ImGui::TextWrapped(
+						"Represents plants. Organisms with green cells will reproduce at a set interval. No further requirements are neccessary."
+					);
+					ImGui::EndTabItem();
+				}
+
+				if (OrganismManager::getInstance().getThornCellDiscovered())
+				{
+					if (ImGui::BeginTabItem("Dark Red Cell"))
+					{
+						ImGui::TextWrapped("Represents thorns. Organisms with green cells may grow this cell when mutating. When an organism touches a dark red cell, it will die. Unless it has more cells than the organism owning this cell.");
+						ImGui::EndTabItem();
+					}
+				}
+
+				if (OrganismManager::getInstance().getHerbivoreDiscovered())
+				{
+					if (ImGui::BeginTabItem("Yellow Cell"))
+					{
+						ImGui::TextWrapped("Represents legs.");
+						ImGui::EndTabItem();
+					}
+
+					if (ImGui::BeginTabItem("Pink Cell"))
+					{
+						ImGui::TextWrapped("Represents the mouth of a herbivore.");
+						ImGui::EndTabItem();
+					}
+				}
+
+				if (OrganismManager::getInstance().getCarnivoreDiscovered())
+				{
+					if (ImGui::BeginTabItem("Light Red Cell"))
+					{
+						ImGui::TextWrapped("Represents the mouth of a carnivore.");
+					}
+				}
+
+				ImGui::EndTabBar();
+			}
+
+		
 			ImGui::EndPopup();
 		}
 	}
@@ -733,30 +882,12 @@ void AliveApp::onMousePressed(int button)
 
 	if (button == GLFW_MOUSE_BUTTON_1 && isHoveringSimWindow_)
 	{
-		if (isRunning_)
-		{
-			auto mousePosWorld = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection());
-			std::vector<Cell*> cells = Organism::getCellsForDNA(dnaSlots_[slotIdx_].DNA.get());
-			OrganismManager::getInstance().add(new Organism(dnaSlots_[slotIdx_].DNA, cells, mousePosWorld, Random::floatRange(0, 2 * std::numbers::pi)));
-			unsigned soundIdx = Random::unsignedRange(0, 4);
-			std::string filename = "drop_" + std::to_string(soundIdx) + ".wav";
-			SoundManager::oneShot(filename);
-		}
-		else
-		{
-			auto mousePosWorld = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection());
-			EntityGrid& grid = EntityGrid::getInstance();
-			auto localPos = grid.getLocalCoord(mousePosWorld);
-			auto& entitiesInSquare = grid.get(localPos.x, localPos.y);
-
-			for (auto entity : entitiesInSquare)
-			{
-				if (entity && entity->bounds.contains(mousePosWorld))
-				{
-					LOG("DNA: {}", entity->organism->getDNA().str());
-				}
-			}
-		}
+		auto mousePosWorld = Camera::screenToWorldPoint(mousePos_, OrthoCamController::getInstance().getViewProjection());
+		std::vector<Cell*> cells = Organism::getCellsForDNA(dnaSlots_[slotIdx_].DNA.get());
+		OrganismManager::getInstance().add(new Organism(dnaSlots_[slotIdx_].DNA, cells, mousePosWorld, Random::floatRange(0, 2 * std::numbers::pi)));
+		unsigned soundIdx = Random::unsignedRange(0, 4);
+		std::string filename = "drop_" + std::to_string(soundIdx) + ".wav";
+		SoundManager::oneShot(filename);
 	}
 	else if (button == GLFW_MOUSE_BUTTON_2 && isHoveringSimWindow_)
 	{

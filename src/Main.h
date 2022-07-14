@@ -45,9 +45,11 @@ private:
 	bool showPredatorsModal_ = false;
 	bool showParasitesModal_ = false;
 	bool showThornsModal_ = false;
+	bool showWikiUpdatedModal_ = false;
 	bool showFiveCellDominationModal_ = false;
 	bool showPredatorDominationModal_ = false;
 	bool showFPSModal_ = false;
+	bool showHelpModal_ = true;
 	std::array<Slot, 8> dnaSlots_;
 	unsigned slotIdx_ = 0;
 	Vec2f size_ = { 16.0f, 9.0f };

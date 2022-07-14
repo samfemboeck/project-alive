@@ -20,6 +20,9 @@ public:
 	bool getThornEventTriggered();
 	bool getFiveCellDominationEventTriggered();
 	bool getPredatorDominationEventTriggered();
+	bool getThornCellDiscovered();
+	bool getHerbivoreDiscovered();
+	bool getCarnivoreDiscovered();
 
 public:
 	inline static int MaxPlants = 10000;
@@ -42,4 +45,8 @@ private:
 	bool thornEventTriggered_ = false;
 	bool fiveCellDominationEventTriggered_ = false;
 	bool predatorDominationEventTriggered_ = false;
+	bool thornCellDiscovered_ = false;
+	bool mouthCellDiscovered_ = false;
+	bool herbivoreDiscovered_ = false;
+	bool carnivoreDiscovered_ = false;
 };
