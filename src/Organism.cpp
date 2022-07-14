@@ -35,6 +35,9 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	bounds.max = { minF, minF };
 	const float cellRadius = Cell::Size * 0.5f;
 
+	unsigned numHerbivoreCells = 0;
+	unsigned numCarnivoreCells = 0;
+
 	for (Cell* cell : cells_)
 	{
 		switch (cell->getType())
@@ -44,7 +47,8 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 				rigidBody_->setLinearFriction(1.0f);
 				break;
 			case Type::Herbivore:
-				isMouth_ = true;
+				isHerbivore_ = true;
+				numHerbivoreCells++;
 				break;
 			case Type::Plant:
 				isPlant_ = true;
@@ -54,6 +58,10 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 				break;
 			case Type::Corpse:
 				isCorpse_ = true;
+				break;
+			case Type::Carnivore:
+				isCarnivore_ = true;
+				numCarnivoreCells++;
 				break;
 		}
 	
@@ -100,7 +108,7 @@ Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, flo
 	aabb_->colliders.push_back(minCell->getCollider());
 
 	if (isMover_)
-		ttl_ = Random::floatRange(14.0f, 17.0f);
+		ttl_ = Random::floatRange(16.0f, 19.0f);
 	else
 		ttl_ = Random::floatRange(48.0f, 51.0f);
 
@@ -195,16 +203,22 @@ Organism* Organism::clone(Vec2f pos)
 
 	if (isPlant_)
 	{
-		if (Random::unsignedRange(0, OneInNMutates / 1.5f) == 0)
-		{
+		if (Random::unsignedRange(0, OneInNMutates) == 0)
 			successor.mutate();
+	}
+	else	
+	{
+		if (cells_.size() == 2)
+		{
+			if (Random::unsignedRange(0, OneInNMutates / 2) == 0)
+				successor.mutate();
+		}
+		else
+		{
+			if (Random::unsignedRange(0, OneInNMutates) == 0)
+				successor.mutate();
 		}
 	}
-	else if (Random::unsignedRange(0, OneInNMutates) == 0)
-	{
-		successor.mutate();
-	}
-
 
 	auto cells = getCellsForDNA(successor.get());
 	return cells.size() > 0 ? new Organism(successor, cells, pos, Random::floatRange(0, 2 * std::numbers::pi)) : nullptr;
@@ -228,7 +242,7 @@ Organism* Organism::createCorpse()
 	ret->setMover(isMover_);
 	ret->isPlant_ = isPlant_;
 	ret->isThorn_ = isThorn_;
-	ret->isMouth_ = isMouth_;
+	ret->isHerbivore_ = isHerbivore_;
 	return ret;
 }
 
@@ -267,9 +281,9 @@ bool Organism::isMover() const
 	return isMover_;
 }
 
-bool Organism::isMouth() const
+bool Organism::isHerbivore() const
 {
-	return isMouth_;
+	return isHerbivore_;
 }
 
 bool Organism::isPlant() const
@@ -280,6 +294,11 @@ bool Organism::isPlant() const
 bool Organism::isThorn() const
 {
 	return isThorn_;
+}
+
+bool Organism::isCarnivore() const
+{
+	return isCarnivore_;
 }
 
 unsigned Organism::getSize()

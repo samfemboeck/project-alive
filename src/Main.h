@@ -9,10 +9,8 @@ struct Slot
 {
 	enum Rarity
 	{
-		Trivial,
 		Common,
-		Rare,
-		UltraRare
+		Rare
 	};
 
 	bool isLocked = true;
@@ -45,6 +43,11 @@ private:
 	bool showUnlockNewOrgModal_ = false;
 	bool showNewDominatingSpeciesModal_ = false;
 	bool showPredatorsModal_ = false;
+	bool showParasitesModal_ = false;
+	bool showThornsModal_ = false;
+	bool showFiveCellDominationModal_ = false;
+	bool showPredatorDominationModal_ = false;
+	bool showFPSModal_ = false;
 	std::array<Slot, 8> dnaSlots_;
 	unsigned slotIdx_ = 0;
 	Vec2f size_ = { 16.0f, 9.0f };

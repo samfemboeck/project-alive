@@ -4,9 +4,7 @@
 
 std::vector<char> Production::mover()
 {
-	//std::vector<std::string> vocabulary = { "LM", "RM", "[LM]","[LM]","[RM]","[RM]","[LM]","[LM]","[RM]","[RM]","LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "O", "LO", "RO", "[LO]", "[RO]", "T", "LT", "RT", "[T]", "[LT]", "[RT]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
 	std::vector<std::string> vocabulary = { "M", "[M]", "[LM]","[RM]","O", "[O]", "[LO]", "[RO]", "C", "[C]", "[LC]", "[RC]"};
-	//std::vector<std::string> vocabulary = { "M", "LM", "RM", "[M]", "[LM]","[RM]","O", "LO", "RO", "[O]", "[LO]", "[RO]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -41,9 +39,7 @@ std::vector<char> Production::plant()
 
 std::vector<char> Production::mouth()
 {	
-	//std::vector<std::string> vocabulary = { "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]","[LO]", "[RO]", "[LO]", "[RO]", "O", "LO", "RO", "[LO]", "[RO]", "[LO]", "[RO]", "M", "LM", "RM", "[LM]", "[RM]", "[LM]", "[RM]", "T", "LT", "RT", "[T]", "[LT]", "[RT]", "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
 	std::vector<std::string> vocabulary = { "O", "O", "[O]", "[O]", "[LO]", "[RO]", "M", "M", "[M]", "[M]", "[LM]", "[RM]", "C", "C", "[C]", "[C]", "[LC]", "[RC]"};
-	//std::vector<std::string> vocabulary = { "O", "LO", "RO", "[O]", "[LO]", "[RO]", "M", "LM", "RM", "[M]", "[LM]", "[RM]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -60,7 +56,7 @@ std::vector<char> Production::mouth()
 
 std::vector<char> Production::thorn()
 {	
-	std::vector<std::string> vocabulary = { "T", "LT", "RT", "[T]", "[LT]", "[RT]"};
+	std::vector<std::string> vocabulary = { "T", "[T]", "[LT]", "[RT]", "P", "[P]", "[LP]", "[RP]"};
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -77,7 +73,7 @@ std::vector<char> Production::thorn()
 
 std::vector<char> Production::carnivore()
 {
-	std::vector<std::string> vocabulary = { "C", "LC", "RC", "[C]", "[LC]", "[RC]"};
+	std::vector<std::string> vocabulary = { "C", "[C]", "[LC]", "[RC]", "C", "[C]", "[LC]", "[RC]", "M", "[M]", "[LM]", "[RM]" };
 	std::vector<char> ret;
 	unsigned numInstructions = Random::unsignedRange(1, 1);
 
@@ -134,6 +130,7 @@ void DNA::mutate()
 	{
 		elems_.clear();
 		elems_.push_back('O');
+		str_ = get();
 		return;
 	}
 
@@ -145,6 +142,24 @@ void DNA::mutate()
 			elems_.erase(elems_.begin() + idx);
 
 		return;
+	}
+
+	unsigned cellSize = 0;
+	for (unsigned i = 0; i < elems_.size(); i++)
+	{
+		if (isCell(i))
+			cellSize++;
+	}
+
+	if (isMover_)
+	{
+		if (cellSize >= 7)
+			return;
+	}
+	else
+	{
+		if (cellSize >= 6)
+			return;
 	}
 
 	/*
@@ -178,6 +193,7 @@ void DNA::mutate()
 		break;
 	case 'C':
 		productionV = Production::carnivore();
+		break;
 	}
 
 	DNA production(productionV);
@@ -203,6 +219,8 @@ void DNA::mutate()
 					elem = 'O';
 		}
 	}
+
+	str_ = get();
 }
 
 void DNA::setString(const std::string& str)
@@ -242,7 +260,7 @@ std::string DNA::str()
 
 bool DNA::isCell(unsigned idx)
 {
-	return elems_[idx] == 'M' || elems_[idx] == 'T' || elems_[idx] == 'O' || elems_[idx] == 'P';
+	return elems_[idx] == 'M' || elems_[idx] == 'T' || elems_[idx] == 'O' || elems_[idx] == 'P' || elems_[idx] == 'C';
 }
 
 bool DNA::hasCell()

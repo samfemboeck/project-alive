@@ -59,14 +59,10 @@ void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
 			if (corpse)
 				corpsesToSpawn.push_back(corpse);
 
-			if (org->isThorn())
-			{
-				numThorns_--;
-			}
-			else if (org->isMover())
-			{
+			if (org->isMover() || org->isHerbivore())
 				registry_[org->getDNA().str()] -= 1;
-			}
+			else
+				registryPlants_[org->getDNA().str()] -= 1;
 
 			delete org;
 		}
@@ -97,6 +93,12 @@ void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
 	corpsesToSpawn.clear();
 	parentsToClone.clear();
 
+	unsigned numCarnivores = 0;
+	unsigned numHerbivores = 0;
+
+	unsigned numHerbivoresMoreThan4Cells = 0;
+	unsigned numHerbivoresTotal = 0;
+
 	for (const auto& pair : registry_)
 	{
 		if (pair.second > movers_.size() * 0.5f)
@@ -104,15 +106,69 @@ void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
 			dominatingSpecies_ = pair.first;
 		}
 
-		if (!predatorEventTriggered_ && pair.first.contains('C') && pair.second >= 5)
+		if (!predatorEventTriggered_ && pair.first.contains('C') && pair.second >= 6)
 		{
 			predatorEventTriggered_ = true;
+		}
+
+		if (!parasiteEventTriggered_ && pair.first.contains('O') && !pair.first.contains('M') && pair.second >= 20)
+		{
+			parasiteEventTriggered_ = true;
+		}
+
+		if (!predatorDominationEventTriggered_)
+		{
+			if (pair.first.contains('C'))
+				numCarnivores += pair.second;
+			else if (pair.first.contains('O') && pair.first.contains('M'))
+				numHerbivores += pair.second;
+		}
+
+		if (!fiveCellDominationEventTriggered_)
+		{
+			if (pair.first.contains('O') && pair.first.contains('M'))
+			{
+				std::string::difference_type numMs = std::count(pair.first.begin(), pair.first.end(), 'M');
+				std::string::difference_type numOs = std::count(pair.first.begin(), pair.first.end(), 'O');
+
+				if (numMs + numOs > 4)
+					numHerbivoresMoreThan4Cells += pair.second;
+
+				numHerbivoresTotal += pair.second;
+			}
+		}
+	}
+
+	if (!predatorDominationEventTriggered_ && numCarnivores > ((numCarnivores + numHerbivores) * (1 / 3.0f)))
+		predatorDominationEventTriggered_ = true;
+
+	if (!fiveCellDominationEventTriggered_ && numHerbivoresMoreThan4Cells > numHerbivoresTotal * 0.5f)
+	{
+		fiveCellDominationEventTriggered_ = true;
+	}
+
+	if (!thornEventTriggered_)
+	{
+		unsigned numThorns = 0;
+		unsigned numTotal = 0;
+
+		for (const auto& pair : registryPlants_)
+		{
+			if (pair.first.contains('T'))
+				numThorns += pair.second;
+
+			numTotal += pair.second;
+		}
+
+		if (registryPlants_.size() > 0 && numThorns >= numTotal * 0.5f)
+		{
+			thornEventTriggered_ = true;
 		}
 	}
 }
 
 void OrganismManager::updateCorpses(std::vector<Organism*>& vec)
-{	
+{
 	for (auto it = vec.begin(); it != vec.end();)
 	{
 		Organism* org = *it;
@@ -153,7 +209,7 @@ bool OrganismManager::add(Organism* org)
 {
 	PhysicsManager::getInstance().update(org->getAABB());
 
-	if (org->isMover() && !org->isCorpse())
+	if ((org->isMover() || org->isHerbivore()) && !org->isCorpse())
 	{
 		if (movers_.size() < maxMovers_ && PhysicsManager::getInstance().hasValidPos(org->getAABB()))
 		{
@@ -165,7 +221,7 @@ bool OrganismManager::add(Organism* org)
 
 		return false;
 	}
-	else if (org->isCorpse() && PhysicsManager::getInstance().hasValidPos(org->getAABB()))	
+	else if (org->isCorpse() && PhysicsManager::getInstance().hasValidPos(org->getAABB()))
 	{
 		if (org->isMover() && corpsesMovers_.size() < maxMovers_)
 		{
@@ -188,10 +244,7 @@ bool OrganismManager::add(Organism* org)
 		{
 			plants_.push_back(org);
 			PhysicsManager::getInstance().add(org->getAABB());
-
-			if (org->isThorn())
-				numThorns_++;
-
+			registryPlants_[org->getDNA().str()] += 1;
 			return true;
 		}
 
@@ -203,7 +256,7 @@ bool OrganismManager::tryClone(Organism* org)
 {
 	Vec2f spawnPos;
 
-	if (!org->isMover() && org->isMouth())
+	if (!org->isMover() && org->isHerbivore())
 	{
 		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 1000, spawnPos))
 		{
@@ -278,4 +331,24 @@ std::string OrganismManager::getDominatingSpecies()
 bool OrganismManager::getPredatorEventTriggered()
 {
 	return predatorEventTriggered_;
+}
+
+bool OrganismManager::getParasiteEventTriggered()
+{
+	return parasiteEventTriggered_;
+}
+
+bool OrganismManager::getThornEventTriggered()
+{
+	return thornEventTriggered_;
+}
+
+bool OrganismManager::getFiveCellDominationEventTriggered()
+{
+	return fiveCellDominationEventTriggered_;
+}
+
+bool OrganismManager::getPredatorDominationEventTriggered()
+{
+	return predatorDominationEventTriggered_;
 }

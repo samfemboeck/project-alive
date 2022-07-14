@@ -25,13 +25,18 @@ void ThornCell::onCollision(Cell* other)
 	}
 	else
 	{
-		organism_->markForDeath();
+		return;
 	}
 }
 
 CorpseCell* ThornCell::createCorpse() const
 {
 	return new CorpseCell(1.0f, localPos_, true);
+}
+
+float ThornCell::getMass() const
+{
+	return 0.1f;
 }
 
 char ThornCell::getSymbol()

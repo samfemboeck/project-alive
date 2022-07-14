@@ -16,6 +16,10 @@ public:
 	unsigned getNumPlantCorpses();
 	std::string getDominatingSpecies();
 	bool getPredatorEventTriggered();
+	bool getParasiteEventTriggered();
+	bool getThornEventTriggered();
+	bool getFiveCellDominationEventTriggered();
+	bool getPredatorDominationEventTriggered();
 
 public:
 	inline static int MaxPlants = 10000;
@@ -31,7 +35,11 @@ private:
 	std::vector<Organism*> plants_;
 	float maxMovers_;
 	std::unordered_map<std::string, unsigned> registry_;
-	unsigned numThorns_ = 0;
+	std::unordered_map<std::string, unsigned> registryPlants_;
 	std::string dominatingSpecies_ = "MO";
 	bool predatorEventTriggered_ = false;
+	bool parasiteEventTriggered_ = false;
+	bool thornEventTriggered_ = false;
+	bool fiveCellDominationEventTriggered_ = false;
+	bool predatorDominationEventTriggered_ = false;
 };

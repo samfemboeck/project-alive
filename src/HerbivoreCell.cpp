@@ -21,6 +21,7 @@ void HerbivoreCell::onCollision(Cell* other)
 	{
 		organism_->setEnergy(organism_->getEnergy() + leafCell->getNutritionValue());
 		other->getOrganism()->removeCell(leafCell);
+		other->getOrganism()->markForDeath();
 	}
 	else
 	{

@@ -55,14 +55,16 @@ AliveApp::AliveApp() :
 	TextureManager::add("cell_corpse.png");
 	TextureManager::add("cell_armor.png");
 	TextureManager::add("aabb.png");
-	TextureManager::add("organism_worm_1.png");
-	TextureManager::add("organism_worm_2.png");
-	TextureManager::add("organism_predator_1.png");
-	TextureManager::add("organism_predator_2.png");
-	TextureManager::add("organism_plant_1.png");
-	TextureManager::add("organism_plant_2.png");
+	TextureManager::add("organism_glider.png");
+	TextureManager::add("organism_herbivore_figure9.png");
 	TextureManager::add("organism_parasite.png");
-	TextureManager::add("lock.png");
+	TextureManager::add("organism_plant_2.png");
+	TextureManager::add("organism_plant_invincible.png");
+	TextureManager::add("organism_predator_centipede.png");
+	TextureManager::add("organism_predator_2.png");
+	TextureManager::add("organism_worm_1.png");
+	TextureManager::add("organism_predator_worm.png");
+	TextureManager::add("questionmark.png");
 
 	SoundManager::init();
 	SoundManager::add("drop_0.wav");
@@ -83,64 +85,66 @@ AliveApp::AliveApp() :
 	SoundManager::add("11.wav");
 	SoundManager::add("12.wav");
 
+	bool cheat = false;
+
 	Slot slot1;
 	slot1.DNA = DNA("P[P]");
 	slot1.isLocked = false;
 	slot1.texture = TextureManager::get("organism_plant_2.png");
-	slot1.rarity = Slot::Rarity::Trivial;
+	slot1.rarity = Slot::Rarity::Common;
 	dnaSlots_[0] = slot1;
 
 	Slot slot2;
 	slot2.DNA = DNA("MO");
-	slot2.isLocked = true;
+	slot2.isLocked = !cheat;
 	slot2.texture = TextureManager::get("organism_worm_1.png");
-	slot2.rarity = Slot::Rarity::Trivial;
+	slot2.rarity = Slot::Rarity::Common;
 	dnaSlots_[1] = slot2;
 
 	Slot slot3;
 	slot3.DNA = DNA("MO[RM]");
-	slot3.isLocked = true;
-	slot3.texture = TextureManager::get("organism_predator_1.png");
-	slot3.rarity = Slot::Rarity::Trivial;
+	slot3.isLocked = !cheat;
+	slot3.texture = TextureManager::get("organism_glider.png");
+	slot3.rarity = Slot::Rarity::Common;
 	dnaSlots_[2] = slot3;
 
 	Slot slot4;
-	slot4.DNA = DNA("MC");
-	slot4.isLocked = true;
-	slot4.texture = TextureManager::get("organism_parasite.png");
+	slot4.DNA = DNA("MMC");
+	slot4.isLocked = !cheat;
+	slot4.texture = TextureManager::get("organism_predator_worm.png");
 	slot4.rarity = Slot::Rarity::Common;
 	dnaSlots_[3] = slot4;
 
 	Slot slot5;
 	slot5.DNA = DNA("O");
-	slot5.isLocked = true;
+	slot5.isLocked = !cheat;
 	slot5.texture = TextureManager::get("organism_parasite.png");
 	slot5.rarity = Slot::Rarity::Common;
 	dnaSlots_[4] = slot5;
 
 	Slot slot6;
 	slot6.DNA = DNA("P[T][RT][RRT][LT]");
-	slot6.isLocked = true;
-	slot6.texture = TextureManager::get("organism_parasite.png");
-	slot6.rarity = Slot::Rarity::Common;
+	slot6.isLocked = !cheat;
+	slot6.texture = TextureManager::get("organism_plant_invincible.png");
+	slot6.rarity = Slot::Rarity::Rare;
 	dnaSlots_[5] = slot6;
 
 	Slot slot7;
-	slot7.DNA = DNA("MMO[LOLM]");
-	slot7.isLocked = true;
-	slot7.texture = TextureManager::get("organism_parasite.png");
+	slot7.DNA = DNA("MMM[LC][RC]C");
+	slot7.isLocked = !cheat;
+	slot7.texture = TextureManager::get("organism_predator_centipede.png");
 	slot7.rarity = Slot::Rarity::Rare;
 	dnaSlots_[6] = slot7;
 
 	Slot slot8;
-	slot8.DNA = DNA("MMC[LCLM]");
-	slot8.isLocked = true;
-	slot8.texture = TextureManager::get("organism_parasite.png");
+	slot8.DNA = DNA("MMOLOLM");
+	slot8.isLocked = !cheat;
+	slot8.texture = TextureManager::get("organism_herbivore_figure9.png");
 	slot8.rarity = Slot::Rarity::Rare;
 	dnaSlots_[7] = slot8;
 
 	GLFWimage images[1];
-	images[0].pixels = stbi_load("Textures/appicon.png", &images[0].width, &images[0].height, 0, 4); //rgba channels 
+	images[0].pixels = stbi_load("Textures/organism_plant_invincible.png", &images[0].width, &images[0].height, 0, 4); //rgba channels 
 	glfwSetWindowIcon(window_, 1, images);
 	stbi_image_free(images[0].pixels);
 }
@@ -214,6 +218,38 @@ void AliveApp::onUpdate()
 		triggeredEventPredators = true;
 		showPredatorsModal_ = true;
 		dnaSlots_[3].isLocked = false;
+	}
+
+	static bool triggeredEventParasites = false;
+	if (!triggeredEventParasites && OrganismManager::getInstance().getParasiteEventTriggered())
+	{
+		triggeredEventParasites = true;
+		showParasitesModal_ = true;
+		dnaSlots_[4].isLocked = false;
+	}
+
+	static bool triggeredEventThorns = false;
+	if (!triggeredEventThorns && OrganismManager::getInstance().getThornEventTriggered())
+	{
+		triggeredEventThorns = true;
+		showThornsModal_ = true;
+		dnaSlots_[5].isLocked = false;
+	}
+
+	static bool triggeredEventPredatorDomination = false;
+	if (!triggeredEventPredatorDomination && OrganismManager::getInstance().getPredatorDominationEventTriggered())
+	{
+		triggeredEventPredatorDomination = true;
+		showPredatorDominationModal_ = true;
+		dnaSlots_[6].isLocked = false;
+	}
+
+	static bool triggeredFiveCellDominationEvent = false;
+	if (!triggeredFiveCellDominationEvent && OrganismManager::getInstance().getFiveCellDominationEventTriggered())
+	{
+		triggeredFiveCellDominationEvent = true;
+		showFiveCellDominationModal_ = true;
+		dnaSlots_[7].isLocked = false;
 	}
 
 	if (soundActive_)
@@ -291,7 +327,7 @@ void AliveApp::onDrawImGui()
 	initDockspace();
 
 	bool showDemo = false;
-	ImGui::ShowDemoWindow(&showDemo);
+	//ImGui::ShowDemoWindow(&showDemo);
 
 	ImGuiWindowFlags windowFlags = 0;
 	//windowFlags |= ImGuiWindowFlags_NoTitleBar;
@@ -325,7 +361,7 @@ void AliveApp::onDrawImGui()
 		ImGui::Begin("Simulation Speed", open, windowFlags);
 
 		ImGui::PushItemWidth(-1);
-		ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
+		ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 4.0f, "%.1f");
 		if (ImGui::IsItemHovered())
 			ImGui::SetTooltip("Speed of simulation time.");
 		ImGui::PopItemWidth();
@@ -343,7 +379,7 @@ void AliveApp::onDrawImGui()
 		ImVec4 bgColorSelected = { 0, 0, 1, 0.1f };
 		ImVec4 bgColorDefault = { 0, 0, 0, 0 };
 
-		Texture2D* textureLock = TextureManager::get("lock.png");
+		Texture2D* textureLock = TextureManager::get("questionmark.png");
 
 		for (unsigned i = 0, count = 0; i < dnaSlots_.size(); i++)
 		{
@@ -354,34 +390,25 @@ void AliveApp::onDrawImGui()
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
-					ImGui::Text("Discover special events in the simulation to unlock.");
 					ImGui::Text("Rarity: ");
 					ImGui::SameLine();
-
 					ImVec4 color;
 					std::string txt;
 
 					switch (dnaSlots_[i].rarity)
 					{
-					case Slot::Rarity::Trivial:
-						color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
-						txt = "Trivial";
-						break;
 					case Slot::Rarity::Common:
-						color = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
+						color = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
 						txt = "Common";
 						break;
 					case Slot::Rarity::Rare:
 						color = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
 						txt = "Rare";
 						break;
-					case Slot::Rarity::UltraRare:
-						color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-						txt = "Ultra Rare";
-						break;
 					}
 
 					ImGui::TextColored(color, txt.c_str());
+					ImGui::Text("Discover a special event to unlock.");
 					ImGui::EndTooltip();
 				}
 			}
@@ -411,7 +438,24 @@ void AliveApp::onDrawImGui()
 	{
 		ImGui::Begin("FPS", open, windowFlags);
 
+		static unsigned frameCount = 0;
 		float FPS = 1.0f / Time::DeltaSeconds;
+
+		if (FPS >= 10)
+		{
+			frameCount = 0;
+		}
+		else
+		{
+			frameCount++;
+			if (frameCount > 20)
+			{
+				frameCount = 0;
+				showFPSModal_ = true;
+				Time::Scale -= 1;
+			}
+		}
+
 		ImGui::PushItemWidth(-1);
 		ImGui::Text((std::to_string((int)FPS)).c_str());
 		ImGui::PopItemWidth();
@@ -446,6 +490,7 @@ void AliveApp::onDrawImGui()
 		ImGui::End();
 	}
 
+	/*
 	{
 		ImGui::Begin("Registry");
 
@@ -461,6 +506,7 @@ void AliveApp::onDrawImGui()
 
 		ImGui::End();
 	}
+	*/
 
 	{
 		if (showUnlockNewOrgModal_)
@@ -496,6 +542,50 @@ void AliveApp::onDrawImGui()
 			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 			ImGui::OpenPopup("Predator and prey");
 			isRunning_ = false;
+		}
+
+		if (showParasitesModal_)
+		{
+			showParasitesModal_ = false;
+			auto& io = ImGui::GetIO();
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::OpenPopup("Symbiosis");
+			isRunning_ = false;
+		}
+
+		if (showThornsModal_)
+		{
+			showThornsModal_ = false;
+			auto& io = ImGui::GetIO();
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::OpenPopup("Evolutionary arms race");
+			isRunning_ = false;
+		}
+
+		if (showFiveCellDominationModal_)
+		{
+			showFiveCellDominationModal_ = false;
+			auto& io = ImGui::GetIO();
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::OpenPopup("Size matters");
+			isRunning_ = false;
+		}
+
+		if (showPredatorDominationModal_)
+		{
+			showPredatorDominationModal_ = false;
+			auto& io = ImGui::GetIO();
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::OpenPopup("Supply and demand");
+			isRunning_ = false;
+		}
+
+		if (showFPSModal_)
+		{
+			showFPSModal_ = false;
+			auto& io = ImGui::GetIO();
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::OpenPopup("Performance issues");
 		}
 
 		if (ImGui::BeginPopupModal("Decomposers"))
@@ -535,8 +625,67 @@ void AliveApp::onDrawImGui()
 		{
 			ImGui::Text("A species of carnivores is emerging!");
 			ImGui::TextWrapped(
-				"Carnivores are animals that hunt, or prey on, other animals. All animals need food to live. Carnivores need the flesh of the animals" 
-				" that they kill to survive. Meat contains more energy than plants. That's why carnivores don't have to eat as much as herbivores."
+				"Carnivores are animals that prey on other animals. Hunters kill living animals for food. Scavengers feast on corpses in order to survive. More often than not, carnivore species are both hunters and scavengers."
+				"Meat contains more energy than plant matter. That's why carnivores don't have to eat as much as herbivores do."
+			);
+
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+				showUnlockNewOrgModal_ = true;
+			}
+		}
+
+		if (ImGui::BeginPopupModal("Symbiosis"))
+		{
+			ImGui::Text("Single mouth cells are spreading! They are getting pushed around by other creatures.");
+			ImGui::TextWrapped(
+				"Different species often inhabit the same spaces and share - or compete for - the same resources. They interact in a variety of ways, known collectively as symbiosis."
+				"Different forms of symbiotic relationships exist. This particular form is called commensalism. One species benefits from the other while not harming it."
+			);
+
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+				showUnlockNewOrgModal_ = true;
+			}
+		}
+
+		if (ImGui::BeginPopupModal("Evolutionary arms race"))
+		{
+			ImGui::Text("Half of all plants developed thorns!");
+			ImGui::TextWrapped(
+				"Species, in order to evolve, must accumulate adaptations that are favorable for the environment in which they live."
+				"These preferred traits are what makes an individual more fit and able to live long enough to reproduce."
+				"Plants develop thorns so that they are less likely to be consumed by roaming herbivores."
+			);
+
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+				showUnlockNewOrgModal_ = true;
+			}
+		}
+
+		if (ImGui::BeginPopupModal("Size matters"))
+		{
+			ImGui::Text("More than half of all moving herbivore creatures have 5 cells or more!");
+			ImGui::TextWrapped(
+				"Sometimes nature favors the survival of big animals. A big body allows them to defend against smaller predators and the environment (e.g. thorns)."
+			);
+
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+				showUnlockNewOrgModal_ = true;
+			}
+		}
+
+		if (ImGui::BeginPopupModal("Supply and demand"))
+		{
+			ImGui::Text("Carnivores constitute more than one third of the moving population!");
+			ImGui::TextWrapped(
+				"Carnivorism is a biological niche which thrives if enough prey is around."
 			);
 
 			if (ImGui::Button("OK", ImVec2(120, 0)))
@@ -548,7 +697,7 @@ void AliveApp::onDrawImGui()
 
 		if (ImGui::BeginPopupModal("New organism unlocked!"))
 		{
-			ImGui::Text("Check your 'Organism' tab for new species. Also, check the wiki for potential updates.");
+			ImGui::TextWrapped("Check your 'Organisms' window for new species. Also, check the wiki for updates.");
 
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
@@ -557,6 +706,18 @@ void AliveApp::onDrawImGui()
 			}
 
 			ImGui::SetItemDefaultFocus();
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::BeginPopupModal("Performance issues"))
+		{
+			ImGui::TextWrapped("The simulation speed was reduced due to bad performance. Please adjust accordingly.");
+
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+
 			ImGui::EndPopup();
 		}
 	}

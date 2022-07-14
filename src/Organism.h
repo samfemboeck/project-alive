@@ -38,9 +38,10 @@ public:
 	float getMass();
 	void removeCell(Cell* cell);
 	bool isMover() const;
-	bool isMouth() const;
+	bool isHerbivore() const;
 	bool isPlant() const;
 	bool isThorn() const;
+	bool isCarnivore() const;
 	unsigned getSize();
 	void setEnergy(float energy);
 	float getEnergy();
@@ -53,6 +54,7 @@ public:
 	void setCorpse(bool corpse);
 	void setMover(bool mover);
 	long getTTL();
+	bool isCarnivore_ = false;
 
 	template<typename T>
 	T* getCell()
@@ -79,7 +81,7 @@ private:
 	bool isCorpse_ = false;
 	bool isPlant_ = false;
 	bool isThorn_ = false;
-	bool isMouth_ = false;
+	bool isHerbivore_ = false;
 	std::vector<Cell*> toRemove_;
 	float energy_ = 0.0f;
 	unsigned numMovers_ = 0;
