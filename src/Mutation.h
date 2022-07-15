@@ -25,6 +25,7 @@ public:
 private:
 	bool isMover_ = false;
 	bool isHerbivore_ = false;
+	bool isCarnivore_ = false;
 	unsigned getRandomCellIdx();
 	std::vector<char> elems_;
 	std::string str_;

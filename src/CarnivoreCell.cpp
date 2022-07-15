@@ -53,7 +53,8 @@ void CarnivoreCell::onCollision(Cell* other)
 	}
 	else if (!(other->getOrganism()->getDNA() == organism_->getDNA()))
 	{
-		other->getOrganism()->markForDeath();
+		if (other->getOrganism()->isMover())
+			other->getOrganism()->markForDeath();
 	}
 }
 

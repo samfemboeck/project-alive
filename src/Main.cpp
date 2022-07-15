@@ -18,22 +18,11 @@
 
 /*
 	--- TODOs ---
-	- Achievements
-	- Wiki	
+	- Merge dark and light red cells for simplicity
 	- Performance
-		- Multithreaded Physik
-		- Redirections loswerden
-		- Auto simulation scale adjustment
+		- Multithreaded physics
+		- Avoid redirections
 	- Fix Physics
-
-	--- Achievements ---
-	- 50 plant corpses -> Herbivore "Worm" (Trivial)
-	- New Species is dominating species -> Herbivore "Glider" (Trivial)
-	- 5 Predators of same DNA -> Predator "Worm" (Common)
-	- 20 Parasites in World -> "Parasite" (Common)
-	- 80% of plants have thorns (Common)
-	- Dominating Species has 5 Cells -> Herbivore "Figure 9" (Rare)
-	- Predators are over 50% of mover population -> Predator "Figure 9" (Rare)
 */
 
 AliveApp::AliveApp() :
@@ -55,7 +44,7 @@ AliveApp::AliveApp() :
 	TextureManager::add("cell_corpse.png");
 	TextureManager::add("cell_armor.png");
 	TextureManager::add("aabb.png");
-	TextureManager::add("organism_glider.png");
+	TextureManager::add("organism_carnivore_glider.png");
 	TextureManager::add("organism_herbivore_figure9.png");
 	TextureManager::add("organism_parasite.png");
 	TextureManager::add("organism_plant_2.png");
@@ -63,6 +52,7 @@ AliveApp::AliveApp() :
 	TextureManager::add("organism_predator_centipede.png");
 	TextureManager::add("organism_predator_2.png");
 	TextureManager::add("organism_worm_1.png");
+	TextureManager::add("organism_worm_2.png");
 	TextureManager::add("organism_predator_worm.png");
 	TextureManager::add("questionmark.png");
 
@@ -85,8 +75,6 @@ AliveApp::AliveApp() :
 	SoundManager::add("11.wav");
 	SoundManager::add("12.wav");
 
-	bool cheat = false;
-
 	Slot slot1;
 	slot1.DNA = DNA("P[P]");
 	slot1.isLocked = false;
@@ -96,49 +84,49 @@ AliveApp::AliveApp() :
 
 	Slot slot2;
 	slot2.DNA = DNA("MO");
-	slot2.isLocked = !cheat;
+	slot2.isLocked = !cheat_;
 	slot2.texture = TextureManager::get("organism_worm_1.png");
 	slot2.rarity = Slot::Rarity::Common;
 	dnaSlots_[1] = slot2;
 
 	Slot slot3;
-	slot3.DNA = DNA("MO[RM]");
-	slot3.isLocked = !cheat;
-	slot3.texture = TextureManager::get("organism_glider.png");
+	slot3.DNA = DNA("MMO");
+	slot3.isLocked = !cheat_;
+	slot3.texture = TextureManager::get("organism_worm_2.png");
 	slot3.rarity = Slot::Rarity::Common;
 	dnaSlots_[2] = slot3;
 
 	Slot slot4;
-	slot4.DNA = DNA("MMC");
-	slot4.isLocked = !cheat;
-	slot4.texture = TextureManager::get("organism_predator_worm.png");
+	slot4.DNA = DNA("MC[RM]");
+	slot4.isLocked = !cheat_;
+	slot4.texture = TextureManager::get("organism_carnivore_glider.png");
 	slot4.rarity = Slot::Rarity::Common;
 	dnaSlots_[3] = slot4;
 
 	Slot slot5;
 	slot5.DNA = DNA("O");
-	slot5.isLocked = !cheat;
+	slot5.isLocked = !cheat_;
 	slot5.texture = TextureManager::get("organism_parasite.png");
 	slot5.rarity = Slot::Rarity::Common;
 	dnaSlots_[4] = slot5;
 
 	Slot slot6;
 	slot6.DNA = DNA("P[T][RT][RRT][LT]");
-	slot6.isLocked = !cheat;
+	slot6.isLocked = !cheat_;
 	slot6.texture = TextureManager::get("organism_plant_invincible.png");
 	slot6.rarity = Slot::Rarity::Rare;
 	dnaSlots_[5] = slot6;
 
 	Slot slot7;
 	slot7.DNA = DNA("MMM[LC][RC]C");
-	slot7.isLocked = !cheat;
+	slot7.isLocked = !cheat_;
 	slot7.texture = TextureManager::get("organism_predator_centipede.png");
 	slot7.rarity = Slot::Rarity::Rare;
 	dnaSlots_[6] = slot7;
 
 	Slot slot8;
 	slot8.DNA = DNA("MMOLOLM");
-	slot8.isLocked = !cheat;
+	slot8.isLocked = !cheat_;
 	slot8.texture = TextureManager::get("organism_herbivore_figure9.png");
 	slot8.rarity = Slot::Rarity::Rare;
 	dnaSlots_[7] = slot8;
@@ -349,7 +337,7 @@ void AliveApp::onDrawImGui()
 	initDockspace();
 
 	bool showDemo = false;
-	//ImGui::ShowDemoWindow(&showDemo);
+	ImGui::ShowDemoWindow(&showDemo);
 
 	ImGuiWindowFlags windowFlags = 0;
 	//windowFlags |= ImGuiWindowFlags_NoTitleBar;
@@ -650,14 +638,25 @@ void AliveApp::onDrawImGui()
 			ImGui::OpenPopup("Wiki");
 		}
 
-		if (ImGui::BeginPopupModal("Decomposers"))
+		auto addPadding = [](float x, float y)
 		{
+			auto cursorPos = ImGui::GetCursorPos();
+			cursorPos.x += x;
+			cursorPos.y += y;
+			ImGui::SetCursorPos(cursorPos);
+		};
+
+		if (ImGui::BeginPopupModal("Decomposers", open, windowFlags))
+		{
+			addPadding(5, 5);
 			ImGui::Text("Plants are about to go extinct!");
+			addPadding(5, 0);
 			ImGui::TextWrapped(
 				"Decomposers play a critical role in the flow of energy through an ecosystem. They break apart dead organisms into simpler inorganic materials, "
 				"making nutrients available to primary producers - mostly plants and algae."
 			);
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -668,14 +667,17 @@ void AliveApp::onDrawImGui()
 			ImGui::EndPopup();
 		}
 
-		if (ImGui::BeginPopupModal("Survival of the fittest"))
+		if (ImGui::BeginPopupModal("Survival of the fittest", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::Text("A new species is dominating!");
+			addPadding(5, 0);
 			ImGui::TextWrapped(
 				"Whether or not a species will prevail in nature depends on its fitness regarding the environment. The creature capable of "
 				"creating the most copies of itself has an edge in surviving. Eventually, less adapted creatures will die out in the process."
 			);
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -683,14 +685,17 @@ void AliveApp::onDrawImGui()
 			}
 		}
 
-		if (ImGui::BeginPopupModal("Predator and prey"))
+		if (ImGui::BeginPopupModal("Predator and prey", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::Text("A species of carnivores is emerging!");
+			addPadding(5, 0);
 			ImGui::TextWrapped(
 				"Carnivores are animals that prey on other animals. Hunters kill living animals for food. Scavengers feast on corpses in order to survive. More often than not, carnivore species are both hunters and scavengers."
 				"Meat contains more energy than plant matter. That's why carnivores don't have to eat as much as herbivores do."
 			);
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -698,14 +703,17 @@ void AliveApp::onDrawImGui()
 			}
 		}
 
-		if (ImGui::BeginPopupModal("Symbiosis"))
+		if (ImGui::BeginPopupModal("Symbiosis", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::Text("Organisms with a single pink cell are spreading! They are getting pushed around by other creatures.");
+			addPadding(5, 0);
 			ImGui::TextWrapped(
 				"Different species often inhabit the same spaces and share - or compete for - the same resources. They interact in a variety of ways, known collectively as symbiosis."
 				"Different forms of symbiotic relationships exist. This particular form is called commensalism. One species benefits from the other while not harming it."
 			);
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -713,25 +721,30 @@ void AliveApp::onDrawImGui()
 			}
 		}
 
-		if (ImGui::BeginPopupModal("The wiki has been updated!"))
+		if (ImGui::BeginPopupModal("The wiki has been updated!", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::TextWrapped("Access the wiki by pressing the 'Wiki' button at the top left of the application. The simulation has been paused. Resume by pressing the 'Resume' button at the top left of the application.");
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
 			}
 		}
 
-		if (ImGui::BeginPopupModal("Evolutionary arms race"))
+		if (ImGui::BeginPopupModal("Evolutionary arms race", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::Text("Half of all plants developed thorns!");
+			addPadding(5, 0);
 			ImGui::TextWrapped(
 				"Species, in order to evolve, must accumulate adaptations that are favorable for the environment in which they live."
 				"These preferred traits are what makes an individual more fit and able to live long enough to reproduce."
 				"Plants develop thorns so that they are less likely to be consumed by roaming herbivores."
 			);
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -739,13 +752,16 @@ void AliveApp::onDrawImGui()
 			}
 		}
 
-		if (ImGui::BeginPopupModal("Size matters"))
+		if (ImGui::BeginPopupModal("Size matters", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::Text("More than half of all moving herbivore creatures have 5 cells or more!");
+			addPadding(5, 0);
 			ImGui::TextWrapped(
 				"Sometimes nature favors the survival of big animals. A big body allows them to defend against smaller predators and the environment (e.g. thorns)."
 			);
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -753,13 +769,16 @@ void AliveApp::onDrawImGui()
 			}
 		}
 
-		if (ImGui::BeginPopupModal("Supply and demand"))
+		if (ImGui::BeginPopupModal("Supply and demand", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::Text("Carnivores constitute more than one third of the moving population!");
+			addPadding(5, 0);
 			ImGui::TextWrapped(
 				"Carnivorism is a biological niche which thrives if enough prey is around."
 			);
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -767,10 +786,12 @@ void AliveApp::onDrawImGui()
 			}
 		}
 
-		if (ImGui::BeginPopupModal("New organism unlocked!"))
+		if (ImGui::BeginPopupModal("New organism unlocked!", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::TextWrapped("Check your 'Organisms' window for new species. The simulation has been paused. Resume by pressing the 'Resume' button at the top left of the application.");
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -780,10 +801,12 @@ void AliveApp::onDrawImGui()
 			ImGui::EndPopup();
 		}
 
-		if (ImGui::BeginPopupModal("Performance issues"))
+		if (ImGui::BeginPopupModal("Performance issues", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::TextWrapped("The simulation speed was reduced due to bad performance.");
 
+			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
@@ -792,19 +815,21 @@ void AliveApp::onDrawImGui()
 			ImGui::EndPopup();
 		}
 
-		if (ImGui::BeginPopupModal("You discovered every event!"))
+		if (ImGui::BeginPopupModal("You discovered every event!", open, windowFlags))
 		{
+			addPadding(5, 5);
 			ImGui::Text("Congratulations! Thanks for playing.");
 			ImGui::EndPopup();
 		}
 
 		bool unusedOpen = true;
-		if (ImGui::BeginPopupModal("Wiki", &unusedOpen))
+		if (ImGui::BeginPopupModal("Wiki", &unusedOpen, windowFlags))
 		{
 			if (ImGui::BeginTabBar("MyTabBar"))
 			{
 				if (ImGui::BeginTabItem("About"))
 				{	
+					addPadding(5, 0);
 					ImGui::TextWrapped(
 						"This is the wiki window. It has multiple tabs and can be reopened by clicking on the 'Wiki' button on the top left of the application. " 
 						"Please note: This wiki will be updated with new tabs as the simulation progresses! Please come back here after you get notified."
@@ -815,51 +840,60 @@ void AliveApp::onDrawImGui()
 
 				if (ImGui::BeginTabItem("Organisms"))
 				{
+					addPadding(5, 0);
 					ImGui::TextWrapped(
 						"Every entity in this simulation is an organism. Organisms are made up of one or more cells of a specific type and color. "
-						"They can reproduce once a specific criteria is met and enough space is available around them. "
-						"After a certain amount of time, every organism will die and every cell will be replaced with a gray corpse cell."
+						"They can reproduce once a certain criteria is met and enough space is available around them. "
+						"After a set amount of time, every organism will die and every cell of it will be replaced with a gray corpse cell."
 					);
 					ImGui::EndTabItem();
 				}
 
 				if (ImGui::BeginTabItem("Green Cell"))
 				{
+					addPadding(5, 0);
 					ImGui::TextWrapped(
-						"Represents plants. Organisms with green cells will reproduce at a set interval. No further requirements are neccessary."
+						"Represents plants. Organisms with green cells will reproduce at a set interval. No further requirements are neccessary. When a green cell gets consumed by another cell, the entire organism dies."
 					);
 					ImGui::EndTabItem();
 				}
 
-				if (OrganismManager::getInstance().getThornCellDiscovered())
+				if (OrganismManager::getInstance().getThornCellDiscovered() || cheat_)
 				{
 					if (ImGui::BeginTabItem("Dark Red Cell"))
 					{
+						addPadding(5, 0);
 						ImGui::TextWrapped("Represents thorns. Organisms with green cells may grow this cell when mutating. When an organism touches a dark red cell, it will die. Unless it has more cells than the organism owning this cell.");
 						ImGui::EndTabItem();
 					}
 				}
 
-				if (OrganismManager::getInstance().getHerbivoreDiscovered())
+				if (OrganismManager::getInstance().getHerbivoreDiscovered() || cheat_)
 				{
 					if (ImGui::BeginTabItem("Yellow Cell"))
 					{
-						ImGui::TextWrapped("Represents legs.");
+						addPadding(5, 0);
+						ImGui::TextWrapped(
+							"Represents legs. Organisms with yellow cells will roam around the map in a random fashion. The speed of an organism is determined by the amount of yellow cells divided by the amount of total cells. "
+							"Once an organism owns a yellow cell, it is considered a mover. Movers will reproduce once they obtained enough energy."
+						);
 						ImGui::EndTabItem();
 					}
 
 					if (ImGui::BeginTabItem("Pink Cell"))
 					{
-						ImGui::TextWrapped("Represents the mouth of a herbivore.");
+						addPadding(5, 0);
+						ImGui::TextWrapped("Represents the mouth of a herbivore. When a pink cell touches a green or gray cell, it consumes it. Consuming allows movers to obtain energy.");
 						ImGui::EndTabItem();
 					}
 				}
 
-				if (OrganismManager::getInstance().getCarnivoreDiscovered())
+				if (OrganismManager::getInstance().getCarnivoreDiscovered() || cheat_)
 				{
 					if (ImGui::BeginTabItem("Light Red Cell"))
 					{
-						ImGui::TextWrapped("Represents the mouth of a carnivore.");
+						addPadding(5, 0);
+						ImGui::TextWrapped("Represents the mouth of a carnivore. When a light red cell touches any cell of another mover organism, it will kill it. Unless it has more cells than the organism owning this cell. When a light red cell touches a gray cell, it consumes it. Consuming allows movers to obtain energy.");
 					}
 				}
 
@@ -960,7 +994,7 @@ void AliveApp::embraceTheDarkness()
 	colors[ImGuiCol_NavHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
 	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 0.70f);
 	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
-	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.5);
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.82);
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.WindowPadding = ImVec2(0.00f, 0.00f);

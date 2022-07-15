@@ -49,7 +49,7 @@ private:
 	bool showFiveCellDominationModal_ = false;
 	bool showPredatorDominationModal_ = false;
 	bool showFPSModal_ = false;
-	bool showHelpModal_ = true;
+	bool showHelpModal_ = false;
 	std::array<Slot, 8> dnaSlots_;
 	unsigned slotIdx_ = 0;
 	Vec2f size_ = { 16.0f, 9.0f };
@@ -64,4 +64,5 @@ private:
 	unsigned dnaIndex_ = 0;
 	unsigned activeSoundIdx_ = 0;
 	bool soundActive_ = false;
+	bool cheat_ = false;
 };

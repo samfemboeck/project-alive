@@ -103,6 +103,9 @@ DNA::DNA(const std::vector<char>& elems) :
 
 		if (c == 'O')
 			isHerbivore_ = true;
+
+		if (c == 'C')
+			isCarnivore_ = true;
 	}
 }
 
@@ -119,6 +122,9 @@ DNA::DNA(std::string dna)
 		if (c == 'O')
 			isHerbivore_ = true;
 
+		if (c == 'C')
+			isCarnivore_ = true;
+
 		elems_.push_back(c);
 	}
 
@@ -127,7 +133,18 @@ DNA::DNA(std::string dna)
 
 void DNA::mutate()
 {		
-	if (!isMover_ && OrganismManager::getInstance().getHerbivoreDiscovered() && Random::unsignedRange(0, 15) == 0)
+	auto rng = Random::unsignedRange(0, 15);
+
+	if (!isMover_ && OrganismManager::getInstance().getHerbivoreDiscovered() && rng == 0)
+	{
+		elems_.clear();
+		elems_.push_back('M');
+		elems_.push_back('O');
+		str_ = get();
+		return;
+	}
+
+	if (!isMover_ && OrganismManager::getInstance().getHerbivoreDiscovered() && rng == 1)
 	{
 		elems_.clear();
 		elems_.push_back('O');
@@ -154,25 +171,30 @@ void DNA::mutate()
 
 	if (isMover_)
 	{
-		if (cellSize >= 7)
+		if (cellSize >= 6)
+		{
+			if (isHerbivore_)
+			{
+
+				for (auto& elem : elems_)
+					if (elem == 'O')
+						elem = 'C';
+			}
+			else if (isCarnivore_)
+			{
+				for (auto& elem : elems_)
+					if (elem == 'C')
+						elem = 'O';
+			}
+
 			return;
+		}
 	}
 	else
 	{
 		if (cellSize >= 6)
 			return;
 	}
-
-	/*
-	if (isMover_ && isHerbivore_ && elems_.size() == 2) // prettify evolution
-	{
-		elems_.clear();
-		elems_.push_back('M');
-		elems_.push_back('M');
-		elems_.push_back('O');
-		return;
-	}
-	*/
 
 	unsigned idx = getRandomCellIdx();
 	char cellType = elems_[idx];
