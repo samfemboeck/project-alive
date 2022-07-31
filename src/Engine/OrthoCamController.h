@@ -27,7 +27,7 @@ private:
 	float aspectRatio_ = 0;
 	float width_ = 0;
 	float zoomLevel_ = 12.0f;
-	glm::vec3 position_ = glm::vec3{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 position_ = glm::vec3{ 0.0f, -275.0f, 0.0f };
 	float speedTranslation_ = 5.0f;
 	float speedScroll_ = 0.25f;
 	bool isKeyWDown_ = false;

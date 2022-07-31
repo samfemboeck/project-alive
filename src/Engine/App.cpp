@@ -174,10 +174,12 @@ void App::start()
 		
 		static clock_t start = clock();
 		clock_t now = clock();
-		Time::DeltaSeconds = ((now - start) / (float)CLOCKS_PER_SEC) * Time::Scale;
-		Time::DeltaMillis = ((now - start) / (float)CLOCKS_PER_SEC) * 1000 * Time::Scale;
+		float deltaSeconds = ((now - start) / (float)CLOCKS_PER_SEC);
+		Time::DeltaSeconds = deltaSeconds * Time::Scale;
+		Time::DeltaMillis = deltaSeconds * 1000 * Time::Scale;
 		start = now;
 		Time::ElapsedSeconds += Time::DeltaSeconds;
+		Time::ElapsedSecondsUnscaled += deltaSeconds;
 
 		onUpdate();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

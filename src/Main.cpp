@@ -107,7 +107,7 @@ AliveApp::AliveApp() :
 	slot5.DNA = DNA("O");
 	slot5.isLocked = !cheat_;
 	slot5.texture = TextureManager::get("organism_parasite.png");
-	slot5.rarity = Slot::Rarity::Common;
+	slot5.rarity = Slot::Rarity::Rare;
 	dnaSlots_[4] = slot5;
 
 	Slot slot6;
@@ -153,7 +153,7 @@ AliveApp& AliveApp::getInstance()
 }
 
 void AliveApp::onUpdate()
-{	
+{
 	frameBuffer_.bind();
 	Renderer2D::clear();
 	Renderer2D::setClearColor({ 0.0f, 0.0f, 0.0f, 0.0f });
@@ -184,6 +184,7 @@ void AliveApp::onUpdate()
 		triggeredEventDecomposers = true;
 		showDecomposerModal_ = true;
 		dnaSlots_[1].isLocked = false;
+		numUnlocked_++;
 	}
 
 	static bool triggeredEventNewDominatingSpecies = false;
@@ -198,6 +199,7 @@ void AliveApp::onUpdate()
 			triggeredEventNewDominatingSpecies = true;
 			showNewDominatingSpeciesModal_ = true;
 			dnaSlots_[2].isLocked = false;
+			numUnlocked_++;
 		}
 	}
 
@@ -207,6 +209,7 @@ void AliveApp::onUpdate()
 		triggeredEventPredators = true;
 		showPredatorsModal_ = true;
 		dnaSlots_[3].isLocked = false;
+		numUnlocked_++;
 	}
 
 	static bool triggeredEventParasites = false;
@@ -215,6 +218,7 @@ void AliveApp::onUpdate()
 		triggeredEventParasites = true;
 		showParasitesModal_ = true;
 		dnaSlots_[4].isLocked = false;
+		numUnlocked_++;
 	}
 
 	static bool triggeredEventThorns = false;
@@ -223,6 +227,7 @@ void AliveApp::onUpdate()
 		triggeredEventThorns = true;
 		showThornsModal_ = true;
 		dnaSlots_[5].isLocked = false;
+		numUnlocked_++;
 	}
 
 	static bool triggeredEventPredatorDomination = false;
@@ -231,6 +236,7 @@ void AliveApp::onUpdate()
 		triggeredEventPredatorDomination = true;
 		showPredatorDominationModal_ = true;
 		dnaSlots_[6].isLocked = false;
+		numUnlocked_++;
 	}
 
 	static bool triggeredFiveCellDominationEvent = false;
@@ -239,27 +245,25 @@ void AliveApp::onUpdate()
 		triggeredFiveCellDominationEvent = true;
 		showFiveCellDominationModal_ = true;
 		dnaSlots_[7].isLocked = false;
+		numUnlocked_++;
 	}
 
 	static bool triggeredThornCellDiscoveredEvent = false;
 	if (!triggeredThornCellDiscoveredEvent && OrganismManager::getInstance().getThornCellDiscovered())
 	{
 		triggeredThornCellDiscoveredEvent = true;
-		showWikiUpdatedModal_ = true;
 	}
 
 	static bool triggeredHerbivoreDiscoveredEvent = false;
 	if (!triggeredHerbivoreDiscoveredEvent && OrganismManager::getInstance().getHerbivoreDiscovered())
 	{
 		triggeredHerbivoreDiscoveredEvent = true;
-		showWikiUpdatedModal_ = true;
 	}
 
 	static bool triggeredCarnivoreDiscoveredEvent = false;
 	if (!triggeredCarnivoreDiscoveredEvent && OrganismManager::getInstance().getCarnivoreDiscovered())
 	{
 		triggeredCarnivoreDiscoveredEvent = true;
-		showWikiUpdatedModal_ = true;
 	}
 
 	if (soundActive_)
@@ -279,6 +283,12 @@ void AliveApp::onUpdate()
 
 			SoundManager::reset(activeFilename);
 		}
+	}
+
+	if (!end_ && (numUnlocked_ == 7 || Time::ElapsedSecondsUnscaled > 60 * 10))
+	{
+		showEndModal_ = true;
+		end_ = true;
 	}
 }
 
@@ -337,7 +347,7 @@ void AliveApp::onDrawImGui()
 	initDockspace();
 
 	bool showDemo = false;
-	ImGui::ShowDemoWindow(&showDemo);
+	//ImGui::ShowDemoWindow(&showDemo);
 
 	ImGuiWindowFlags windowFlags = 0;
 	//windowFlags |= ImGuiWindowFlags_NoTitleBar;
@@ -638,6 +648,12 @@ void AliveApp::onDrawImGui()
 			ImGui::OpenPopup("Wiki");
 		}
 
+		if (showEndModal_)
+		{
+			showEndModal_ = false;
+			ImGui::OpenPopup("Thanks for playing!");
+		}
+
 		auto addPadding = [](float x, float y)
 		{
 			auto cursorPos = ImGui::GetCursorPos();
@@ -815,24 +831,17 @@ void AliveApp::onDrawImGui()
 			ImGui::EndPopup();
 		}
 
-		if (ImGui::BeginPopupModal("You discovered every event!", open, windowFlags))
-		{
-			addPadding(5, 5);
-			ImGui::Text("Congratulations! Thanks for playing.");
-			ImGui::EndPopup();
-		}
-
 		bool unusedOpen = true;
 		if (ImGui::BeginPopupModal("Wiki", &unusedOpen, windowFlags))
 		{
 			if (ImGui::BeginTabBar("MyTabBar"))
 			{
 				if (ImGui::BeginTabItem("About"))
-				{	
+				{
 					addPadding(5, 0);
 					ImGui::TextWrapped(
-						"This is the wiki window. It has multiple tabs and can be reopened by clicking on the 'Wiki' button on the top left of the application. " 
-						"Please note: This wiki will be updated with new tabs as the simulation progresses! Please come back here after you get notified."
+						"This is the wiki window. It has multiple tabs and can be reopened by clicking on the 'Wiki' button on the top left of the application. "
+						"Please read every tab page in this wiki to get the general idea before starting the simulation!"
 					);
 
 					ImGui::EndTabItem();
@@ -843,8 +852,8 @@ void AliveApp::onDrawImGui()
 					addPadding(5, 0);
 					ImGui::TextWrapped(
 						"Every entity in this simulation is an organism. Organisms are made up of one or more cells of a specific type and color. "
-						"They can reproduce once a certain criteria is met and enough space is available around them. "
-						"After a set amount of time, every organism will die and every cell of it will be replaced with a gray corpse cell."
+						"They will reproduce once they obtained enough energy and enough space is available around them. "
+						"After some time, every organism will die and every cell of it will be replaced with a gray corpse cell."
 					);
 					ImGui::EndTabItem();
 				}
@@ -853,56 +862,61 @@ void AliveApp::onDrawImGui()
 				{
 					addPadding(5, 0);
 					ImGui::TextWrapped(
-						"Represents plants. Organisms with green cells will reproduce at a set interval. No further requirements are neccessary. When a green cell gets consumed by another cell, the entire organism dies."
+						"Represents plants. Organisms with green cells receive energy over time passively. The sun does all the work! No further requirements are neccessary. When a green cell gets consumed by another cell, the entire organism dies."
 					);
 					ImGui::EndTabItem();
 				}
 
-				if (OrganismManager::getInstance().getThornCellDiscovered() || cheat_)
+				if (ImGui::BeginTabItem("Dark Red Cell"))
 				{
-					if (ImGui::BeginTabItem("Dark Red Cell"))
-					{
-						addPadding(5, 0);
-						ImGui::TextWrapped("Represents thorns. Organisms with green cells may grow this cell when mutating. When an organism touches a dark red cell, it will die. Unless it has more cells than the organism owning this cell.");
-						ImGui::EndTabItem();
-					}
+					addPadding(5, 0);
+					ImGui::TextWrapped("Represents thorns. Organisms with green cells may grow this cell when mutating. When an organism touches a dark red cell, it will die. As long as it is smaller than the organism possesing this cell.");
+					ImGui::EndTabItem();
 				}
 
-				if (OrganismManager::getInstance().getHerbivoreDiscovered() || cheat_)
+				if (ImGui::BeginTabItem("Yellow Cell"))
 				{
-					if (ImGui::BeginTabItem("Yellow Cell"))
-					{
-						addPadding(5, 0);
-						ImGui::TextWrapped(
-							"Represents legs. Organisms with yellow cells will roam around the map in a random fashion. The speed of an organism is determined by the amount of yellow cells divided by the amount of total cells. "
-							"Once an organism owns a yellow cell, it is considered a mover. Movers will reproduce once they obtained enough energy."
-						);
-						ImGui::EndTabItem();
-					}
-
-					if (ImGui::BeginTabItem("Pink Cell"))
-					{
-						addPadding(5, 0);
-						ImGui::TextWrapped("Represents the mouth of a herbivore. When a pink cell touches a green or gray cell, it consumes it. Consuming allows movers to obtain energy.");
-						ImGui::EndTabItem();
-					}
+					addPadding(5, 0);
+					ImGui::TextWrapped(
+						"Represents legs. Organisms with yellow cells will roam around the map in a random fashion. The speed of an organism is determined by the amount of yellow cells divided by the amount of total cells. "
+					);
+					ImGui::EndTabItem();
 				}
 
-				if (OrganismManager::getInstance().getCarnivoreDiscovered() || cheat_)
+				if (ImGui::BeginTabItem("Pink Cell"))
 				{
-					if (ImGui::BeginTabItem("Light Red Cell"))
-					{
-						addPadding(5, 0);
-						ImGui::TextWrapped("Represents the mouth of a carnivore. When a light red cell touches any cell of another mover organism, it will kill it. Unless it has more cells than the organism owning this cell. When a light red cell touches a gray cell, it consumes it. Consuming allows movers to obtain energy.");
-					}
+					addPadding(5, 0);
+					ImGui::TextWrapped("Represents the mouth of a herbivore. When a pink cell touches a green or gray cell, it consumes it. Consuming will give energy to the organism.");
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Light Red Cell"))
+				{
+					addPadding(5, 0);
+					ImGui::TextWrapped("Represents the mouth of a carnivore. When a light red cell touches any non-green cell of another organism, it will kill the organism. Unless the other organism has more cells than the organism owning this cell. When a light red cell touches a gray cell, it consumes it. Consuming will give energy to the organism.");
 				}
 
 				ImGui::EndTabBar();
 			}
 
-		
+
 			ImGui::EndPopup();
 		}
+
+		if (ImGui::BeginPopupModal("Thanks for playing!", open, windowFlags))
+		{
+			addPadding(5, 5);
+			ImGui::TextWrapped("You either discovered every event or played longer than 10 minutes. If you didn't discover every event, it doesn't matter. If you are a completionist, you can restart the application and try again.");
+			
+			addPadding(5, 0);
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();			
+		}
+
 	}
 
 	ScopeTimer::Data.clear();

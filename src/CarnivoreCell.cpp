@@ -25,21 +25,13 @@ void CarnivoreCell::onCollision(Cell* other)
 		if (corpse)
 		{
 			other->getOrganism()->removeCell(corpse);
-			float nutritionValue = other->getOrganism()->isHerbivore() ? corpse->getNutritionValue() * 2.0f : corpse->getNutritionValue() * 0.5f;
+			float nutritionValue = other->getOrganism()->isHerbivore() ? corpse->getNutritionValue() : corpse->getNutritionValue() * 0.5f;
 			organism_->setEnergy(organism_->getEnergy() + nutritionValue);
 		}
 	}
 	else if (other->getOrganism()->getSize() > organism_->getSize())
 	{
-		if (organism_->isMover() && other->getOrganism()->isMover())
-		{
-			return;
-		}
-		else
-		{
-			organism_->markForDeath();
-			return;
-		}
+		return;
 	}
 	else if (other->getType() == Type::Carnivore)
 	{
@@ -53,8 +45,7 @@ void CarnivoreCell::onCollision(Cell* other)
 	}
 	else if (!(other->getOrganism()->getDNA() == organism_->getDNA()))
 	{
-		if (other->getOrganism()->isMover())
-			other->getOrganism()->markForDeath();
+		other->getOrganism()->markForDeath();
 	}
 }
 

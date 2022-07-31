@@ -3,11 +3,11 @@
 #include "Engine/QuickMaths.h"
 #include "OrganismManager.h"
 
-std::vector<char> Production::mover()
+std::vector<char> Production::mover(unsigned numMaxMutations)
 {
-	std::vector<std::string> vocabulary = { "M", "[M]", "[LM]","[RM]","O", "[O]", "[LO]", "[RO]", "C", "[C]", "[LC]", "[RC]"};
+	std::vector<std::string> vocabulary = { "M", "[M]", "[LM]","[RM]","M", "[M]", "[LM]","[RM]", "O", "[O]", "[LO]", "[RO]", "C", "[C]", "[LC]", "[RC]"};
 	std::vector<char> ret;
-	unsigned numInstructions = Random::unsignedRange(1, 1);
+	unsigned numInstructions = Random::unsignedRange(1, std::min(2u, numMaxMutations));
 
 	for (unsigned i = 0; i < numInstructions; i++)
 	{
@@ -38,11 +38,11 @@ std::vector<char> Production::plant()
 	return ret;
 }
 
-std::vector<char> Production::mouth()
+std::vector<char> Production::mouth(unsigned numMaxMutations)
 {	
 	std::vector<std::string> vocabulary = { "O", "O", "[O]", "[O]", "[LO]", "[RO]", "M", "M", "[M]", "[M]", "[LM]", "[RM]", "C", "C", "[C]", "[C]", "[LC]", "[RC]"};
 	std::vector<char> ret;
-	unsigned numInstructions = Random::unsignedRange(1, 1);
+	unsigned numInstructions = Random::unsignedRange(1, std::min(2u, numMaxMutations));
 
 	for (unsigned i = 0; i < numInstructions; i++)
 	{
@@ -72,11 +72,11 @@ std::vector<char> Production::thorn()
 	return ret;
 }
 
-std::vector<char> Production::carnivore()
+std::vector<char> Production::carnivore(unsigned numMaxMutations)
 {
 	std::vector<std::string> vocabulary = { "C", "[C]", "[LC]", "[RC]", "C", "[C]", "[LC]", "[RC]", "M", "[M]", "[LM]", "[RM]" };
 	std::vector<char> ret;
-	unsigned numInstructions = Random::unsignedRange(1, 1);
+	unsigned numInstructions = Random::unsignedRange(1, std::min(2u, numMaxMutations));
 
 	for (unsigned i = 0; i < numInstructions; i++)
 	{
@@ -154,10 +154,18 @@ void DNA::mutate()
 
 	if (elems_.size() > 1 && Random::unsignedRange(0, 1) == 0)
 	{
-		unsigned idx = Random::unsignedRange(1, elems_.size() - 1);
+		unsigned numInstructions = Random::unsignedRange(1, 2);
 
-		if (isCell(idx))
-			elems_.erase(elems_.begin() + idx);
+		for (unsigned i = 0; i < numInstructions; i++)
+		{
+			if (elems_.size() > 1)
+			{
+				unsigned idx = Random::unsignedRange(1, elems_.size() - 1);
+
+				if (isCell(idx))
+					elems_.erase(elems_.begin() + idx);
+			}
+		}
 
 		return;
 	}
@@ -171,7 +179,7 @@ void DNA::mutate()
 
 	if (isMover_)
 	{
-		if (cellSize >= 6)
+		if (cellSize >= 5)
 		{
 			if (isHerbivore_)
 			{
@@ -192,9 +200,11 @@ void DNA::mutate()
 	}
 	else
 	{
-		if (cellSize >= 6)
+		if (cellSize >= 5)
 			return;
 	}
+
+	unsigned numMaxMutations = 5 - cellSize;
 
 	unsigned idx = getRandomCellIdx();
 	char cellType = elems_[idx];
@@ -206,16 +216,16 @@ void DNA::mutate()
 		productionV = Production::plant();
 		break;
 	case 'O':
-		productionV = Production::mouth();
+		productionV = Production::mouth(numMaxMutations);
 		break;
 	case 'M':
-		productionV = Production::mover();
+		productionV = Production::mover(numMaxMutations);
 		break;
 	case 'T':
 		productionV = Production::thorn();
 		break;
 	case 'C':
-		productionV = Production::carnivore();
+		productionV = Production::carnivore(numMaxMutations);
 		break;
 	}
 

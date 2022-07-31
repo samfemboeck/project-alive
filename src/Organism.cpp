@@ -203,21 +203,13 @@ Organism* Organism::clone(Vec2f pos)
 
 	if (isPlant_)
 	{
-		if (Random::unsignedRange(0, OneInNMutates) == 0)
+		if (Random::unsignedRange(0, OneInNMutates * 2) == 0)
 			successor.mutate();
 	}
 	else	
 	{
-		if (cells_.size() == 2)
-		{
-			if (Random::unsignedRange(0, OneInNMutates / 2) == 0)
-				successor.mutate();
-		}
-		else
-		{
-			if (Random::unsignedRange(0, OneInNMutates) == 0)
-				successor.mutate();
-		}
+		if (Random::unsignedRange(0, OneInNMutates) == 0)
+			successor.mutate();
 	}
 
 	auto cells = getCellsForDNA(successor.get());

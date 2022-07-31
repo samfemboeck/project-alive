@@ -35,9 +35,9 @@ private:
 class Production
 {
 public:
-	static std::vector<char> mover();
+	static std::vector<char> mover(unsigned numMaxMutations);
 	static std::vector<char> plant();
-	static std::vector<char> mouth();
+	static std::vector<char> mouth(unsigned numMaxMutations);
 	static std::vector<char> thorn();
-	static std::vector<char> carnivore();
+	static std::vector<char> carnivore(unsigned numMaxMutations);
 };
