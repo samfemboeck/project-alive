@@ -55,19 +55,9 @@ void Renderer2D::init()
 
 	s_data.flatColorShader = new Shader("Shaders/flat_color.glsl");
 
-	s_data.txWaterChannel0 = new Texture2D("gem_stones.jpg", false);
-	s_data.txWaterChannel1 = new Texture2D("noise.png", false);			
-	
 	int32_t channels[2];
 	channels[0] = 0;
 	channels[1] = 1;
-
-
-	s_data.waterShader = new Shader("Shaders/water.glsl");
-	s_data.waterShader->bind();
-	s_data.waterShader->uploadUniformIntArray("uChannels", channels, 2);
-	s_data.waterShader->uploadUniformFloat2Array("uLightPositions", &lightPositions->x, 1);
-	s_data.waterShader->uploadUniformInt("uNumLights", 1);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -135,37 +125,6 @@ void Renderer2D::endTextures()
 
 void Renderer2D::endFlatColor()
 {
-	uint32_t dataSize = (uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase;
-	s_data.quadVertexBuffer->setData(s_data.quadVertexBufferBase, dataSize);
-	glDrawElements(GL_TRIANGLES, s_data.quadIndexCount, GL_UNSIGNED_INT, nullptr);
-}
-
-void Renderer2D::beginWater(const glm::mat4& view, const glm::mat4& projection)
-{
-	s_data.quadVertexArray->bind();
-	s_data.quadIndexCount = 0;
-	s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
-	s_data.waterShader->bind();
-	s_data.waterShader->uploadUniformMat4("uView", view);
-	s_data.waterShader->uploadUniformMat4("uProjection", projection);
-	s_data.waterShader->uploadUniformFloat("uElapsedTime", Time::ElapsedSeconds * 0.5f);
-	s_data.waterShader->uploadUniformFloat3("uWaterColor", Renderer2DStorage::WaterColor);
-	s_data.waterShader->uploadUniformInt("uTileLevel", Renderer2DStorage::TileLevel);
-	s_data.waterShader->uploadUniformFloat3("uLightAttenuation", Renderer2DStorage::LightAttenuation);
-	s_data.waterShader->uploadUniformFloat3("uAmbient", Renderer2DStorage::AmbientLight);
-
-	int32_t channels[2];
-	channels[0] = 0;
-	channels[1] = 1;
-
-	s_data.waterShader->uploadUniformIntArray("uChannels", channels, 2);
-}
-
-void Renderer2D::endWater()
-{		
-	s_data.txWaterChannel0->bind(0);
-	s_data.txWaterChannel1->bind(1);
-
 	uint32_t dataSize = (uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase;
 	s_data.quadVertexBuffer->setData(s_data.quadVertexBufferBase, dataSize);
 	glDrawElements(GL_TRIANGLES, s_data.quadIndexCount, GL_UNSIGNED_INT, nullptr);

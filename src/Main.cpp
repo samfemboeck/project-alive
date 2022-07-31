@@ -50,7 +50,6 @@ AliveApp::AliveApp() :
 	TextureManager::add("organism_plant_2.png");
 	TextureManager::add("organism_plant_invincible.png");
 	TextureManager::add("organism_predator_centipede.png");
-	TextureManager::add("organism_predator_2.png");
 	TextureManager::add("organism_worm_1.png");
 	TextureManager::add("organism_worm_2.png");
 	TextureManager::add("organism_predator_worm.png");
@@ -285,7 +284,7 @@ void AliveApp::onUpdate()
 		}
 	}
 
-	if (!end_ && (numUnlocked_ == 7 || Time::ElapsedSecondsUnscaled > 60 * 10))
+	if (!end_ && Time::ElapsedSecondsUnscaled > 60 * 10)
 	{
 		showEndModal_ = true;
 		end_ = true;
@@ -811,6 +810,12 @@ void AliveApp::onDrawImGui()
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
+
+				if (!end_ && numUnlocked_ == 7)
+				{
+					showEndModal_ = true;
+					end_ = true;
+				}
 			}
 
 			ImGui::SetItemDefaultFocus();
@@ -841,7 +846,7 @@ void AliveApp::onDrawImGui()
 					addPadding(5, 0);
 					ImGui::TextWrapped(
 						"This is the wiki window. It has multiple tabs and can be reopened by clicking on the 'Wiki' button on the top left of the application. "
-						"Please read every tab page in this wiki to get the general idea before starting the simulation!"
+						"Please read every tab page in this wiki to get the general idea before starting the simulation! Controls: Scroll to zoom and drag with right mouse down to move the camera."
 					);
 
 					ImGui::EndTabItem();

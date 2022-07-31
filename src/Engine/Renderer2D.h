@@ -29,8 +29,6 @@ public:
 	static void endLines();
 	static void endTextures();
 	static void endFlatColor();
-	static void beginWater(const glm::mat4& view, const glm::mat4& projection);
-	static void endWater();
 
 	static void pushQuad(const glm::mat4&, Texture2D*, const glm::vec4 & = glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, bool = true);
 	static void pushQuad(const glm::mat4&, SubTexture2D*, const glm::vec4 & = glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, bool = true);
@@ -66,9 +64,6 @@ struct Renderer2DStorage
 	std::array<Texture2D*, MaxTextureSlots> textureSlots;
 	uint32_t textureSlotIndex = 0;
 
-	Shader* waterShader;
-	Texture2D* txWaterChannel0;
-	Texture2D* txWaterChannel1;	
 
 	glm::vec4 unitQuad[4]
 	{
