@@ -91,7 +91,7 @@ std::vector<char> Production::carnivore(unsigned numMaxMutations)
 
 DNA::DNA(const std::vector<char>& elems) :
 	elems_(elems),
-	str_(std::string(elems))
+	str_(std::string(elems.begin(), elems.end()))
 {
 	for (char c : elems)
 	{
@@ -128,7 +128,7 @@ DNA::DNA(std::string dna)
 		elems_.push_back(c);
 	}
 
-	str_ = std::string(elems_);
+	str_ = std::string(elems_.begin(), elems_.end());
 }
 
 void DNA::mutate()
@@ -307,7 +307,7 @@ bool DNA::hasCell()
 
 std::string DNA::get() const
 {
-	return std::string(elems_);
+	return std::string(elems_.begin(), elems_.end());
 }
 
 bool DNA::operator==(const DNA& other)

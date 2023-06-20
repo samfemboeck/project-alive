@@ -189,7 +189,11 @@ void Organism::tick()
 	if (isMover_)
 	{
 		rigidBody_->addTorque(Random::floatRange(-torqueFactor_, torqueFactor_));
-		Vec2f forward = b2Rot(rigidBody_->getRotation()).GetYAxis();
+		float s, c;
+		auto rot = rigidBody_->getRotation();
+		s = sin(rot);
+		c = cos(rot);
+		Vec2f forward = { -s, c };
 		rigidBody_->addImpulse(forward * 5000.0f);
 
 		if (rigidBody_->getVelocity().magnitude() > speedMove_)

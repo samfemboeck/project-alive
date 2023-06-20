@@ -2,7 +2,6 @@
 
 #include <glm/glm.hpp>
 #include <string>
-#include <box2d/b2_math.h>
 
 template<typename T>
 struct Vec2
@@ -15,12 +14,6 @@ struct Vec2
 		this->y = y;
 	}
 
-	Vec2(const b2Vec2& vec)
-	{
-		x = vec.x;
-		y = vec.y;
-	}
-
 	Vec2(const glm::vec2& vec)
 	{
 		x = vec.x;
@@ -30,11 +23,6 @@ struct Vec2
 	operator const glm::vec2() const
 	{
 		return glm::vec2(x, y);
-	}
-
-	operator const b2Vec2() const
-	{
-		return b2Vec2(x, y);
 	}
 
 	std::string str() const

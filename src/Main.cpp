@@ -352,8 +352,8 @@ void AliveApp::onDrawImGui()
 	//windowFlags |= ImGuiWindowFlags_NoTitleBar;
 	//windowFlags  |= ImGuiWindowFlags_MenuBar;
 	windowFlags |= ImGuiWindowFlags_NoScrollbar;
-	windowFlags |= ImGuiWindowFlags_NoMove;
-	windowFlags |= ImGuiWindowFlags_NoResize;
+	//windowFlags |= ImGuiWindowFlags_NoMove;
+	//windowFlags |= ImGuiWindowFlags_NoResize;
 	windowFlags |= ImGuiWindowFlags_NoCollapse;
 	windowFlags |= ImGuiWindowFlags_NoNav;
 	windowFlags |= ImGuiWindowFlags_NoBackground;

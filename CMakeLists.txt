@@ -94,7 +94,6 @@ add_executable(alive
 
 add_subdirectory ("external/glfw")
 add_subdirectory ("external/glm")
-add_subdirectory("external/box2d")
 
 target_precompile_headers(alive
 	INTERFACE src/pch.h
@@ -105,14 +104,13 @@ target_include_directories (alive
 	PUBLIC ${PROJECT_SOURCE_DIR}/external/glfw/include
 	PUBLIC ${PROJECT_SOURCE_DIR}/external/glm
 	PUBLIC ${PROJECT_SOURCE_DIR}/external/stb
-	PUBLIC ${PROJECT_SOURCE_DIR}/external/box2d/include
+	PUBLIC ${PROJECT_SOURCE_DIR}/external/imgui
 	)
 
 target_link_libraries (
 	alive
 	glfw
 	glm
-	box2d
 )
 
 add_custom_command(TARGET alive POST_BUILD

@@ -42,12 +42,6 @@ using namespace std::literals;
 
 #include "stb_image.h"
 
-#include <box2d/b2_math.h>
-#include <box2d/b2_world.h>
-#include <box2d/b2_body.h>
-#include <box2d/b2_circle_shape.h>
-#include <box2d/b2_fixture.h>
-
 #include "Engine/Texture.h"
 #include "Engine/SubTexture2D.h"
 #include "Engine/VertexArray.h"

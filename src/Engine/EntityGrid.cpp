@@ -128,7 +128,7 @@ Vec2i EntityGrid::getLocalCoord(Vec2f worldPos)
 Vec2f EntityGrid::getWorldPos(Vec2i localCoord)
 {
 	Vec2i newPos = localCoord * SquareSize + 0.5f * SquareSize;
-	return pos_ + newPos;
+	return pos_ + Vec2f(newPos);
 }
 
 std::array<AABB*, EntityGrid::MaxEntitiesPerSquare>& EntityGrid::get(unsigned x, unsigned y)

@@ -4,12 +4,12 @@
 [submodule "external/glfw"]
 	path = external/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "external/stb"]
-	path = external/stb
-	url = https://github.com/nothings/stb.git
 [submodule "external/box2d"]
 	path = external/box2d
 	url = https://github.com/erincatto/box2d.git
 [submodule "external/imgui"]
 	path = external/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "external/stb"]
+	path = external/stb
+	url = https://github.com/nothings/stb.git

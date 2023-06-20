@@ -150,7 +150,7 @@ void PhysicsManager::resolveCollisions()
 		auto angular_2 = contact_vec_2.cross(man.Normal);
 		angular_2 *= angular_2;
 		j /= man.rb1->getInvMass() + man.rb2->getInvMass() + angular_1 + angular_2;
-		Vec2f impulse = j * man.Normal;
+		Vec2f impulse = man.Normal * j;
 
 		float overdrive = 10.0f; // let's add some overdrive so that parasites can spread around the map more easily
 
@@ -161,7 +161,7 @@ void PhysicsManager::resolveCollisions()
 
 		const float percent = 0.75f;
 		const float slop = 0.0f;
-		Vec2f correction = std::max(man.Penetration - slop, 0.0f) / (man.rb1->getInvMass() + man.rb2->getInvMass()) * percent * man.Normal;
+		Vec2f correction = man.Normal * (std::max(man.Penetration - slop, 0.0f) / (man.rb1->getInvMass() + man.rb2->getInvMass())) * percent;
 		man.rb1->addPosCorrection(correction * -1.0f);
 		man.rb2->addPosCorrection(correction);
 		man.Penetration -= correction.magnitude() * 2;
@@ -322,7 +322,7 @@ PhysicsManager::PhysicsManager()
 
 void RigidBody::addPosCorrection(Vec2f correction)
 {
-	correction_ += invMass_ * correction;
+	correction_ += correction * invMass_;
 }
 
 Vec2f RigidBody::getPosition()
@@ -420,7 +420,7 @@ void RigidBody::setMass(float mass)
 
 void RigidBody::addImpulse(const Vec2f& impulse)
 {
-	impulses_.push_back(invMass_ * impulse);
+	impulses_.push_back(impulse * invMass_);
 }
 
 void RigidBody::addTorque(float torque)
