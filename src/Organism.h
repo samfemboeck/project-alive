@@ -12,7 +12,6 @@ class AABB;
 class Organism
 {
 public:
-	inline static long MaxTTL = 10000;
 	inline static long Instances = 0;
 	inline static int OneInNMutates = 20;
 	

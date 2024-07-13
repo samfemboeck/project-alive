@@ -22,7 +22,6 @@
 	- Performance
 		- Multithreaded physics
 		- Avoid redirections
-	- Fix Physics
 */
 
 AliveApp::AliveApp() :
@@ -133,7 +132,22 @@ AliveApp::AliveApp() :
 	GLFWimage images[1];
 	images[0].pixels = stbi_load("Textures/organism_plant_invincible.png", &images[0].width, &images[0].height, 0, 4); //rgba channels 
 	glfwSetWindowIcon(window_, 1, images);
-	stbi_image_free(images[0].pixels);
+	stbi_image_free(images[0].pixels);	
+
+	events_.push_back({ .unlocksSlotIdxNr = 1, .unlockCondition = []() {return OrganismManager::getInstance().getNumPlantCorpses() > 800; } , .popupName = "Decomposers" });
+	events_.push_back({ .unlocksSlotIdxNr = 2, .unlockCondition = []() {
+		if (OrganismManager::getInstance().getDominatingSpecies() != "MO")
+		{
+			auto dominatingSpecies = OrganismManager::getInstance().getDominatingSpecies();
+			std::string::difference_type numOs = std::count(dominatingSpecies.begin(), dominatingSpecies.end(), 'O');
+			std::string::difference_type numMs = std::count(dominatingSpecies.begin(), dominatingSpecies.end(), 'M');
+			return numOs + numMs > 2;
+		}}, .popupName = "Survival of the fittest" });
+	events_.push_back({ .unlocksSlotIdxNr = 3, .unlockCondition = []() {return OrganismManager::getInstance().getPredatorEventTriggered(); } , .popupName = "Predator and prey" });
+	events_.push_back({ .unlocksSlotIdxNr = 4, .unlockCondition = []() {return OrganismManager::getInstance().getParasiteEventTriggered(); } , .popupName = "Symbiosis" });
+	events_.push_back({ .unlocksSlotIdxNr = 5, .unlockCondition = []() {return OrganismManager::getInstance().getThornEventTriggered(); } , .popupName = "Evolutionary arms race" });
+	events_.push_back({ .unlocksSlotIdxNr = 6, .unlockCondition = []() {return OrganismManager::getInstance().getFiveCellDominationEventTriggered(); } , .popupName = "Size matters" });
+	events_.push_back({ .unlocksSlotIdxNr = 7, .unlockCondition = []() {return OrganismManager::getInstance().getPredatorDominationEventTriggered(); } , .popupName = "Supply and demand" });
 }
 
 void AliveApp::onShutdown()
@@ -176,95 +190,6 @@ void AliveApp::onUpdate()
 		PhysicsManager::getInstance().update();
 	}
 
-
-	static bool triggeredEventDecomposers = false;
-	if (!triggeredEventDecomposers && OrganismManager::getInstance().getNumPlantCorpses() > 800)
-	{
-		triggeredEventDecomposers = true;
-		showDecomposerModal_ = true;
-		dnaSlots_[1].isLocked = false;
-		numUnlocked_++;
-	}
-
-	static bool triggeredEventNewDominatingSpecies = false;
-	if (!triggeredEventNewDominatingSpecies && OrganismManager::getInstance().getDominatingSpecies() != "MO")
-	{
-		auto dominatingSpecies = OrganismManager::getInstance().getDominatingSpecies();
-		std::string::difference_type numOs = std::count(dominatingSpecies.begin(), dominatingSpecies.end(), 'O');
-		std::string::difference_type numMs = std::count(dominatingSpecies.begin(), dominatingSpecies.end(), 'M');
-
-		if (numOs + numMs > 2)
-		{
-			triggeredEventNewDominatingSpecies = true;
-			showNewDominatingSpeciesModal_ = true;
-			dnaSlots_[2].isLocked = false;
-			numUnlocked_++;
-		}
-	}
-
-	static bool triggeredEventPredators = false;
-	if (!triggeredEventPredators && OrganismManager::getInstance().getPredatorEventTriggered())
-	{
-		triggeredEventPredators = true;
-		showPredatorsModal_ = true;
-		dnaSlots_[3].isLocked = false;
-		numUnlocked_++;
-	}
-
-	static bool triggeredEventParasites = false;
-	if (!triggeredEventParasites && OrganismManager::getInstance().getParasiteEventTriggered())
-	{
-		triggeredEventParasites = true;
-		showParasitesModal_ = true;
-		dnaSlots_[4].isLocked = false;
-		numUnlocked_++;
-	}
-
-	static bool triggeredEventThorns = false;
-	if (!triggeredEventThorns && OrganismManager::getInstance().getThornEventTriggered())
-	{
-		triggeredEventThorns = true;
-		showThornsModal_ = true;
-		dnaSlots_[5].isLocked = false;
-		numUnlocked_++;
-	}
-
-	static bool triggeredEventPredatorDomination = false;
-	if (!triggeredEventPredatorDomination && OrganismManager::getInstance().getPredatorDominationEventTriggered())
-	{
-		triggeredEventPredatorDomination = true;
-		showPredatorDominationModal_ = true;
-		dnaSlots_[6].isLocked = false;
-		numUnlocked_++;
-	}
-
-	static bool triggeredFiveCellDominationEvent = false;
-	if (!triggeredFiveCellDominationEvent && OrganismManager::getInstance().getFiveCellDominationEventTriggered())
-	{
-		triggeredFiveCellDominationEvent = true;
-		showFiveCellDominationModal_ = true;
-		dnaSlots_[7].isLocked = false;
-		numUnlocked_++;
-	}
-
-	static bool triggeredThornCellDiscoveredEvent = false;
-	if (!triggeredThornCellDiscoveredEvent && OrganismManager::getInstance().getThornCellDiscovered())
-	{
-		triggeredThornCellDiscoveredEvent = true;
-	}
-
-	static bool triggeredHerbivoreDiscoveredEvent = false;
-	if (!triggeredHerbivoreDiscoveredEvent && OrganismManager::getInstance().getHerbivoreDiscovered())
-	{
-		triggeredHerbivoreDiscoveredEvent = true;
-	}
-
-	static bool triggeredCarnivoreDiscoveredEvent = false;
-	if (!triggeredCarnivoreDiscoveredEvent && OrganismManager::getInstance().getCarnivoreDiscovered())
-	{
-		triggeredCarnivoreDiscoveredEvent = true;
-	}
-
 	if (soundActive_)
 	{
 		std::string activeFilename = std::to_string(activeSoundIdx_ + 1) + ".wav";
@@ -297,18 +222,7 @@ void AliveApp::onKeyPressed(int key)
 	if (io.WantCaptureKeyboard)
 		return;
 
-	OrthoCamController::getInstance().pressKey(key);
-
-	static const float scroll_speed_ttl = 250;
-
-	if (key == GLFW_KEY_UP)
-	{
-		Organism::MaxTTL += scroll_speed_ttl;
-	}
-	else if (key == GLFW_KEY_DOWN)
-	{
-		Organism::MaxTTL -= scroll_speed_ttl;
-	}
+	OrthoCamController::getInstance().onKeyPressed(key);
 }
 
 void AliveApp::onKeyReleased(int key)
@@ -317,7 +231,7 @@ void AliveApp::onKeyReleased(int key)
 	if (io.WantCaptureKeyboard)
 		return;
 
-	OrthoCamController::getInstance().releaseKey(key);
+	OrthoCamController::getInstance().onKeyReleased(key);
 }
 
 void AliveApp::onMouseScrolled(double offsetX, double offsetY)
@@ -327,7 +241,7 @@ void AliveApp::onMouseScrolled(double offsetX, double offsetY)
 		return;
 
 	if (isHoveringSimWindow_)
-		OrthoCamController::getInstance().scrollMouse(offsetY);
+		OrthoCamController::getInstance().onMouseScrolled(offsetY);
 }
 
 void AliveApp::onDrawImGui()
@@ -364,6 +278,7 @@ void AliveApp::onDrawImGui()
 	//if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
 	bool* open = nullptr; // Don't pass our bool* to Begin
 
+	// Top Menu
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (isRunning_)
@@ -389,23 +304,12 @@ void AliveApp::onDrawImGui()
 		ImGui::EndMainMenuBar();
 	}
 
-	{
-		ImGui::Begin("Simulation Speed", open, windowFlags);
-
-		ImGui::PushItemWidth(-1);
-		ImGui::SliderFloat("##Speed", &Time::Scale, 0.5f, 8.0f, "%.1f");
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Speed of simulation time.");
-		ImGui::PopItemWidth();
-
-		ImGui::End();
-	}
-
+	// "Organisms" Window
 	{
 		ImGui::Begin("Organisms", open, windowFlags);
 		unsigned orgsPerCell = 2;
 		auto& style = ImGui::GetStyle();
-		float imgWidth = (ImGui::GetContentRegionAvail().x - ((orgsPerCell - 1) * style.FramePadding.x)) / (float)orgsPerCell;
+		float imgWidth = 100;//(ImGui::GetContentRegionAvail().x - ((orgsPerCell - 1) * style.FramePadding.x)) / (float)orgsPerCell;
 
 		float aspect = dnaSlots_[0].texture->getAspect();
 		ImVec4 bgColorSelected = { 0, 0, 1, 0.1f };
@@ -479,33 +383,7 @@ void AliveApp::onDrawImGui()
 		ImGui::End();
 	}
 
-	{
-		ImGui::Begin("FPS", open, windowFlags);
-
-		static unsigned frameCount = 0;
-		float FPS = 1.0f / Time::DeltaSeconds;
-
-		if (FPS >= 10)
-		{
-			frameCount = 0;
-		}
-		else
-		{
-			frameCount++;
-			if (frameCount > 20)
-			{
-				frameCount = 0;
-				showFPSModal_ = true;
-				Time::Scale -= 1;
-			}
-		}
-
-		ImGui::PushItemWidth(-1);
-		ImGui::Text((std::to_string((int)FPS)).c_str());
-		ImGui::PopItemWidth();
-		ImGui::End();
-	}
-
+	// World view
 	{
 		ImGuiWindowClass windowClass;
 		windowClass.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_AutoHideTabBar;
@@ -534,111 +412,28 @@ void AliveApp::onDrawImGui()
 		ImGui::End();
 	}
 
-	/*
+	// Popups
 	{
-		ImGui::Begin("Registry");
-
-		const auto& registry = OrganismManager::getInstance().getRegistry();
-		for (const auto& pair : registry)
+		for (auto iter = events_.begin(); iter != events_.end(); iter++)
 		{
-			if (pair.second > 0)
+			if (iter->unlockCondition())
 			{
-				std::string text = pair.first + ": " + std::to_string(pair.second);
-				ImGui::Text(text.c_str());
+				dnaSlots_[iter->unlocksSlotIdxNr].isLocked = false;
+				numUnlocked_++;
+				auto& io = ImGui::GetIO();
+				ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+				ImGui::OpenPopup(iter->popupName.c_str());
+				isRunning_ = false;
+				iter = events_.erase(iter);
 			}
 		}
 
-		ImGui::End();
-	}
-	*/
-
-	{
 		if (showUnlockNewOrgModal_)
 		{
 			showUnlockNewOrgModal_ = false;
 			auto& io = ImGui::GetIO();
 			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 			ImGui::OpenPopup("New organism unlocked!");
-		}
-
-		if (showDecomposerModal_)
-		{
-			showDecomposerModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Decomposers");
-			isRunning_ = false;
-		}
-
-		if (showNewDominatingSpeciesModal_)
-		{
-			showNewDominatingSpeciesModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Survival of the fittest");
-			isRunning_ = false;
-		}
-
-		if (showPredatorsModal_)
-		{
-			showPredatorsModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Predator and prey");
-			isRunning_ = false;
-		}
-
-		if (showParasitesModal_)
-		{
-			showParasitesModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Symbiosis");
-			isRunning_ = false;
-		}
-
-		if (showWikiUpdatedModal_)
-		{
-			showWikiUpdatedModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("The wiki has been updated!");
-			isRunning_ = false;
-		}
-
-		if (showThornsModal_)
-		{
-			showThornsModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Evolutionary arms race");
-			isRunning_ = false;
-		}
-
-		if (showFiveCellDominationModal_)
-		{
-			showFiveCellDominationModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Size matters");
-			isRunning_ = false;
-		}
-
-		if (showPredatorDominationModal_)
-		{
-			showPredatorDominationModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Supply and demand");
-			isRunning_ = false;
-		}
-
-		if (showFPSModal_)
-		{
-			showFPSModal_ = false;
-			auto& io = ImGui::GetIO();
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("Performance issues");
 		}
 
 		if (showHelpModal_)
@@ -912,14 +707,14 @@ void AliveApp::onDrawImGui()
 		{
 			addPadding(5, 5);
 			ImGui::TextWrapped("You either discovered every event or played longer than 10 minutes. If you didn't discover every event, it doesn't matter. If you are a completionist, you can restart the application and try again.");
-			
+
 			addPadding(5, 0);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
 			{
 				ImGui::CloseCurrentPopup();
 			}
 
-			ImGui::EndPopup();			
+			ImGui::EndPopup();
 		}
 
 	}

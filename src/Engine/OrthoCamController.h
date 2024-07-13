@@ -10,9 +10,9 @@ public:
 
 	void update();
 	void setDimensions(float width, float aspect);
-	void pressKey(int key);
-	void releaseKey(int key);
-	bool scrollMouse(double mouseOffsetY);
+	void onKeyPressed(int key);
+	void onKeyReleased(int key);
+	bool onMouseScrolled(double mouseOffsetY);
 	float getZoomLevel();
 	inline glm::mat4 getViewProjection() { return getProjection() * getView(); }
 	inline glm::mat4 getView() { return glm::inverse(glm::translate(glm::mat4(1), position_)); }

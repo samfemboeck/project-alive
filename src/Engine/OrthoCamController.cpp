@@ -34,7 +34,7 @@ void OrthoCamController::setDimensions(float width, float aspect)
 	camera_.setOrtho(-width * 0.5f * zoomLevel_, width * 0.5f * zoomLevel_, -aspect * width * 0.5f * zoomLevel_, aspect * width * 0.5f * zoomLevel_);
 }
 
-void OrthoCamController::pressKey(int key)
+void OrthoCamController::onKeyPressed(int key)
 {
 	switch (key)
 	{
@@ -55,7 +55,7 @@ void OrthoCamController::pressKey(int key)
 	}
 }
 
-void OrthoCamController::releaseKey(int key)
+void OrthoCamController::onKeyReleased(int key)
 {
 	switch (key)
 	{
@@ -76,7 +76,7 @@ void OrthoCamController::releaseKey(int key)
 	}
 }
 
-bool OrthoCamController::scrollMouse(double mouseOffsetY)
+bool OrthoCamController::onMouseScrolled(double mouseOffsetY)
 {
 	zoomLevel_ -= mouseOffsetY * speedScroll_;
 	zoomLevel_ = std::max(zoomLevel_, 0.1f);

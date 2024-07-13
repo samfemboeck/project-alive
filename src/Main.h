@@ -19,6 +19,13 @@ struct Slot
 	Rarity rarity;
 };
 
+struct Event
+{
+	unsigned unlocksSlotIdxNr;
+	std::function<bool()> unlockCondition;
+	std::string popupName;
+};
+
 class AliveApp : public App
 {
 private:
@@ -68,4 +75,5 @@ private:
 	bool cheat_ = false;
 	unsigned numUnlocked_ = 0;
 	bool end_ = false;
+	std::vector<Event> events_;
 };

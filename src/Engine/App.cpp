@@ -15,12 +15,11 @@ App::App()
 	glfwSetErrorCallback([](int errorCode, const char* desc) { LOG("GLFW error: {}", desc); });
 
 	if (!glfwInit())
-	{
 		LOG("Failed to init GLFW!");
-	}
 
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
  
+	/*
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -30,8 +29,9 @@ App::App()
 	glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
 	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 	glfwWindowHint(GLFW_MAXIMIZED, true);
+	*/
  
-	window_ = glfwCreateWindow(1920, 1080, "Tiny Terrarium", NULL, NULL);
+	window_ = glfwCreateWindow(1280, 720, "Project \"Alive\"", NULL, NULL);
 
 	windowData_.app = this;
 	windowData_.width = 1280;
