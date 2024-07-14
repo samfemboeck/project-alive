@@ -8,22 +8,18 @@
 #include "Engine/SoundManager.h"
 #include "Main.h"
 
-OrganismManager& OrganismManager::getInstance()
-{
-	static OrganismManager manager;
-	return manager;
-}
-
 void OrganismManager::update()
 {	
+	// minimize performance overhead for corpses
 	updateCorpses(corpsesPlants_);
 	updateCorpses(corpsesMovers_);
-	update(plants_, false);
-	update(movers_, true);
+	updateOrganisms(plants_, false); // We don't care about the most productive plants for optimization.
+	updateOrganisms(movers_, true); // Survival of the fittest (most productive).
+	updateEventTriggers();
 
 	float avgSize = 2;
 
-	if (movers_.size() > 0)
+	if (!movers_.empty())
 	{
 		float sumSize = 0;
 
@@ -33,27 +29,35 @@ void OrganismManager::update()
 		avgSize = sumSize / movers_.size();
 	}
 
-	maxMovers_ = 10000;//300.0f / avgSize;
+	maxMovers_ = 10000;
 }
 
-bool compareReproductionUrge(Organism* org1, Organism* org2)
+void OrganismManager::draw()
 {
-    return (org1->getReproductionUrge() > org2->getReproductionUrge());
+	auto& orthoCam = OrthoCamController::getInstance();
+	Renderer2D::beginTextures(orthoCam.getView(), orthoCam.getProjection());
+
+	for (Organism* org : corpsesPlants_) org->draw();
+	for (Organism* org : corpsesMovers_) org->draw();
+	for (Organism* org : plants_) org->draw();
+	for (Organism* org : movers_) org->draw();
+
+	Renderer2D::endTextures();
 }
 
-void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
-{	
-	static std::vector<Organism*> corpsesToSpawn;
-	static std::vector<Organism*> parentsToClone;
+void OrganismManager::updateOrganisms(std::vector<Organism*>& orgs, bool prioritizeMostProductive)
+{
+	std::vector<Organism*> corpsesToSpawn;
+	std::vector<Organism*> parentsToClone;
 
-	for (auto it = vec.begin(); it != vec.end();)
+	for (auto it = orgs.begin(); it != orgs.end();)
 	{
 		Organism* org = *it;
 		org->tick();
 
 		if (org->wantsToDie())
 		{
-			it = vec.erase(it);
+			it = orgs.erase(it);
 
 			Organism* corpse = org->createCorpse();
 			if (corpse)
@@ -81,21 +85,18 @@ void OrganismManager::update(std::vector<Organism*>& vec, bool sort)
 		if (!add(corpse))
 			delete corpse;
 
-	if (sort)
-		std::sort(parentsToClone.begin(), parentsToClone.end(), compareReproductionUrge);
+	if (prioritizeMostProductive)
+		std::sort(parentsToClone.begin(), parentsToClone.end(), [](Organism* org1, Organism* org2){ return org1->getReproductionUrge() > org2->getReproductionUrge(); });
 
 	for (Organism* parent : parentsToClone)
-	{
 		if (tryClone(parent))
 			parent->setEnergy(parent->getEnergy() - parent->getHunger());
-	}
+}
 
-	corpsesToSpawn.clear();
-	parentsToClone.clear();
-
+void OrganismManager::updateEventTriggers()
+{
 	unsigned numCarnivores = 0;
 	unsigned numHerbivores = 0;
-
 	unsigned numHerbivoresMoreThan4Cells = 0;
 	unsigned numHerbivoresTotal = 0;
 
@@ -186,25 +187,6 @@ void OrganismManager::updateCorpses(std::vector<Organism*>& vec)
 	}
 }
 
-void OrganismManager::draw()
-{
-	Renderer2D::beginTextures(OrthoCamController::getInstance().getView(), OrthoCamController::getInstance().getProjection());
-
-	for (Organism* org : corpsesPlants_)
-		org->draw();
-
-	for (Organism* org : corpsesMovers_)
-		org->draw();
-
-	for (Organism* org : plants_)
-		org->draw();
-
-	for (Organism* org : movers_)
-		org->draw();
-
-	Renderer2D::endTextures();
-}
-
 bool OrganismManager::add(Organism* org)
 {
 	PhysicsManager::getInstance().update(org->getAABB());
@@ -259,7 +241,7 @@ bool OrganismManager::tryClone(Organism* org)
 {
 	Vec2f spawnPos;
 
-	if (!org->isMover() && org->isHerbivore())
+	if (!org->isMover() && org->isHerbivore()) // Non-moving Herbivore cell get VIP treatment so that they can flourish
 	{
 		if (PhysicsManager::getInstance().findSpawnPosition(org->getAABB(), 1000, spawnPos))
 		{
@@ -330,57 +312,26 @@ bool OrganismManager::tryClone(Organism* org)
 	return false;
 }
 
-const std::unordered_map<std::string, unsigned>& OrganismManager::getRegistry()
-{
-	return registry_;
-}
+const std::unordered_map<std::string, unsigned>& OrganismManager::getRegistry() { return registry_; }
 
-unsigned OrganismManager::getNumPlantCorpses()
-{
-	return corpsesPlants_.size();
-}
+unsigned OrganismManager::getNumPlantCorpses() { return corpsesPlants_.size(); }
 
-std::string OrganismManager::getDominatingSpecies()
-{
-	return dominatingSpecies_;
-}
+std::string OrganismManager::getDominatingSpecies() { return dominatingSpecies_; }
 
-bool OrganismManager::getPredatorEventTriggered()
-{
-	return predatorEventTriggered_;
-}
+bool OrganismManager::getPredatorEventTriggered() { return predatorEventTriggered_; }
 
-bool OrganismManager::getParasiteEventTriggered()
-{
-	return parasiteEventTriggered_;
-}
+bool OrganismManager::getParasiteEventTriggered() { return parasiteEventTriggered_; }
 
-bool OrganismManager::getThornEventTriggered()
-{
-	return thornEventTriggered_;
-}
+bool OrganismManager::getThornEventTriggered() { return thornEventTriggered_; }
 
-bool OrganismManager::getFiveCellDominationEventTriggered()
-{
-	return fiveCellDominationEventTriggered_;
-}
+bool OrganismManager::getFiveCellDominationEventTriggered() { return fiveCellDominationEventTriggered_; }
 
-bool OrganismManager::getPredatorDominationEventTriggered()
-{
-	return predatorDominationEventTriggered_;
-}
+bool OrganismManager::getPredatorDominationEventTriggered() { return predatorDominationEventTriggered_; }
 
-bool OrganismManager::getThornCellDiscovered()
-{
-	return thornCellDiscovered_;
-}
+bool OrganismManager::getThornCellDiscovered() { return thornCellDiscovered_; }
 
-bool OrganismManager::getHerbivoreDiscovered()
-{
-	return herbivoreDiscovered_;
-}
+bool OrganismManager::getHerbivoreDiscovered() { return herbivoreDiscovered_; }
 
-bool OrganismManager::getCarnivoreDiscovered()
-{
-	return carnivoreDiscovered_;
-}
+bool OrganismManager::getCarnivoreDiscovered() { return carnivoreDiscovered_; }
+
+OrganismManager& OrganismManager::getInstance() { static OrganismManager manager; return manager; }

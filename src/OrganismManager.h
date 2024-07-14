@@ -30,6 +30,8 @@ public:
 
 private:
 	OrganismManager() = default;
+	void updateEventTriggers();
+	void updateOrganisms(std::vector<Organism*>& orgs, bool prioritizeMostProductive);
 
 private:
 	std::vector<Organism*> corpsesMovers_;

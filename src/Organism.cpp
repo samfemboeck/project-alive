@@ -4,7 +4,6 @@
 #include "ThornCell.h"
 #include "MoverCell.h"
 #include "CorpseCell.h"
-#include "ArmorCell.h"
 #include "HerbivoreCell.h"
 #include "CarnivoreCell.h"
 #include "Engine/Physics.h"
@@ -13,7 +12,7 @@
 #include "Engine/Renderer2D.h"
 #include "Engine/Util.h"
 #include "OrganismManager.h"
-#include "Mutation.h"
+#include "DNA.h"
 
 Organism::Organism(DNA dna, const std::vector<Cell*>& cells, Vec2f position, float angle) :
 	dna_(dna),
@@ -386,8 +385,6 @@ Cell* Organism::getCellForSymbol(char symbol)
 		return new HerbivoreCell();
 	case 'C':
 		return new CarnivoreCell();
-	case 'A':
-		return new ArmorCell();
 	default:
 		throw std::exception(std::format("Invalid DNA symbol: {}", symbol).c_str());
 	}

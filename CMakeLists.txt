@@ -23,8 +23,8 @@ add_executable(alive
 	src/Engine/VertexArray.cpp
 	src/Engine/TextureManager.h
 	src/Engine/TextureManager.cpp
-	src/Engine/Component.h
-	src/Engine/Component.cpp
+	
+	
 	src/Engine/Physics.h
 	src/Engine/Physics.cpp
 	src/Engine/QuickMaths.h
@@ -63,15 +63,13 @@ add_executable(alive
 	src/ThornCell.cpp
 	src/CorpseCell.h
 	src/CorpseCell.cpp
-	src/Mutation.h
-	src/Mutation.cpp
+	src/DNA.h
+	src/DNA.cpp
 	src/HerbivoreCell.h
 	src/HerbivoreCell.cpp
 	src/CarnivoreCell.h
 	src/CarnivoreCell.cpp
-	src/ArmorCell.h
-	src/ArmorCell.cpp
-
+	
 	external/glad/include/glad/glad.h
 	external/glad/src/glad.c
 	external/stb/stb_image.h

@@ -31,13 +31,3 @@ private:
 	std::string str_;
 	unsigned numCells_ = 0;
 };
-
-class Production
-{
-public:
-	static std::vector<char> mover(unsigned numMaxMutations);
-	static std::vector<char> plant();
-	static std::vector<char> mouth(unsigned numMaxMutations);
-	static std::vector<char> thorn();
-	static std::vector<char> carnivore(unsigned numMaxMutations);
-};

@@ -28,14 +28,14 @@ App::App()
 	glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
 	glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
 	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-	glfwWindowHint(GLFW_MAXIMIZED, true);
 	*/
  
-	window_ = glfwCreateWindow(1280, 720, "Project \"Alive\"", NULL, NULL);
+	glfwWindowHint(GLFW_MAXIMIZED, true);
+	window_ = glfwCreateWindow(1920, 1080, "Project \"Alive\"", NULL, NULL);
 
 	windowData_.app = this;
-	windowData_.width = 1280;
-	windowData_.height = 720;
+	windowData_.width = 1920;
+	windowData_.height = 1080;
 
 	//window_ = glfwCreateWindow(windowData_.width, windowData_.height, "Project Alive", nullptr, nullptr);
 	if (window_ == NULL)

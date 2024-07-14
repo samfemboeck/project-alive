@@ -11,7 +11,7 @@
 #include "Engine/Renderer2D.h"
 #include "Cell.h"
 #include "OrganismManager.h"
-#include "Mutation.h"
+#include "DNA.h"
 #include "Engine/FrameBuffer.h"
 #include "Engine/SoundManager.h"
 #include "Main.h"
