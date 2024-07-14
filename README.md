@@ -1,8 +1,11 @@
-# project-alive
-Artificial Life simulation for my bachelor thesis.
+# About
+Visit the [Itch.io Page](https://samyemmy.itch.io/project-alive) for information about this application.
 
-In this simulation, an ecosystem containing producers, herbivores and predators is emulated. The organisms within consist of cells of different types. By simple but refined interaction rules between these cells, complex behaviour emerges. The aim of this project is to create a complex system with educational value.
+# How to build
 
-![alt text](https://github.com/samfemboeck/project-alive/blob/master/Unbenannt.PNG?raw=true)
-
-
+## Clone the repo with all dependencies
+```
+git clone --recursive https://github.com/samfemboeck/project-alive
+```
+## Run CMake 
+'CMakeLists.txt' is in the root directory of the project.
